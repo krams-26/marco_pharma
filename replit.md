@@ -8,12 +8,18 @@ Application web complète de gestion de pharmacie développée avec Flask et Boo
 
 **Date:** 14 octobre 2025
 
+### Corrections critiques appliquées
+- ✅ Système de permissions granulaires entièrement appliqué avec décorateur `require_permission`
+- ✅ Page 403 personnalisée pour accès refusé (évite boucles de redirection infinies)
+- ✅ Correction clés étrangères avec `db.session.flush()` avant création objets dépendants
+- ✅ Toutes les routes sensibles protégées par permissions appropriées
+
 ### Architecture complète implémentée
 - Backend Flask avec SQLAlchemy (SQLite)
 - Frontend Bootstrap 5 responsive
 - Système d'authentification avec Flask-Login
-- Système de permissions granulaires par utilisateur
-- 13 modules fonctionnels complets
+- Système de permissions granulaires entièrement fonctionnel
+- 13 modules fonctionnels complets et sécurisés
 
 ### Stack Technologique
 
@@ -40,7 +46,10 @@ Application web complète de gestion de pharmacie développée avec Flask et Boo
 
 ### 1. Authentification & Sécurité
 - Système de connexion sécurisé
+- Décorateur de permissions `require_permission` appliqué à toutes les routes
+- Page 403 personnalisée pour accès refusé
 - Système de permissions granulaires personnalisables par utilisateur
+- 12 permissions individuelles assignables par utilisateur
 - 5 rôles prédéfinis: Admin, Manager, Pharmacien, Caissier, Vendeur
 - Audit complet de toutes les activités
 
