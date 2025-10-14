@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Nouvelle demande de congé</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Employé *</label>
+                <select class="form-select" name="employee_id" required>
+                    <option value="">Sélectionner</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee.user.full_name if employee.user else employee.employee_id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Date de début *</label>
+                    <input type="date" class="form-control" name="start_date" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Date de fin *</label>
+                    <input type="date" class="form-control" name="end_date" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Type de congé</label>
+                <select class="form-select" name="leave_type">
+                    <option value="annual">Congé annuel</option>
+                    <option value="sick">Congé maladie</option>
+                    <option value="maternity">Congé maternité</option>
+                    <option value="other">Autre</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Raison</label>
+                <textarea class="form-control" name="reason" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="{{ url_for('hr.leave_requests') }}" class="btn btn-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

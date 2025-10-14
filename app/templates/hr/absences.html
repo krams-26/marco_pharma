@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Absences</h2>
+    <a href="{{ url_for('hr.add_absence') }}" class="btn btn-primary">Enregistrer une absence</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Employé</th><th>Date</th><th>Raison</th><th>Notes</th></tr></thead>
+                <tbody>
+                    {% for absence in absences.items %}
+                    <tr>
+                        <td>{{ absence.employee.user.full_name if absence.employee.user else '-' }}</td>
+                        <td>{{ absence.absence_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ absence.reason or '-' }}</td>
+                        <td>{{ absence.notes or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center text-muted">Aucune absence</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

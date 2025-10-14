@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ customer.name }}</h2>
+    <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-primary">Modifier</a>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white"><h5 class="mb-0">Informations</h5></div>
+            <div class="card-body">
+                <p><strong>Type:</strong> {{ 'Grossiste' if customer.customer_type == 'wholesale' else 'Régulier' }}</p>
+                <p><strong>Email:</strong> {{ customer.email or '-' }}</p>
+                <p><strong>Téléphone:</strong> {{ customer.phone or '-' }}</p>
+                <p><strong>Adresse:</strong> {{ customer.address or '-' }}</p>
+                <p><strong>Limite crédit:</strong> ${{ "%.2f"|format(customer.credit_limit) }}</p>
+                <p><strong>Crédit actuel:</strong> ${{ "%.2f"|format(customer.current_credit) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white"><h5 class="mb-0">Historique des ventes</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Facture</th><th>Date</th><th>Montant</th><th>Statut</th></tr></thead>
+                        <tbody>
+                            {% for sale in sales %}
+                            <tr>
+                                <td><a href="{{ url_for('sales.view', id=sale.id) }}">{{ sale.invoice_number }}</a></td>
+                                <td>{{ sale.sale_date.strftime('%d/%m/%Y') }}</td>
+                                <td>${{ "%.2f"|format(sale.total_amount) }}</td>
+                                <td>
+                                    {% if sale.payment_status == 'paid' %}
+                                        <span class="badge bg-success">Payé</span>
+                                    {% elif sale.payment_status == 'partial' %}
+                                        <span class="badge bg-warning">Partiel</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">En attente</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">Aucune vente</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

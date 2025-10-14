@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Paiements en attente</h2>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Facture</th><th>Client</th><th>Total</th><th>Payé</th><th>Solde dû</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td><a href="{{ url_for('sales.view', id=sale.id) }}">{{ sale.invoice_number }}</a></td>
+                        <td>{{ sale.customer.name if sale.customer else 'Client anonyme' }}</td>
+                        <td>${{ "%.2f"|format(sale.total_amount) }}</td>
+                        <td>${{ "%.2f"|format(sale.paid_amount) }}</td>
+                        <td>${{ "%.2f"|format(sale.balance_due) }}</td>
+                        <td><a href="{{ url_for('payments.record', sale_id=sale.id) }}" class="btn btn-sm btn-primary">Enregistrer paiement</a></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted">Aucun paiement en attente</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

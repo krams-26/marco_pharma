@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Vente {{ sale.invoice_number }}</h2>
+    <a href="{{ url_for('pos.invoice', sale_id=sale.id) }}" class="btn btn-primary" target="_blank">
+        <i class="bi bi-printer"></i> Imprimer facture
+    </a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5>Client</h5>
+                <p>{{ sale.customer.name if sale.customer else 'Client anonyme' }}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <h5>Date</h5>
+                <p>{{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Produit</th><th>Prix unitaire</th><th>Quantité</th><th>Total</th></tr></thead>
+                <tbody>
+                    {% for item in sale.items %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>${{ "%.2f"|format(item.unit_price) }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ "%.2f"|format(item.total) }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr><td colspan="3" class="text-end"><strong>Remise:</strong></td><td>${{ "%.2f"|format(sale.discount) }}</td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>Total:</strong></td><td><strong>${{ "%.2f"|format(sale.total_amount) }}</strong></td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>Payé:</strong></td><td>${{ "%.2f"|format(sale.paid_amount) }}</td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>Solde dû:</strong></td><td>${{ "%.2f"|format(sale.balance_due) }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

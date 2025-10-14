@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Lots de produits</h2>
+    <a href="{{ url_for('stock.add_batch') }}" class="btn btn-primary">Ajouter un lot</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Produit</th><th>Numéro de lot</th><th>Quantité</th><th>Prix d'achat</th><th>Date de réception</th></tr></thead>
+                <tbody>
+                    {% for batch in batches.items %}
+                    <tr>
+                        <td>{{ batch.product.name }}</td>
+                        <td>{{ batch.batch_number }}</td>
+                        <td>{{ batch.quantity }}</td>
+                        <td>${{ "%.2f"|format(batch.purchase_price) }}</td>
+                        <td>{{ batch.received_date.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted">Aucun lot trouvé</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Modifier l'utilisateur</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nom d'utilisateur *</label>
+                    <input type="text" class="form-control" name="username" value="{{ user.username }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Prénom</label>
+                    <input type="text" class="form-control" name="first_name" value="{{ user.first_name or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nom</label>
+                    <input type="text" class="form-control" name="last_name" value="{{ user.last_name or '' }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Téléphone</label>
+                    <input type="text" class="form-control" name="phone" value="{{ user.phone or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+                    <input type="password" class="form-control" name="password">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Rôle</label>
+                    <select class="form-select" name="role">
+                        {% for value, label in roles %}
+                        <option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" class="form-check-input" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">Actif</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <h5>Permissions</h5>
+                {% set user_perms = user.get_permissions() %}
+                <div class="row">
+                    {% for perm, label in permissions %}
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="perm_{{ perm }}" id="perm_{{ perm }}" {% if user_perms.get(perm) %}checked{% endif %}>
+                            <label class="form-check-label" for="perm_{{ perm }}">{{ label }}</label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+            <a href="{{ url_for('users.index') }}" class="btn btn-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

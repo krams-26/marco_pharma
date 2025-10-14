@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Taux de change</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white"><h5 class="mb-0">Ajouter un taux</h5></div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">De (devise) *</label>
+                        <input type="text" class="form-control" name="from_currency" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vers (devise) *</label>
+                        <input type="text" class="form-control" name="to_currency" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Taux *</label>
+                        <input type="number" class="form-control" name="rate" step="0.0001" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white"><h5 class="mb-0">Taux configurés</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>De</th><th>Vers</th><th>Taux</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for rate in rates %}
+                            <tr>
+                                <td>{{ rate.from_currency }}</td>
+                                <td>{{ rate.to_currency }}</td>
+                                <td>{{ rate.rate }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('settings.delete_rate', id=rate.id) }}" style="display:inline;">
+                                        <button class="btn btn-sm btn-danger">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">Aucun taux configuré</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

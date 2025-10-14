@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Demandes de crédit</h2>
+    <a href="{{ url_for('hr.add_credit_request') }}" class="btn btn-primary">Nouvelle demande</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Employé</th><th>Montant</th><th>Raison</th><th>Statut</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for request in requests.items %}
+                    <tr>
+                        <td>{{ request.employee.user.full_name if request.employee.user else '-' }}</td>
+                        <td>${{ "%.2f"|format(request.amount) }}</td>
+                        <td>{{ request.reason or '-' }}</td>
+                        <td>
+                            {% if request.status == 'approved' %}
+                                <span class="badge bg-success">Approuvé</span>
+                            {% elif request.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejeté</span>
+                            {% else %}
+                                <span class="badge bg-warning">En attente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if request.status == 'pending' %}
+                            <form method="POST" action="{{ url_for('hr.approve_credit', id=request.id) }}" style="display:inline;">
+                                <button class="btn btn-sm btn-success">Approuver</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted">Aucune demande</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Modifier le client</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" class="form-control" name="name" value="{{ customer.name }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Type de client</label>
+                    <select class="form-select" name="customer_type">
+                        <option value="regular" {% if customer.customer_type == 'regular' %}selected{% endif %}>Régulier</option>
+                        <option value="wholesale" {% if customer.customer_type == 'wholesale' %}selected{% endif %}>Grossiste</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" value="{{ customer.email or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Téléphone</label>
+                    <input type="text" class="form-control" name="phone" value="{{ customer.phone or '' }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Adresse</label>
+                <textarea class="form-control" name="address" rows="3">{{ customer.address or '' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Limite de crédit</label>
+                <input type="number" class="form-control" name="credit_limit" step="0.01" value="{{ customer.credit_limit }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+            <a href="{{ url_for('customers.index') }}" class="btn btn-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

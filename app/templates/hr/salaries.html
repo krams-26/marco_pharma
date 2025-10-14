@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Paiements de salaires</h2>
+    <a href="{{ url_for('hr.pay_salary') }}" class="btn btn-primary">Nouveau paiement</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Employé</th><th>Montant</th><th>Période</th><th>Date</th><th>Méthode</th></tr></thead>
+                <tbody>
+                    {% for payment in payments.items %}
+                    <tr>
+                        <td>{{ payment.employee.user.full_name if payment.employee.user else '-' }}</td>
+                        <td>${{ "%.2f"|format(payment.amount) }}</td>
+                        <td>{{ payment.period or '-' }}</td>
+                        <td>{{ payment.payment_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ payment.payment_method or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted">Aucun paiement</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
