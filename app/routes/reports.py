@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, send_file
 from flask_login import login_required
 from app.models import db, Sale, Product, Expense, Payment, Customer
+from app.decorators import require_permission
 from sqlalchemy import func, extract
 from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import letter
@@ -11,7 +12,7 @@ import io
 reports_bp = Blueprint('reports', __name__, url_prefix='/reports')
 
 @reports_bp.route('/')
-@login_required
+@require_permission('view_reports')
 def index():
     return render_template('reports/index.html')
 

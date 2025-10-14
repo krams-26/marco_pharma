@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 from app.models import Sale
+from app.decorators import require_permission
 
 sales_bp = Blueprint('sales', __name__, url_prefix='/sales')
 
 @sales_bp.route('/')
-@login_required
+@require_permission('manage_sales')
 def index():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '')
@@ -22,7 +23,7 @@ def index():
     return render_template('sales/index.html', sales=sales, search=search)
 
 @sales_bp.route('/view/<int:id>')
-@login_required
+@require_permission('manage_sales')
 def view(id):
     sale = Sale.query.get_or_404(id)
     return render_template('sales/view.html', sale=sale)

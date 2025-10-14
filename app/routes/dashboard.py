@@ -1,13 +1,14 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from app.models import db, Product, Sale, Customer, User, StockMovement
+from app.decorators import require_permission
 from sqlalchemy import func
 from datetime import datetime, timedelta
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 @dashboard_bp.route('/')
-@login_required
+@require_permission('view_dashboard')
 def index():
     today = datetime.now().date()
     month_start = datetime(today.year, today.month, 1).date()

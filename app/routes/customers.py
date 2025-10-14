@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from app.decorators import require_permission
 from flask_login import login_required, current_user
 from app.models import db, Customer, Sale, Payment, Audit
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
 
 @customers_bp.route('/')
-@login_required
+@require_permission('manage_customers')
 def index():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '')
@@ -28,7 +29,7 @@ def index():
     return render_template('customers/index.html', customers=customers, search=search)
 
 @customers_bp.route('/add', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_customers')
 def add():
     if request.method == 'POST':
         try:
@@ -42,6 +43,7 @@ def add():
             )
             
             db.session.add(customer)
+            db.session.flush()
             
             audit = Audit(
                 user_id=current_user.id,
@@ -64,7 +66,7 @@ def add():
     return render_template('customers/add.html')
 
 @customers_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_customers')
 def edit(id):
     customer = Customer.query.get_or_404(id)
     
@@ -98,7 +100,7 @@ def edit(id):
     return render_template('customers/edit.html', customer=customer)
 
 @customers_bp.route('/view/<int:id>')
-@login_required
+@require_permission('manage_customers')
 def view(id):
     customer = Customer.query.get_or_404(id)
     sales = Sale.query.filter_by(customer_id=id).order_by(Sale.sale_date.desc()).all()
@@ -107,7 +109,7 @@ def view(id):
     return render_template('customers/view.html', customer=customer, sales=sales, payments=payments)
 
 @customers_bp.route('/delete/<int:id>', methods=['POST'])
-@login_required
+@require_permission('manage_customers')
 def delete(id):
     customer = Customer.query.get_or_404(id)
     

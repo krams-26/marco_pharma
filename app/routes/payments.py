@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from app.decorators import require_permission
 from flask_login import login_required, current_user
 from app.models import db, Payment, Sale, Customer, Audit
 
 payments_bp = Blueprint('payments', __name__, url_prefix='/payments')
 
 @payments_bp.route('/')
-@login_required
+@require_permission('manage_payments')
 def index():
     page = request.args.get('page', 1, type=int)
     
@@ -16,7 +17,7 @@ def index():
     return render_template('payments/index.html', payments=payments)
 
 @payments_bp.route('/pending')
-@login_required
+@require_permission('manage_payments')
 def pending():
     pending_sales = Sale.query.filter(
         Sale.payment_status.in_(['pending', 'partial'])
@@ -25,7 +26,7 @@ def pending():
     return render_template('payments/pending.html', sales=pending_sales)
 
 @payments_bp.route('/record/<int:sale_id>', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_payments')
 def record(sale_id):
     sale = Sale.query.get_or_404(sale_id)
     

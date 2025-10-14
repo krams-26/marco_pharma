@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from app.decorators import require_permission
 from flask_login import login_required, current_user
 from app.models import db, User, Audit
 
@@ -28,7 +29,7 @@ ROLES = [
 ]
 
 @users_bp.route('/')
-@login_required
+@require_permission('manage_users')
 def index():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '')
@@ -52,7 +53,7 @@ def index():
     return render_template('users/index.html', users=users, search=search)
 
 @users_bp.route('/add', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_users')
 def add():
     if request.method == 'POST':
         try:
@@ -74,6 +75,7 @@ def add():
             user.set_permissions(perms)
             
             db.session.add(user)
+            db.session.flush()
             
             audit = Audit(
                 user_id=current_user.id,
@@ -96,7 +98,7 @@ def add():
     return render_template('users/add.html', permissions=PERMISSIONS, roles=ROLES)
 
 @users_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_users')
 def edit(id):
     user = User.query.get_or_404(id)
     
@@ -140,7 +142,7 @@ def edit(id):
     return render_template('users/edit.html', user=user, permissions=PERMISSIONS, roles=ROLES)
 
 @users_bp.route('/delete/<int:id>', methods=['POST'])
-@login_required
+@require_permission('manage_users')
 def delete(id):
     if id == current_user.id:
         flash('Vous ne pouvez pas supprimer votre propre compte!', 'danger')

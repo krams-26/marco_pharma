@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from app.decorators import require_permission
 from flask_login import login_required, current_user
 from app.models import db, Product, StockMovement, ProductBatch, Audit
 from datetime import datetime
@@ -6,7 +7,7 @@ from datetime import datetime
 stock_bp = Blueprint('stock', __name__, url_prefix='/stock')
 
 @stock_bp.route('/')
-@login_required
+@require_permission('manage_stock')
 def index():
     page = request.args.get('page', 1, type=int)
     
@@ -17,7 +18,7 @@ def index():
     return render_template('stock/index.html', movements=movements)
 
 @stock_bp.route('/adjust', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_stock')
 def adjust():
     if request.method == 'POST':
         try:
@@ -71,7 +72,7 @@ def adjust():
     return render_template('stock/adjust.html', products=products)
 
 @stock_bp.route('/batches')
-@login_required
+@require_permission('manage_stock')
 def batches():
     page = request.args.get('page', 1, type=int)
     
@@ -82,7 +83,7 @@ def batches():
     return render_template('stock/batches.html', batches=batches)
 
 @stock_bp.route('/add-batch', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_stock')
 def add_batch():
     if request.method == 'POST':
         try:

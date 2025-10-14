@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from app.decorators import require_permission
 from flask_login import login_required, current_user
 from app.models import db, Employee, Absence, SalaryPayment, LeaveRequest, CreditRequest, User, Audit
 from datetime import datetime
@@ -6,13 +7,13 @@ from datetime import datetime
 hr_bp = Blueprint('hr', __name__, url_prefix='/hr')
 
 @hr_bp.route('/')
-@login_required
+@require_permission('manage_hr')
 def index():
     employees = Employee.query.filter_by(is_active=True).all()
     return render_template('hr/index.html', employees=employees)
 
 @hr_bp.route('/absences')
-@login_required
+@require_permission('manage_hr')
 def absences():
     page = request.args.get('page', 1, type=int)
     absences = Absence.query.order_by(Absence.absence_date.desc()).paginate(
@@ -21,7 +22,7 @@ def absences():
     return render_template('hr/absences.html', absences=absences)
 
 @hr_bp.route('/add-absence', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_hr')
 def add_absence():
     if request.method == 'POST':
         try:

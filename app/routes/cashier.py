@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from app.decorators import require_permission
 from flask_login import login_required, current_user
 from app.models import db, CashTransaction, Sale, Payment, Audit
 from datetime import datetime
@@ -7,7 +8,7 @@ from sqlalchemy import func
 cashier_bp = Blueprint('cashier', __name__, url_prefix='/cashier')
 
 @cashier_bp.route('/')
-@login_required
+@require_permission('manage_cashier')
 def index():
     today = datetime.now().date()
     
@@ -40,7 +41,7 @@ def index():
                          transactions=recent_transactions)
 
 @cashier_bp.route('/add-transaction', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_cashier')
 def add_transaction():
     if request.method == 'POST':
         try:
@@ -74,7 +75,7 @@ def add_transaction():
     return render_template('cashier/add_transaction.html')
 
 @cashier_bp.route('/history')
-@login_required
+@require_permission('manage_cashier')
 def history():
     page = request.args.get('page', 1, type=int)
     date_from = request.args.get('date_from')

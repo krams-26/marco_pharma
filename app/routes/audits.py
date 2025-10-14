@@ -1,12 +1,13 @@
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 from app.models import Audit
+from app.decorators import require_permission
 from datetime import datetime
 
 audits_bp = Blueprint('audits', __name__, url_prefix='/audits')
 
 @audits_bp.route('/')
-@login_required
+@require_permission('view_audits')
 def index():
     page = request.args.get('page', 1, type=int)
     user_id = request.args.get('user_id')

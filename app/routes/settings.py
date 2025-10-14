@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from app.models import db, Setting, ExchangeRate, Audit
+from app.decorators import require_permission
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
 @settings_bp.route('/')
-@login_required
+@require_permission('manage_settings')
 def index():
     settings = Setting.query.all()
     settings_dict = {s.key: s.value for s in settings}
@@ -17,7 +18,7 @@ def index():
                          exchange_rates=exchange_rates)
 
 @settings_bp.route('/update', methods=['POST'])
-@login_required
+@require_permission('manage_settings')
 def update():
     try:
         for key in ['company_name', 'company_address', 'company_phone', 'company_email', 
@@ -48,7 +49,7 @@ def update():
     return redirect(url_for('settings.index'))
 
 @settings_bp.route('/exchange-rates', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_settings')
 def exchange_rates():
     if request.method == 'POST':
         try:
@@ -81,7 +82,7 @@ def exchange_rates():
     return render_template('settings/exchange_rates.html', rates=rates)
 
 @settings_bp.route('/delete-rate/<int:id>', methods=['POST'])
-@login_required
+@require_permission('manage_settings')
 def delete_rate(id):
     rate = ExchangeRate.query.get_or_404(id)
     db.session.delete(rate)

@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+from app.decorators import require_permission
 from flask_login import login_required, current_user
 from app.models import db, Product, ProductBatch, Audit
 from datetime import datetime
@@ -6,7 +7,7 @@ from datetime import datetime
 products_bp = Blueprint('products', __name__, url_prefix='/products')
 
 @products_bp.route('/')
-@login_required
+@require_permission('manage_products')
 def index():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '')
@@ -29,7 +30,7 @@ def index():
     return render_template('products/index.html', products=products, search=search)
 
 @products_bp.route('/add', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_products')
 def add():
     if request.method == 'POST':
         try:
@@ -53,6 +54,7 @@ def add():
                 product.expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
             
             db.session.add(product)
+            db.session.flush()
             
             audit = Audit(
                 user_id=current_user.id,
@@ -75,7 +77,7 @@ def add():
     return render_template('products/add.html')
 
 @products_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
+@require_permission('manage_products')
 def edit(id):
     product = Product.query.get_or_404(id)
     
@@ -118,7 +120,7 @@ def edit(id):
     return render_template('products/edit.html', product=product)
 
 @products_bp.route('/delete/<int:id>', methods=['POST'])
-@login_required
+@require_permission('manage_products')
 def delete(id):
     product = Product.query.get_or_404(id)
     
@@ -144,7 +146,7 @@ def delete(id):
     return redirect(url_for('products.index'))
 
 @products_bp.route('/alerts')
-@login_required
+@require_permission('manage_products')
 def alerts():
     today = datetime.now().date()
     

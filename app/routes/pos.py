@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 from app.models import db, Product, Customer, Sale, SaleItem, Payment, StockMovement, Audit
+from app.decorators import require_permission
 from datetime import datetime
 import random
 import string
@@ -13,14 +14,14 @@ def generate_invoice_number():
     return f'INV-{date_str}-{random_str}'
 
 @pos_bp.route('/')
-@login_required
+@require_permission('manage_sales')
 def index():
     products = Product.query.filter_by(is_active=True).all()
     customers = Customer.query.filter_by(is_active=True).all()
     return render_template('pos/index.html', products=products, customers=customers)
 
 @pos_bp.route('/search-product')
-@login_required
+@require_permission('manage_sales')
 def search_product():
     query = request.args.get('q', '')
     products = Product.query.filter(
@@ -40,7 +41,7 @@ def search_product():
     } for p in products])
 
 @pos_bp.route('/create-sale', methods=['POST'])
-@login_required
+@require_permission('manage_sales')
 def create_sale():
     try:
         data = request.get_json()
@@ -109,6 +110,7 @@ def create_sale():
             sale.payment_status = 'pending'
         
         db.session.add(sale)
+        db.session.flush()
         
         if paid_amount > 0:
             payment = Payment(
@@ -143,7 +145,7 @@ def create_sale():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @pos_bp.route('/invoice/<int:sale_id>')
-@login_required
+@require_permission('manage_sales')
 def invoice(sale_id):
     sale = Sale.query.get_or_404(sale_id)
     return render_template('pos/invoice.html', sale=sale)
