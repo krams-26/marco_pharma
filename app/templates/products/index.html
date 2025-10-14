@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-capsule"></i> Produits</h2>
+    <a href="{{ url_for('products.add') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nouveau produit
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="GET" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ search }}">
+                <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+            </div>
+        </form>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Code-barres</th>
+                        <th>Catégorie</th>
+                        <th>Prix de vente</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products.items %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.barcode or '-' }}</td>
+                        <td>{{ product.category or '-' }}</td>
+                        <td>${{ "%.2f"|format(product.selling_price) }}</td>
+                        <td>
+                            {% if product.is_low_stock %}
+                            <span class="badge bg-warning">{{ product.stock_quantity }}</span>
+                            {% else %}
+                            {{ product.stock_quantity }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('products.edit', id=product.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Aucun produit trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if products.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if products.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.prev_num }}">Précédent</a></li>
+                {% endif %}
+                {% if products.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.next_num }}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

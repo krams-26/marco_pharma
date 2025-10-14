@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Alertes Produits</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">Stock Faible</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Produit</th><th>Stock</th><th>Minimum</th></tr></thead>
+                        <tbody>
+                            {% for product in low_stock %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td><span class="badge bg-warning">{{ product.stock_quantity }}</span></td>
+                                <td>{{ product.min_stock_level }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted">Aucune alerte</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Produits Expirés</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Produit</th><th>Date d'expiration</th></tr></thead>
+                        <tbody>
+                            {% for product in expired %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td><span class="badge bg-danger">{{ product.expiry_date.strftime('%d/%m/%Y') }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="2" class="text-center text-muted">Aucune alerte</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

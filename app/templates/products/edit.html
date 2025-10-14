@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Modifier le produit</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" class="form-control" name="name" value="{{ product.name }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Code-barres</label>
+                    <input type="text" class="form-control" name="barcode" value="{{ product.barcode or '' }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Catégorie</label>
+                    <input type="text" class="form-control" name="category" value="{{ product.category or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Unité</label>
+                    <select class="form-select" name="unit">
+                        <option value="piece" {% if product.unit == 'piece' %}selected{% endif %}>Pièce</option>
+                        <option value="box" {% if product.unit == 'box' %}selected{% endif %}>Boîte</option>
+                        <option value="bottle" {% if product.unit == 'bottle' %}selected{% endif %}>Bouteille</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Prix d'achat</label>
+                    <input type="number" class="form-control" name="purchase_price" step="0.01" value="{{ product.purchase_price }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Prix de vente *</label>
+                    <input type="number" class="form-control" name="selling_price" step="0.01" value="{{ product.selling_price }}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Prix de gros</label>
+                    <input type="number" class="form-control" name="wholesale_price" step="0.01" value="{{ product.wholesale_price }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Stock minimum</label>
+                    <input type="number" class="form-control" name="min_stock_level" value="{{ product.min_stock_level }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Date d'expiration</label>
+                    <input type="date" class="form-control" name="expiry_date" value="{{ product.expiry_date.strftime('%Y-%m-%d') if product.expiry_date else '' }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Fabricant</label>
+                    <input type="text" class="form-control" name="manufacturer" value="{{ product.manufacturer or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Fournisseur</label>
+                    <input type="text" class="form-control" name="supplier" value="{{ product.supplier or '' }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3">{{ product.description or '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+            <a href="{{ url_for('products.index') }}" class="btn btn-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-body">
+            <div class="text-center mb-4">
+                <h2>FACTURE</h2>
+                <p class="text-muted">{{ sale.invoice_number }}</p>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-6">
+                    <strong>Client:</strong><br>
+                    {{ sale.customer.name if sale.customer else 'Client anonyme' }}
+                </div>
+                <div class="col-6 text-end">
+                    <strong>Date:</strong><br>
+                    {{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}
+                </div>
+            </div>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Prix unitaire</th>
+                        <th>Quantité</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sale.items %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>${{ "%.2f"|format(item.unit_price) }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ "%.2f"|format(item.total) }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Remise:</strong></td>
+                        <td>${{ "%.2f"|format(sale.discount) }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                        <td><strong>${{ "%.2f"|format(sale.total_amount) }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Payé:</strong></td>
+                        <td>${{ "%.2f"|format(sale.paid_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Solde dû:</strong></td>
+                        <td>${{ "%.2f"|format(sale.balance_due) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="text-center mt-4">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer"></i> Imprimer
+                </button>
+                <a href="{{ url_for('pos.index') }}" class="btn btn-secondary">
+                    Nouvelle vente
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

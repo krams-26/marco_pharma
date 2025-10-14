@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Point de Vente - Pharmacie{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-cart-check"></i> Point de Vente (POS)</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Rechercher un produit</h5>
+            </div>
+            <div class="card-body">
+                <input type="text" id="product-search" class="form-control" placeholder="Rechercher par nom ou code-barres...">
+                <div id="search-results" class="mt-2"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Panier</h5>
+            </div>
+            <div class="card-body">
+                <table class="table" id="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th>Prix</th>
+                            <th>Qté</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cart-items"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Paiement</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Client</label>
+                    <select class="form-select" id="customer-select">
+                        <option value="">Client anonyme</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Total</label>
+                    <h3 id="total-amount">$0.00</h3>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Remise</label>
+                    <input type="number" class="form-control" id="discount" value="0" step="0.01">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Montant payé</label>
+                    <input type="number" class="form-control" id="paid-amount" step="0.01">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Méthode de paiement</label>
+                    <select class="form-select" id="payment-method">
+                        <option value="cash">Espèces</option>
+                        <option value="card">Carte</option>
+                        <option value="mobile">Mobile Money</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary w-100" id="complete-sale">
+                    <i class="bi bi-check-circle"></i> Terminer la vente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cart = [];
+
+$('#product-search').on('input', function() {
+    const query = $(this).val();
+    if (query.length > 1) {
+        $.get('/pos/search-product?q=' + query, function(products) {
+            let html = '<div class="list-group">';
+            products.forEach(p => {
+                html += `<a href="#" class="list-group-item list-group-item-action add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
+                    ${p.name} - $${p.price} (Stock: ${p.stock})
+                </a>`;
+            });
+            html += '</div>';
+            $('#search-results').html(html);
+        });
+    } else {
+        $('#search-results').html('');
+    }
+});
+
+$(document).on('click', '.add-to-cart', function(e) {
+    e.preventDefault();
+    const product = {
+        id: $(this).data('id'),
+        name: $(this).data('name'),
+        price: parseFloat($(this).data('price')),
+        quantity: 1
+    };
+    
+    const existing = cart.find(item => item.id === product.id);
+    if (existing) {
+        existing.quantity++;
+    } else {
+        cart.push(product);
+    }
+    
+    updateCart();
+    $('#search-results').html('');
+    $('#product-search').val('');
+});
+
+function updateCart() {
+    let html = '';
+    let total = 0;
+    
+    cart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        
+        html += `<tr>
+            <td>${item.name}</td>
+            <td>$${item.price.toFixed(2)}</td>
+            <td><input type="number" class="form-control form-control-sm" value="${item.quantity}" min="1" data-index="${index}" style="width:80px"></td>
+            <td>$${itemTotal.toFixed(2)}</td>
+            <td><button class="btn btn-sm btn-danger remove-item" data-index="${index}"><i class="bi bi-trash"></i></button></td>
+        </tr>`;
+    });
+    
+    $('#cart-items').html(html);
+    $('#total-amount').text('$' + total.toFixed(2));
+}
+
+$(document).on('change', '#cart-items input[type="number"]', function() {
+    const index = $(this).data('index');
+    cart[index].quantity = parseInt($(this).val());
+    updateCart();
+});
+
+$(document).on('click', '.remove-item', function() {
+    const index = $(this).data('index');
+    cart.splice(index, 1);
+    updateCart();
+});
+
+$('#complete-sale').click(function() {
+    if (cart.length === 0) {
+        alert('Le panier est vide!');
+        return;
+    }
+    
+    const data = {
+        customer_id: $('#customer-select').val(),
+        items: cart.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price
+        })),
+        discount: parseFloat($('#discount').val()) || 0,
+        paid_amount: parseFloat($('#paid-amount').val()) || 0,
+        payment_method: $('#payment-method').val()
+    };
+    
+    $.ajax({
+        url: '/pos/create-sale',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(response) {
+            alert('Vente créée avec succès! Facture: ' + response.invoice_number);
+            window.location.href = '/pos/invoice/' + response.sale_id;
+        },
+        error: function(xhr) {
+            alert('Erreur: ' + xhr.responseJSON.message);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Ajouter un produit</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" class="form-control" name="name" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Code-barres</label>
+                    <input type="text" class="form-control" name="barcode">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Catégorie</label>
+                    <input type="text" class="form-control" name="category">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Unité</label>
+                    <select class="form-select" name="unit">
+                        <option value="piece">Pièce</option>
+                        <option value="box">Boîte</option>
+                        <option value="bottle">Bouteille</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Prix d'achat</label>
+                    <input type="number" class="form-control" name="purchase_price" step="0.01" value="0">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Prix de vente *</label>
+                    <input type="number" class="form-control" name="selling_price" step="0.01" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Prix de gros</label>
+                    <input type="number" class="form-control" name="wholesale_price" step="0.01" value="0">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Quantité en stock</label>
+                    <input type="number" class="form-control" name="stock_quantity" value="0">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Stock minimum</label>
+                    <input type="number" class="form-control" name="min_stock_level" value="10">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Date d'expiration</label>
+                    <input type="date" class="form-control" name="expiry_date">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Fabricant</label>
+                    <input type="text" class="form-control" name="manufacturer">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Fournisseur</label>
+                    <input type="text" class="form-control" name="supplier">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="{{ url_for('products.index') }}" class="btn btn-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
