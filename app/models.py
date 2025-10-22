@@ -442,18 +442,19 @@ class Audit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     action = db.Column(db.String(100), nullable=False, index=True)
-    module = db.Column(db.String(50), index=True)  # products, sales, users, stock, etc.
-    action_type = db.Column(db.String(20), index=True)  # create, update, delete, view, export, login, logout
     entity_type = db.Column(db.String(50))
     entity_id = db.Column(db.Integer)
     details = db.Column(db.Text)
-    old_value = db.Column(db.Text)  # JSON - valeur avant modification
-    new_value = db.Column(db.Text)  # JSON - valeur après modification
-    result = db.Column(db.String(20), default='success')  # success, failed, denied
     ip_address = db.Column(db.String(50))
-    user_agent = db.Column(db.String(255))  # Navigateur/OS
-    session_id = db.Column(db.String(100))  # Session utilisateur
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    # Champs optionnels (ajoutés progressivement)
+    module = db.Column(db.String(50), index=True, nullable=True)
+    action_type = db.Column(db.String(20), index=True, nullable=True)
+    old_value = db.Column(db.Text, nullable=True)
+    new_value = db.Column(db.Text, nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
+    session_id = db.Column(db.String(100), nullable=True)
     
     @property
     def is_suspicious(self):
@@ -781,6 +782,99 @@ class Supplier(db.Model):
     @property
     def total_products(self):
         return len(self.products)
+
+class SaleCredit(db.Model):
+    __tablename__ = 'sale_credits'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    pharmacy_id = db.Column(db.Integer, db.ForeignKey('pharmacies.id'))
+    credit_amount = db.Column(db.Float, nullable=False)
+    paid_amount = db.Column(db.Float, default=0.0)
+    remaining_amount = db.Column(db.Float, nullable=False)
+    credit_limit_used = db.Column(db.Float, default=0.0)
+    interest_rate = db.Column(db.Float, default=0.0)
+    credit_days = db.Column(db.Integer, default=30)
+    due_date = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(20), default='active')  # active, paid, overdue, defaulted
+    payment_terms = db.Column(db.Text)
+    notes = db.Column(db.Text)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    sale = db.relationship('Sale', backref='credit_record')
+    customer = db.relationship('Customer', backref='credit_sales')
+    pharmacy = db.relationship('Pharmacy', backref='sale_credits')
+    creator = db.relationship('User', backref='sale_credits_created')
+    payments = db.relationship('CreditPayment', backref='sale_credit', lazy=True, cascade='all, delete-orphan')
+    
+    @property
+    def is_overdue(self):
+        """Vérifier si le crédit est en retard"""
+        return self.due_date < datetime.now().date() and self.status == 'active'
+    
+    @property
+    def days_overdue(self):
+        """Nombre de jours de retard"""
+        if self.is_overdue:
+            return (datetime.now().date() - self.due_date).days
+        return 0
+    
+    def calculate_interest(self):
+        """Calculer les intérêts si applicable"""
+        if self.interest_rate > 0 and self.is_overdue:
+            days = self.days_overdue
+            return (self.remaining_amount * self.interest_rate / 100) * (days / 30)
+        return 0
+    
+    def update_status(self):
+        """Mettre à jour le statut automatiquement"""
+        if self.remaining_amount <= 0:
+            self.status = 'paid'
+        elif self.is_overdue:
+            self.status = 'overdue'
+        else:
+            self.status = 'active'
+
+class CreditPayment(db.Model):
+    __tablename__ = 'credit_payments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    sale_credit_id = db.Column(db.Integer, db.ForeignKey('sale_credits.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    payment_method = db.Column(db.String(50), default='cash')
+    payment_date = db.Column(db.Date, nullable=False, index=True)
+    reference = db.Column(db.String(100))
+    notes = db.Column(db.Text)
+    interest_amount = db.Column(db.Float, default=0.0)
+    principal_amount = db.Column(db.Float, nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    creator = db.relationship('User', backref='credit_payments_created')
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if not self.principal_amount:
+            self.principal_amount = self.amount - (self.interest_amount or 0)
+
+class CreditTerms(db.Model):
+    __tablename__ = 'credit_terms'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    credit_limit = db.Column(db.Float, nullable=False)
+    credit_days = db.Column(db.Integer, default=30)
+    interest_rate = db.Column(db.Float, default=0.0)
+    grace_period_days = db.Column(db.Integer, default=5)
+    payment_terms = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    customer = db.relationship('Customer', backref='credit_terms')
 
 class TempSale(db.Model):
     __tablename__ = 'temp_sales'

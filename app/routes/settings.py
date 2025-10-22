@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from app.models import db, Setting, ExchangeRate, Audit
 from app.decorators import require_permission
@@ -11,10 +11,15 @@ def index():
     settings = Setting.query.all()
     settings_dict = {s.key: s.value for s in settings}
     
-    exchange_rates = ExchangeRate.query.all()
+    # Récupérer le taux de change actuel
+    current_rate = ExchangeRate.query.filter_by(is_active=True).first()
+    
+    # Récupérer tous les taux de change pour l'historique
+    exchange_rates = ExchangeRate.query.order_by(ExchangeRate.created_at.desc()).all()
     
     return render_template('settings/index.html', 
                          settings=settings_dict,
+                         current_rate=current_rate,
                          exchange_rates=exchange_rates)
 
 @settings_bp.route('/update', methods=['POST'])
@@ -47,6 +52,193 @@ def update():
         flash(f'Erreur: {str(e)}', 'danger')
     
     return redirect(url_for('settings.index'))
+
+@settings_bp.route('/save', methods=['POST'])
+@require_permission('manage_settings')
+def save():
+    """Sauvegarder les paramètres via API JSON"""
+    try:
+        data = request.get_json()
+        
+        # Sauvegarder les paramètres généraux
+        if 'general' in data:
+            for key, value in data['general'].items():
+                setting = Setting.query.filter_by(key=key).first()
+                if setting:
+                    setting.value = str(value)
+                else:
+                    setting = Setting(key=key, value=str(value))
+                    db.session.add(setting)
+        
+        # Sauvegarder les paramètres de stock
+        if 'stock' in data:
+            for key, value in data['stock'].items():
+                setting = Setting.query.filter_by(key=key).first()
+                if setting:
+                    setting.value = str(value)
+                else:
+                    setting = Setting(key=key, value=str(value))
+                    db.session.add(setting)
+        
+        # Sauvegarder les paramètres de profil
+        if 'profile' in data:
+            for key, value in data['profile'].items():
+                setting = Setting.query.filter_by(key=key).first()
+                if setting:
+                    setting.value = str(value)
+                else:
+                    setting = Setting(key=key, value=str(value))
+                    db.session.add(setting)
+        
+        # Sauvegarder les paramètres de sécurité
+        if 'security' in data:
+            for key, value in data['security'].items():
+                setting = Setting.query.filter_by(key=key).first()
+                if setting:
+                    setting.value = str(value)
+                else:
+                    setting = Setting(key=key, value=str(value))
+                    db.session.add(setting)
+        
+        # Sauvegarder les paramètres de notifications
+        if 'notifications' in data:
+            for key, value in data['notifications'].items():
+                setting = Setting.query.filter_by(key=key).first()
+                if setting:
+                    setting.value = str(value)
+                else:
+                    setting = Setting(key=key, value=str(value))
+                    db.session.add(setting)
+        
+        # Audit
+        audit = Audit(
+            user_id=current_user.id,
+            action='update_settings_api',
+            entity_type='settings',
+            details='Paramètres mis à jour via API',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Paramètres sauvegardés avec succès!'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
+
+@settings_bp.route('/update-exchange-rate', methods=['POST'])
+@require_permission('manage_settings')
+def update_exchange_rate():
+    """Mettre à jour le taux de change via API"""
+    try:
+        data = request.get_json()
+        new_rate = data.get('rate')
+        
+        if not new_rate or new_rate <= 0:
+            return jsonify({'success': False, 'message': 'Taux invalide'}), 400
+        
+        # Désactiver tous les taux existants
+        ExchangeRate.query.update({'is_active': False})
+        
+        # Créer un nouveau taux actif
+        exchange_rate = ExchangeRate(
+            from_currency='USD',
+            to_currency='CDF',
+            rate=new_rate,
+            is_active=True
+        )
+        db.session.add(exchange_rate)
+        
+        # Audit
+        audit = Audit(
+            user_id=current_user.id,
+            action='update_exchange_rate',
+            entity_type='exchange_rate',
+            details=f'Taux de change mis à jour: {new_rate} CDF pour 1 USD',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Taux de change mis à jour avec succès!'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
+
+@settings_bp.route('/get-logo', methods=['GET'])
+@require_permission('manage_settings')
+def get_logo():
+    """Récupérer le logo de l'entreprise"""
+    try:
+        logo_setting = Setting.query.filter_by(key='company_logo').first()
+        if logo_setting and logo_setting.value:
+            return jsonify({'success': True, 'logo': logo_setting.value})
+        else:
+            return jsonify({'success': False, 'logo': None})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
+
+@settings_bp.route('/activate-rate/<int:rate_id>', methods=['POST'])
+@require_permission('manage_settings')
+def activate_rate(rate_id):
+    """Activer un taux de change"""
+    try:
+        rate = ExchangeRate.query.get_or_404(rate_id)
+        
+        # Désactiver tous les autres taux
+        ExchangeRate.query.update({'is_active': False})
+        
+        # Activer le taux sélectionné
+        rate.is_active = True
+        rate.updated_at = db.func.now()
+        
+        # Audit
+        audit = Audit(
+            user_id=current_user.id,
+            action='activate_exchange_rate',
+            entity_type='exchange_rate',
+            details=f'Taux de change activé: {rate.rate} CDF pour 1 USD',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Taux activé avec succès!'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
+
+@settings_bp.route('/delete-rate/<int:rate_id>', methods=['POST'])
+@require_permission('manage_settings')
+def delete_rate(rate_id):
+    """Supprimer un taux de change"""
+    try:
+        rate = ExchangeRate.query.get_or_404(rate_id)
+        
+        # Ne pas permettre la suppression du taux actif
+        if rate.is_active:
+            return jsonify({'success': False, 'message': 'Impossible de supprimer le taux actif'}), 400
+        
+        # Audit
+        audit = Audit(
+            user_id=current_user.id,
+            action='delete_exchange_rate',
+            entity_type='exchange_rate',
+            details=f'Taux de change supprimé: {rate.rate} CDF',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        
+        db.session.delete(rate)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Taux supprimé avec succès!'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
 
 @settings_bp.route('/exchange-rates', methods=['GET', 'POST'])
 @require_permission('manage_settings')
@@ -106,51 +298,3 @@ def exchange_rates():
     active_rate_id = current_rate.id if current_rate else (rates[0].id if len(rates) > 0 else None)
     return render_template('settings/exchange_rates.html', rates=rates, current_rate=current_rate, active_rate_id=active_rate_id)
 
-@settings_bp.route('/activate-rate/<int:id>', methods=['POST'])
-@require_permission('manage_settings')
-def activate_rate(id):
-    """Activer un taux de change"""
-    try:
-        rate = ExchangeRate.query.get_or_404(id)
-        
-        # Désactiver tous les autres taux de la même paire
-        ExchangeRate.query.filter_by(
-            from_currency=rate.from_currency,
-            to_currency=rate.to_currency
-        ).update({'is_active': False})
-        
-        # Activer ce taux
-        rate.is_active = True
-        
-        # Audit
-        audit = Audit(
-            user_id=current_user.id,
-            action='activate_exchange_rate',
-            entity_type='exchange_rate',
-            entity_id=rate.id,
-            details=f'Taux activé: {rate.from_currency}→{rate.to_currency} = {rate.rate}',
-            ip_address=request.remote_addr
-        )
-        db.session.add(audit)
-        
-        db.session.commit()
-        flash(f'Taux activé: 1 {rate.from_currency} = {rate.rate} {rate.to_currency}', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erreur: {str(e)}', 'danger')
-    
-    return redirect(url_for('settings.exchange_rates'))
-
-@settings_bp.route('/delete-rate/<int:id>', methods=['POST'])
-@require_permission('manage_settings')
-def delete_rate(id):
-    rate = ExchangeRate.query.get_or_404(id)
-    
-    if rate.is_active:
-        flash('Impossible de supprimer un taux actif!', 'danger')
-        return redirect(url_for('settings.exchange_rates'))
-    
-    db.session.delete(rate)
-    db.session.commit()
-    flash('Taux de change supprimé!', 'success')
-    return redirect(url_for('settings.exchange_rates'))

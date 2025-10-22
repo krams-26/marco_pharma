@@ -32,7 +32,7 @@
 <div class="container-fluid mt--6">
   <div class="row">
     <div class="col">
-      <div class="card">
+<div class="card">
         <div class="card-header border-0">
           <div class="row align-items-center">
             <div class="col">
@@ -102,27 +102,27 @@
                 </button>
               </div>
             </div>
-          </form>
+        </form>
         </div>
-
+        
         <!-- Table -->
         <div class="table-responsive">
           <table class="table align-items-center table-flush">
             <thead class="thead-light">
-              <tr>
-                <th>Nom</th>
+                    <tr>
+                        <th>Nom</th>
                 <th>Contact</th>
-                <th>Type</th>
+                        <th>Type</th>
                 <th>Limite Crédit</th>
                 {% if current_user.role == 'admin' %}
                 <th>Pharmacie</th>
                 {% endif %}
                 <th class="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for customer in customers.items %}
-              <tr>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers.items %}
+                    <tr>
                 <td>
                   <span class="font-weight-bold">{{ customer.name }}</span>
                 </td>
@@ -130,15 +130,15 @@
                   {% if customer.phone %}<i class="fas fa-phone"></i> {{ customer.phone }}<br>{% endif %}
                   {% if customer.email %}<i class="fas fa-envelope"></i> {{ customer.email }}{% endif %}
                 </td>
-                <td>
-                  {% if customer.customer_type == 'vip' %}
+                        <td>
+                            {% if customer.customer_type == 'vip' %}
                     <span class="badge badge-warning">VIP</span>
-                  {% elif customer.customer_type == 'wholesale' %}
+                            {% elif customer.customer_type == 'wholesale' %}
                     <span class="badge badge-info">Grossiste</span>
-                  {% else %}
+                            {% else %}
                     <span class="badge badge-secondary">Régulier</span>
-                  {% endif %}
-                </td>
+                            {% endif %}
+                        </td>
                 <td>
                   <span class="text-success font-weight-bold">${{ "%.2f"|format(customer.credit_limit) }}</span>
                 </td>
@@ -152,24 +152,24 @@
                   <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
                     <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
                   </a>
-                </td>
-              </tr>
-              {% else %}
-              <tr>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
                 <td colspan="{% if current_user.role == 'admin' %}6{% else %}5{% endif %}" class="text-center text-muted py-5">
                   <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
                   Aucun client trouvé
                 </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-
+        
         <!-- Pagination -->
         {% if customers.pages > 1 %}
         <div class="card-footer py-4">
-          <nav>
+        <nav>
             <ul class="pagination justify-content-end mb-0">
               <li class="page-item {% if not customers.has_prev %}disabled{% endif %}">
                 <a class="page-link" href="?page={{ customers.prev_num }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&type={{ type_filter }}">
@@ -183,20 +183,20 @@
                   <li class="page-item"><a class="page-link" href="?page={{ page_num }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&type={{ type_filter }}">{{ page_num }}</a></li>
                 {% elif page_num == customers.page - 3 or page_num == customers.page + 3 %}
                   <li class="page-item disabled"><span class="page-link">...</span></li>
-                {% endif %}
-              {% endfor %}
+                    {% endif %}
+                {% endfor %}
               <li class="page-item {% if not customers.has_next %}disabled{% endif %}">
                 <a class="page-link" href="?page={{ customers.next_num }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&type={{ type_filter }}">
                   <i class="fas fa-angle-right"></i>
                 </a>
               </li>
             </ul>
-          </nav>
+        </nav>
         </div>
         {% endif %}
       </div>
     </div>
-  </div>
+    </div>
 </div>
 
 {% endblock %}

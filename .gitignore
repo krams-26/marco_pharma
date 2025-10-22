@@ -180,6 +180,45 @@ uploads/
 *.db
 *.sqlite
 
+# Fichiers de documentation redondants
+*.md
+!README.md
+!GUIDE_DEMARRAGE.md
+!LICENSE
+
+# Scripts de test et migration
+test_*.py
+migrate_*.py
+generate_*.py
+setup_*.py
+*_test.py
+*_data.py
+
+# Scripts de lancement (garder les principaux)
+!lancer.py
+
+# Fichiers Windows (sauf les fichiers de lancement)
+*.bat
+!start.bat
+!LANCER_APP.bat
+!LANCER_SIMPLE.bat
+*.cmd
+
+# Fichiers de configuration locaux
+*.env
+*.envrc
+config.env.*
+wsgi_*.py
+
+# Dossiers de templates externes
+*-master/
+*-template/
+
+# Fichiers de déploiement spécifiques
+Dockerfile
+docker-compose.yml
+nginx/
+
 # Abstra
 # Abstra is an AI-powered process automation framework.
 # Ignore directories containing user credentials, local state, and settings.

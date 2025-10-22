@@ -5,11 +5,11 @@ Application complète de gestion pour pharmacies avec support multi-sites.
 ## 🚀 DÉMARRAGE RAPIDE
 
 ### **Windows** (Recommandé)
-Double-cliquez sur : **`LANCER_APP.bat`**
+Double-cliquez sur : **`start.bat`**
 
 ### **Tous systèmes** (Python)
 ```bash
-python lancer.py
+python run.py
 ```
 
 ### **Manuel**
@@ -74,13 +74,11 @@ CREATE DATABASE marphar CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ## 🛠️ OUTILS INCLUS
 
 ### **Scripts de Lancement**
-- `LANCER_APP.bat` - Script Windows complet avec vérifications
-- `LANCER_SIMPLE.bat` - Lancement minimal
-- `lancer.py` - Script Python multi-plateforme
+- `start.bat` - Script Windows complet avec vérifications
+- `run.py` - Point d'entrée Flask
 
 ### **Documentation**
-- `GUIDE_DEMARRAGE.md` - Guide détaillé
-- `RAPPORT_FINAL_ANALYSE.md` - Rapport technique complet
+- `README.md` - Documentation principale
 
 ---
 
@@ -94,8 +92,7 @@ Marco-Pharma/
 │   ├── static/          # CSS, JS, images
 │   ├── models.py        # Modèles de base de données
 │   └── __init__.py      # Configuration Flask
-├── LANCER_APP.bat       # Script de lancement Windows
-├── lancer.py            # Script de lancement Python
+├── start.bat             # Script de lancement Windows
 ├── run.py               # Point d'entrée Flask
 ├── requirements.txt     # Dépendances Python
 └── README.md            # Ce fichier
@@ -141,15 +138,18 @@ pip install --upgrade -r requirements.txt
 ## 📞 SUPPORT
 
 Pour toute assistance :
-1. Consulter `GUIDE_DEMARRAGE.md`
-2. Vérifier `RAPPORT_FINAL_ANALYSE.md`
+1. Consulter `README.md`
+2. Vérifier la documentation du projet
 3. Contacter le support technique
 
 ---
 
 ## 📜 LICENCE
 
-Propriétaire - Marco Pharma © 2025
+**© 2025 Marco Pharma SARL** - Tous droits réservés
+
+**Développement :** Rama L. Kevin - Tech & Beyond
+**Contact développeur :** kraluk2412@gmail.com
 
 ---
 

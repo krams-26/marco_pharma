@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Paramètres{% endblock %}
+{% block title %}Paramètres Système - MARCO PHARMA{% endblock %}
 
 {% block content %}
 
@@ -9,14 +9,22 @@
   <div class="container-fluid">
     <div class="header-body">
       <div class="row align-items-center py-4">
-        <div class="col-lg-12">
-          <h6 class="h2 text-white d-inline-block mb-0">Paramètres</h6>
+        <div class="col-lg-6">
+          <h6 class="h2 text-white d-inline-block mb-0">Paramètres Système</h6>
           <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
             <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
               <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
               <li class="breadcrumb-item active">Paramètres</li>
             </ol>
           </nav>
+        </div>
+        <div class="col-lg-6 text-right">
+          <button onclick="saveAllSettings()" class="btn btn-success">
+            <i class="fas fa-save mr-2"></i>Sauvegarder
+          </button>
+          <button onclick="exportSettings()" class="btn btn-info ml-2">
+            <i class="fas fa-download mr-2"></i>Exporter
+          </button>
         </div>
       </div>
     </div>
@@ -26,41 +34,628 @@
 <!-- Page content -->
 <div class="container-fluid mt--6">
   <div class="row">
-    <div class="col-lg-8">
+    <div class="col-12">
+      <!-- Settings Tabs -->
       <div class="card">
-        <div class="card-header">
-          <h3 class="mb-0">Paramètres Généraux</h3>
+        <div class="card-header border-0">
+          <ul class="nav nav-tabs card-header-tabs" id="settingsTabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab">
+                <i class="fas fa-cog mr-2"></i>Général
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="stock-tab" data-toggle="tab" href="#stock" role="tab">
+                <i class="fas fa-boxes mr-2"></i>Stock
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab">
+                <i class="fas fa-user mr-2"></i>Profil
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab">
+                <i class="fas fa-shield-alt mr-2"></i>Sécurité
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="notifications-tab" data-toggle="tab" href="#notifications" role="tab">
+                <i class="fas fa-bell mr-2"></i>Notifications
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="exchange-tab" data-toggle="tab" href="#exchange" role="tab">
+                <i class="fas fa-exchange-alt mr-2"></i>Taux de Change
+              </a>
+            </li>
+          </ul>
         </div>
+        
         <div class="card-body">
-          <p class="mb-0">Configuration du système Marco Pharma</p>
-        </div>
-      </div>
-
-      <div class="card mt-4">
-        <div class="card-header">
-          <h3 class="mb-0"><i class="ni ni-money-coins"></i> Taux de Change</h3>
-        </div>
-        <div class="card-body">
-          <a href="{{ url_for('settings.exchange_rates') }}" class="btn btn-primary">
-            <i class="ni ni-settings"></i> Gérer les Taux
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-4">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="mb-0"><i class="ni ni-single-02"></i> Mon Profil</h3>
-        </div>
-        <div class="card-body">
-          <div class="text-center">
-            <div class="avatar avatar-xl bg-gradient-primary mx-auto mb-3">
-              <i class="ni ni-single-02"></i>
+          <div class="tab-content" id="settingsTabContent">
+            
+            <!-- General Settings Tab -->
+            <div class="tab-pane fade show active" id="general" role="tabpanel">
+              <div class="row">
+                <!-- Company Information -->
+                <div class="col-lg-8">
+                  <h4 class="mb-4">
+                    <i class="fas fa-building text-primary mr-2"></i>
+                    Identité de l'Entreprise
+                  </h4>
+                  
+                  <!-- Logo Section -->
+                  <div class="card mb-4">
+                    <div class="card-body text-center">
+                      <div class="mb-3">
+                        <div class="mx-auto" style="width: 120px; height: 120px; border: 2px dashed #dee2e6; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                          <img id="company_logo_preview" src="" alt="Logo" class="img-fluid" style="max-width: 100px; max-height: 100px; display: none;">
+                          <i id="logo_placeholder" class="fas fa-building text-4xl text-muted"></i>
+                        </div>
+                      </div>
+                      <div class="btn-group">
+                        <label for="company_logo" class="btn btn-primary btn-sm">
+                          <i class="fas fa-upload mr-1"></i>Choisir Logo
+                        </label>
+                        <input type="file" id="company_logo" accept="image/*" class="d-none" onchange="previewLogo(this)">
+                        <button type="button" onclick="removeLogo()" class="btn btn-danger btn-sm">
+                          <i class="fas fa-trash mr-1"></i>Supprimer
+                        </button>
+                      </div>
+                      <p class="text-muted small mt-2">PNG, JPG, SVG (Max: 2MB)</p>
+                    </div>
+                  </div>
+                  
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label class="form-control-label">Nom de l'entreprise</label>
+                        <input type="text" id="company_name" class="form-control" value="{{ settings.get('company_name', 'MARCO PHARMA SARL') }}">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label class="form-control-label">Type d'entreprise</label>
+                        <select id="company_type" class="form-control">
+                          <option value="SARL" {{ 'selected' if settings.get('company_type') == 'SARL' else '' }}>SARL</option>
+                          <option value="SA" {{ 'selected' if settings.get('company_type') == 'SA' else '' }}>SA</option>
+                          <option value="SAS" {{ 'selected' if settings.get('company_type') == 'SAS' else '' }}>SAS</option>
+                          <option value="EURL" {{ 'selected' if settings.get('company_type') == 'EURL' else '' }}>EURL</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label class="form-control-label">Secteur d'activité</label>
+                        <select id="company_sector" class="form-control">
+                          <option value="Pharmacie" {{ 'selected' if settings.get('company_sector') == 'Pharmacie' else '' }}>Pharmacie</option>
+                          <option value="Medecine" {{ 'selected' if settings.get('company_sector') == 'Medecine' else '' }}>Médecine</option>
+                          <option value="Laboratoire" {{ 'selected' if settings.get('company_sector') == 'Laboratoire' else '' }}>Laboratoire</option>
+                          <option value="Optique" {{ 'selected' if settings.get('company_sector') == 'Optique' else '' }}>Optique</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label class="form-control-label">Email de contact</label>
+                        <input type="email" id="company_email" class="form-control" value="{{ settings.get('company_email', 'contact@marco-pharma.com') }}">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label class="form-control-label">Téléphone</label>
+                        <input type="tel" id="company_phone" class="form-control" value="{{ settings.get('company_phone', '+243 123 456 789') }}">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label class="form-control-label">Site web</label>
+                        <input type="url" id="company_website" class="form-control" value="{{ settings.get('company_website', 'https://marco-pharma.com') }}">
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <div class="form-group">
+                        <label class="form-control-label">Adresse complète</label>
+                        <textarea id="company_address" class="form-control" rows="3">{{ settings.get('company_address', 'Avenue de la Paix, Kinshasa, RDC') }}</textarea>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Legal Information -->
+                  <h5 class="mt-4 mb-3">
+                    <i class="fas fa-gavel text-purple mr-2"></i>
+                    Informations Légales
+                  </h5>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label class="form-control-label">RCCM</label>
+                        <input type="text" id="company_rccm" class="form-control" value="{{ settings.get('company_rccm', '') }}" placeholder="Numéro RCCM">
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label class="form-control-label">ID National</label>
+                        <input type="text" id="company_national_id" class="form-control" value="{{ settings.get('company_national_id', '') }}" placeholder="Numéro d'identification">
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label class="form-control-label">Numéro Fiscal</label>
+                        <input type="text" id="company_tax_number" class="form-control" value="{{ settings.get('company_tax_number', '') }}" placeholder="Numéro fiscal">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- System Settings -->
+                <div class="col-lg-4">
+                  <h4 class="mb-4">
+                    <i class="fas fa-cogs text-success mr-2"></i>
+                    Paramètres Système
+                  </h4>
+                  
+                  <div class="form-group">
+                    <label class="form-control-label">Fuseau horaire</label>
+                    <input type="text" id="timezone" class="form-control" value="{{ settings.get('timezone', 'Africa/Kinshasa') }}" readonly>
+                    <small class="form-text text-muted">Détecté automatiquement</small>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-control-label">Langue</label>
+                    <select id="language" class="form-control">
+                      <option value="fr" {{ 'selected' if settings.get('language') == 'fr' else '' }}>Français</option>
+                      <option value="en" {{ 'selected' if settings.get('language') == 'en' else '' }}>English</option>
+                      <option value="es" {{ 'selected' if settings.get('language') == 'es' else '' }}>Español</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-control-label">Devise principale</label>
+                    <select id="main_currency" class="form-control">
+                      <option value="USD" {{ 'selected' if settings.get('main_currency') == 'USD' else '' }}>USD (Dollar US)</option>
+                      <option value="CDF" {{ 'selected' if settings.get('main_currency') == 'CDF' else '' }}>CDF (Franc Congolais)</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-control-label">Devise secondaire</label>
+                    <select id="secondary_currency" class="form-control">
+                      <option value="CDF" {{ 'selected' if settings.get('secondary_currency') == 'CDF' else '' }}>CDF (Franc Congolais)</option>
+                      <option value="USD" {{ 'selected' if settings.get('secondary_currency') == 'USD' else '' }}>USD (Dollar US)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h4>{{ current_user.full_name or current_user.username }}</h4>
-            <p class="text-muted">{{ current_user.email }}</p>
-            <span class="badge badge-primary">{{ current_user.role|title }}</span>
+            
+            <!-- Stock Settings Tab -->
+            <div class="tab-pane fade" id="stock" role="tabpanel">
+              <h4 class="mb-4">
+                <i class="fas fa-boxes text-orange mr-2"></i>
+                Paramètres de Stock
+              </h4>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Seuil d'alerte stock bas</label>
+                    <input type="number" id="low_stock_threshold" class="form-control" value="{{ settings.get('low_stock_threshold', 10) }}" min="0">
+                    <small class="form-text text-muted">Nombre minimum d'unités avant alerte</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Seuil d'alerte rupture</label>
+                    <input type="number" id="out_of_stock_threshold" class="form-control" value="{{ settings.get('out_of_stock_threshold', 5) }}" min="0">
+                    <small class="form-text text-muted">Nombre d'unités avant rupture totale</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Jours avant expiration</label>
+                    <input type="number" id="expiry_warning_days" class="form-control" value="{{ settings.get('expiry_warning_days', 30) }}" min="1" max="365">
+                    <small class="form-text text-muted">Alerte avant expiration des produits</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Marge de sécurité (%)</label>
+                    <input type="number" id="safety_margin" class="form-control" value="{{ settings.get('safety_margin', 15) }}" min="0" max="100">
+                    <small class="form-text text-muted">Marge pour éviter les ruptures</small>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="auto_lot_management" {{ 'checked' if settings.get('auto_lot_management', True) else '' }}>
+                      <label class="custom-control-label" for="auto_lot_management">
+                        <strong>Gestion automatique des lots</strong>
+                        <br><small class="text-muted">Rotation automatique FIFO/LIFO</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Profile Settings Tab -->
+            <div class="tab-pane fade" id="profile" role="tabpanel">
+              <h4 class="mb-4">
+                <i class="fas fa-user text-purple mr-2"></i>
+                Paramètres du Profil
+              </h4>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Nom complet</label>
+                    <input type="text" id="user_fullname" class="form-control" value="{{ current_user.full_name or current_user.username }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Email</label>
+                    <input type="email" id="user_email" class="form-control" value="{{ current_user.email }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Téléphone</label>
+                    <input type="tel" id="user_phone" class="form-control" value="{{ settings.get('user_phone', '') }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Langue préférée</label>
+                    <select id="user_language" class="form-control">
+                      <option value="fr" {{ 'selected' if settings.get('user_language') == 'fr' else '' }}>Français</option>
+                      <option value="en" {{ 'selected' if settings.get('user_language') == 'en' else '' }}>English</option>
+                      <option value="es" {{ 'selected' if settings.get('user_language') == 'es' else '' }}>Español</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group">
+                    <label class="form-control-label">Signature email</label>
+                    <textarea id="user_signature" class="form-control" rows="3">{{ settings.get('user_signature', 'Cordialement,\nL\'équipe MARCO PHARMA') }}</textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Security Settings Tab -->
+            <div class="tab-pane fade" id="security" role="tabpanel">
+              <h4 class="mb-4">
+                <i class="fas fa-shield-alt text-red mr-2"></i>
+                Paramètres de Sécurité
+              </h4>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Timeout de session (minutes)</label>
+                    <input type="number" id="session_timeout" class="form-control" value="{{ settings.get('session_timeout', 30) }}" min="5" max="480">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Expiration mot de passe (jours)</label>
+                    <input type="number" id="password_expiry" class="form-control" value="{{ settings.get('password_expiry', 90) }}" min="30" max="365">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Tentatives de connexion max</label>
+                    <input type="number" id="login_attempts" class="form-control" value="{{ settings.get('login_attempts', 3) }}" min="1" max="10">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Durée de blocage (minutes)</label>
+                    <input type="number" id="lockout_duration" class="form-control" value="{{ settings.get('lockout_duration', 15) }}" min="5" max="1440">
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="two_factor_auth" {{ 'checked' if settings.get('two_factor_auth') else '' }}>
+                      <label class="custom-control-label" for="two_factor_auth">
+                        <strong>Authentification à deux facteurs</strong>
+                        <br><small class="text-muted">Sécurité renforcée par SMS/Email</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="login_logging" {{ 'checked' if settings.get('login_logging', True) else '' }}>
+                      <label class="custom-control-label" for="login_logging">
+                        <strong>Journalisation des connexions</strong>
+                        <br><small class="text-muted">Enregistrer toutes les tentatives de connexion</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Notifications Settings Tab -->
+            <div class="tab-pane fade" id="notifications" role="tabpanel">
+              <h4 class="mb-4">
+                <i class="fas fa-bell text-purple mr-2"></i>
+                Paramètres de Notifications
+              </h4>
+              
+              <div class="row">
+                <div class="col-12">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="email_notifications" {{ 'checked' if settings.get('email_notifications', True) else '' }}>
+                      <label class="custom-control-label" for="email_notifications">
+                        <strong>Notifications par email</strong>
+                        <br><small class="text-muted">Recevoir les notifications par email</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="stock_alerts" {{ 'checked' if settings.get('stock_alerts', True) else '' }}>
+                      <label class="custom-control-label" for="stock_alerts">
+                        <strong>Alertes de stock</strong>
+                        <br><small class="text-muted">Notifications quand le stock est faible</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="expiry_alerts" {{ 'checked' if settings.get('expiry_alerts', True) else '' }}>
+                      <label class="custom-control-label" for="expiry_alerts">
+                        <strong>Alertes d'expiration</strong>
+                        <br><small class="text-muted">Notifications pour produits expirant bientôt</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="sales_reports" {{ 'checked' if settings.get('sales_reports', True) else '' }}>
+                      <label class="custom-control-label" for="sales_reports">
+                        <strong>Rapports de ventes</strong>
+                        <br><small class="text-muted">Rapports automatiques des ventes</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="maintenance_notifications" {{ 'checked' if settings.get('maintenance_notifications') else '' }}>
+                      <label class="custom-control-label" for="maintenance_notifications">
+                        <strong>Notifications de maintenance</strong>
+                        <br><small class="text-muted">Alertes système et maintenance</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Exchange Rates Tab -->
+            <div class="tab-pane fade" id="exchange" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                  <i class="fas fa-exchange-alt text-green mr-2"></i>
+                  Taux de Change
+                </h4>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exchangeRatesModal">
+                  <i class="fas fa-cog mr-2"></i>Gestion Avancée
+                </button>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-body text-center">
+                      <h5 class="card-title">Taux Actuel</h5>
+                      <div class="display-4 text-success" id="current_rate_display">
+                        {{ current_rate.rate if current_rate else 'N/A' }}
+                      </div>
+                      <p class="text-muted">1 USD = <span id="rate_cdf">{{ current_rate.rate if current_rate else 'N/A' }}</span> CDF</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-body text-center">
+                      <h5 class="card-title">Statut</h5>
+                      <div class="mb-3">
+                        {% if current_rate %}
+                        <span class="badge badge-success badge-lg">
+                          <i class="fas fa-check-circle mr-1"></i>Actif
+                        </span>
+                        {% else %}
+                        <span class="badge badge-warning badge-lg">
+                          <i class="fas fa-exclamation-triangle mr-1"></i>Non configuré
+                        </span>
+                        {% endif %}
+                      </div>
+                      <p class="text-muted">Dernière mise à jour</p>
+                      <small class="text-muted">
+                        {% if current_rate and current_rate.updated_at %}
+                        {{ current_rate.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                        Non disponible
+                        {% endif %}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Exchange Rates Management Modal -->
+              <div class="modal fade" id="exchangeRatesModal" tabindex="-1" role="dialog" aria-labelledby="exchangeRatesModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="exchangeRatesModalLabel">
+                        <i class="fas fa-exchange-alt mr-2"></i>Gestion Complète des Taux de Change
+                      </h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                      <!-- Current Rate Section -->
+                      <div class="card mb-3">
+                        <div class="card-header py-2">
+                          <h6 class="mb-0">
+                            <i class="fas fa-info-circle mr-2"></i>Taux Actuel
+                          </h6>
+                        </div>
+                        <div class="card-body py-2">
+                          <div class="row">
+                            <div class="col-md-6">
+                              <div class="form-group mb-2">
+                                <label class="form-control-label small">Taux USD → CDF</label>
+                                <div class="input-group input-group-sm">
+                                  <input type="number" id="modal_exchange_rate" class="form-control" 
+                                         value="{{ current_rate.rate if current_rate else '' }}" 
+                                         step="0.01" min="0" placeholder="Ex: 2800" readonly>
+                                  <div class="input-group-append">
+                                    <span class="input-group-text">CDF</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="form-group mb-2">
+                                <label class="form-control-label small">Statut</label>
+                                <div class="mt-1">
+                                  {% if current_rate %}
+                                  <span class="badge badge-success badge-sm">
+                                    <i class="fas fa-check-circle mr-1"></i>Actif
+                                  </span>
+                                  {% else %}
+                                  <span class="badge badge-warning badge-sm">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Non configuré
+                                  </span>
+                                  {% endif %}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Update Rate Section -->
+                      <div class="card mb-3">
+                        <div class="card-header py-2">
+                          <h6 class="mb-0">
+                            <i class="fas fa-edit mr-2"></i>Mettre à jour le taux
+                          </h6>
+                        </div>
+                        <div class="card-body py-2">
+                          <form id="updateExchangeRateForm">
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group mb-2">
+                                  <label class="form-control-label small">Nouveau taux USD → CDF</label>
+                                  <div class="input-group input-group-sm">
+                                    <input type="number" id="new_exchange_rate" class="form-control" 
+                                           step="0.01" min="0" placeholder="Ex: 2800" required>
+                                    <div class="input-group-append">
+                                      <span class="input-group-text">CDF</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group mb-2">
+                                  <label class="form-control-label small">Aperçu</label>
+                                  <div class="input-group input-group-sm">
+                                    <input type="text" id="rate_preview" class="form-control" 
+                                           placeholder="1 USD = ? CDF" readonly>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-12">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                  <i class="fas fa-save mr-1"></i>Mettre à jour
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm ml-2" onclick="resetExchangeForm()">
+                                  <i class="fas fa-undo mr-1"></i>Réinitialiser
+                                </button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                      
+                      <!-- Exchange Rates History -->
+                      <div class="card">
+                        <div class="card-header py-2">
+                          <h6 class="mb-0">
+                            <i class="fas fa-history mr-2"></i>Historique des Taux
+                          </h6>
+                        </div>
+                        <div class="card-body py-2" style="max-height: 300px; overflow-y: auto;">
+                          <div class="table-responsive">
+                            <table class="table table-sm table-striped mb-0">
+                              <thead class="thead-light">
+                                <tr>
+                                  <th class="py-1">Date</th>
+                                  <th class="py-1">Taux</th>
+                                  <th class="py-1">Statut</th>
+                                  <th class="py-1">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for rate in exchange_rates %}
+                                <tr>
+                                  <td class="py-1 small">{{ rate.created_at.strftime('%d/%m/%Y %H:%M') if rate.created_at else 'N/A' }}</td>
+                                  <td class="py-1 small">{{ rate.rate }} CDF</td>
+                                  <td class="py-1">
+                                    {% if rate.is_active %}
+                                    <span class="badge badge-success badge-sm">Actif</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary badge-sm">Inactif</span>
+                                    {% endif %}
+                                  </td>
+                                  <td class="py-1">
+                                    {% if not rate.is_active %}
+                                    <button class="btn btn-xs btn-primary" onclick="activateRate({{ rate.id }})">
+                                      <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-xs btn-danger ml-1" onclick="deleteRate({{ rate.id }})">
+                                      <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted small">Actuel</span>
+                                    {% endif %}
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not exchange_rates %}
+                                <tr>
+                                  <td colspan="4" class="text-center text-muted py-2">Aucun taux de change enregistré</td>
+                                </tr>
+                                {% endif %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-2"></i>Fermer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
           </div>
         </div>
       </div>
@@ -77,5 +672,424 @@
   height: 74px;
   font-size: 2rem;
 }
+.badge-lg {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+}
+.badge-sm {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+.btn-xs {
+  padding: 0.125rem 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+.modal-lg {
+  max-width: 800px;
+}
+#exchangeRatesModal .modal-body {
+  padding: 1rem;
+}
+#exchangeRatesModal .card {
+  border: 1px solid #e3e6f0;
+  box-shadow: none;
+}
+#exchangeRatesModal .card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+}
 </style>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+// Gestion du logo
+function previewLogo(input) {
+    const file = input.files[0];
+    if (file) {
+        // Vérifier la taille du fichier (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            showNotification('Le fichier est trop volumineux. Taille maximum : 2MB', 'error');
+            input.value = '';
+            return;
+        }
+        
+        // Vérifier le type de fichier
+        if (!file.type.startsWith('image/')) {
+            showNotification('Veuillez sélectionner un fichier image valide', 'error');
+            input.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('company_logo_preview');
+            const placeholder = document.getElementById('logo_placeholder');
+            
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            
+            // Sauvegarder automatiquement le logo
+            saveLogoToDatabase(e.target.result);
+        };
+        reader.readAsDataURL(file);
+        
+        showNotification('Logo sélectionné avec succès !', 'success');
+    }
+}
+
+function removeLogo() {
+    const preview = document.getElementById('company_logo_preview');
+    const placeholder = document.getElementById('logo_placeholder');
+    const fileInput = document.getElementById('company_logo');
+    
+    preview.style.display = 'none';
+    placeholder.style.display = 'block';
+    fileInput.value = '';
+    
+    // Supprimer le logo de la base de données
+    saveLogoToDatabase('');
+    
+    showNotification('Logo supprimé', 'info');
+}
+
+// Sauvegarder le logo en base de données
+function saveLogoToDatabase(logoData) {
+    const settingsData = {
+        general: {
+            company_logo: logoData
+        }
+    };
+
+    fetch('/settings/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settingsData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Logo sauvegardé avec succès !', 'success');
+            // Ne pas recharger automatiquement, garder l'affichage actuel
+        } else {
+            showNotification('Erreur lors de la sauvegarde du logo: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showNotification('Erreur lors de la sauvegarde du logo', 'error');
+    });
+}
+
+// Détecter automatiquement le fuseau horaire
+function detectTimezone() {
+    try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (timezone) {
+            document.getElementById('timezone').value = timezone;
+            return timezone;
+        } else {
+            const offset = new Date().getTimezoneOffset();
+            const hours = Math.abs(Math.floor(offset / 60));
+            const minutes = Math.abs(offset % 60);
+            const sign = offset > 0 ? '-' : '+';
+            let timezone = 'UTC' + sign + hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+            document.getElementById('timezone').value = timezone;
+            return timezone;
+        }
+    } catch (error) {
+        console.error('Erreur lors de la détection du fuseau horaire:', error);
+        const defaultTimezone = 'Africa/Kinshasa';
+        document.getElementById('timezone').value = defaultTimezone;
+        return defaultTimezone;
+    }
+}
+
+// Sauvegarder tous les paramètres
+function saveAllSettings() {
+    const settings = {
+        general: {
+            company_name: document.getElementById('company_name').value,
+            company_type: document.getElementById('company_type').value,
+            company_sector: document.getElementById('company_sector').value,
+            company_email: document.getElementById('company_email').value,
+            company_phone: document.getElementById('company_phone').value,
+            company_website: document.getElementById('company_website').value,
+            company_address: document.getElementById('company_address').value,
+            company_rccm: document.getElementById('company_rccm').value,
+            company_national_id: document.getElementById('company_national_id').value,
+            company_tax_number: document.getElementById('company_tax_number').value,
+            timezone: document.getElementById('timezone').value,
+            language: document.getElementById('language').value,
+            main_currency: document.getElementById('main_currency').value,
+            secondary_currency: document.getElementById('secondary_currency').value
+        },
+        stock: {
+            low_stock_threshold: parseInt(document.getElementById('low_stock_threshold').value),
+            out_of_stock_threshold: parseInt(document.getElementById('out_of_stock_threshold').value),
+            expiry_warning_days: parseInt(document.getElementById('expiry_warning_days').value),
+            safety_margin: parseInt(document.getElementById('safety_margin').value),
+            auto_lot_management: document.getElementById('auto_lot_management').checked
+        },
+        profile: {
+            user_phone: document.getElementById('user_phone').value,
+            user_language: document.getElementById('user_language').value,
+            user_signature: document.getElementById('user_signature').value
+        },
+        security: {
+            session_timeout: parseInt(document.getElementById('session_timeout').value),
+            password_expiry: parseInt(document.getElementById('password_expiry').value),
+            login_attempts: parseInt(document.getElementById('login_attempts').value),
+            lockout_duration: parseInt(document.getElementById('lockout_duration').value),
+            two_factor_auth: document.getElementById('two_factor_auth').checked,
+            login_logging: document.getElementById('login_logging').checked
+        },
+        notifications: {
+            email_notifications: document.getElementById('email_notifications').checked,
+            stock_alerts: document.getElementById('stock_alerts').checked,
+            expiry_alerts: document.getElementById('expiry_alerts').checked,
+            sales_reports: document.getElementById('sales_reports').checked,
+            maintenance_notifications: document.getElementById('maintenance_notifications').checked
+        }
+    };
+    
+    // Afficher un indicateur de chargement
+    showNotification('Sauvegarde en cours...', 'info');
+    
+    // Sauvegarder en base de données
+    fetch('/settings/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Paramètres sauvegardés avec succès !', 'success');
+        } else {
+            showNotification('Erreur lors de la sauvegarde: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showNotification('Erreur lors de la sauvegarde', 'error');
+    });
+}
+
+// Exporter les paramètres
+function exportSettings() {
+    const settings = {
+        export_date: new Date().toISOString(),
+        general: {
+            company_name: document.getElementById('company_name').value,
+            company_type: document.getElementById('company_type').value,
+            company_sector: document.getElementById('company_sector').value,
+            company_email: document.getElementById('company_email').value,
+            company_phone: document.getElementById('company_phone').value,
+            company_website: document.getElementById('company_website').value,
+            company_address: document.getElementById('company_address').value
+        },
+        stock: {
+            low_stock_threshold: document.getElementById('low_stock_threshold').value,
+            out_of_stock_threshold: document.getElementById('out_of_stock_threshold').value,
+            expiry_warning_days: document.getElementById('expiry_warning_days').value,
+            safety_margin: document.getElementById('safety_margin').value
+        }
+    };
+    
+    const dataStr = JSON.stringify(settings, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = 'marco-pharma_settings.json';
+    link.click();
+    
+    showNotification('Paramètres exportés avec succès !', 'success');
+}
+
+// Afficher une notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+        ${message}
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-suppression après 5 secondes
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Gestion des taux de change
+function updateRatePreview() {
+    const newRate = document.getElementById('new_exchange_rate').value;
+    const preview = document.getElementById('rate_preview');
+    
+    if (newRate && newRate > 0) {
+        preview.value = `1 USD = ${newRate} CDF`;
+    } else {
+        preview.value = '';
+    }
+}
+
+function resetExchangeForm() {
+    document.getElementById('new_exchange_rate').value = '';
+    document.getElementById('rate_preview').value = '';
+}
+
+// Activer un taux
+function activateRate(rateId) {
+    if (confirm('Êtes-vous sûr de vouloir activer ce taux ?')) {
+        fetch('/settings/activate-rate/' + rateId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Taux activé avec succès !', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showNotification('Erreur lors de l\'activation: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showNotification('Erreur lors de l\'activation du taux', 'error');
+        });
+    }
+}
+
+// Supprimer un taux
+function deleteRate(rateId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce taux ? Cette action est irréversible.')) {
+        fetch('/settings/delete-rate/' + rateId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Taux supprimé avec succès !', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showNotification('Erreur lors de la suppression: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showNotification('Erreur lors de la suppression du taux', 'error');
+        });
+    }
+}
+
+// Gestion du formulaire de mise à jour du taux
+document.getElementById('updateExchangeRateForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const newRate = document.getElementById('new_exchange_rate').value;
+    
+    if (!newRate || newRate <= 0) {
+        showNotification('Veuillez entrer un taux valide', 'error');
+        return;
+    }
+    
+    // Afficher un indicateur de chargement
+    showNotification('Mise à jour du taux en cours...', 'info');
+    
+    // Envoyer la requête
+    fetch('/settings/update-exchange-rate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            rate: parseFloat(newRate)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Taux de change mis à jour avec succès !', 'success');
+            // Mettre à jour l'affichage
+            document.getElementById('current_rate_display').textContent = newRate;
+            document.getElementById('rate_cdf').textContent = newRate;
+            document.getElementById('modal_exchange_rate').value = newRate;
+            // Fermer la modal
+            $('#exchangeRatesModal').modal('hide');
+            // Recharger la page pour mettre à jour toutes les données
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showNotification('Erreur lors de la mise à jour: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showNotification('Erreur lors de la mise à jour du taux', 'error');
+    });
+});
+
+// Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    // Détecter automatiquement le fuseau horaire
+    detectTimezone();
+    
+    // Charger le logo existant s'il existe (seulement si pas déjà affiché)
+    const preview = document.getElementById('company_logo_preview');
+    if (preview.src === '' || preview.src === window.location.href) {
+        loadCompanyLogo();
+    }
+    
+    // Gestion de l'aperçu du taux
+    document.getElementById('new_exchange_rate').addEventListener('input', updateRatePreview);
+});
+
+// Fonction pour charger le logo depuis la base de données
+function loadCompanyLogo() {
+    fetch('/settings/get-logo')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.logo) {
+                const preview = document.getElementById('company_logo_preview');
+                const placeholder = document.getElementById('logo_placeholder');
+                
+                preview.src = data.logo;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement du logo:', error);
+        });
+}
+</script>
 {% endblock %}

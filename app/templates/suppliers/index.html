@@ -101,6 +101,10 @@
                                 <a href="{{ url_for('suppliers.edit', id=supplier.id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                                <button onclick="confirmDelete('{{ url_for('suppliers.delete', id=supplier.id) }}', '{{ supplier.name }}')" 
+                                        class="btn btn-sm btn-danger" title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                         {% else %}
@@ -149,5 +153,20 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(url, name) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer le fournisseur "' + name + '" ?\n\nCette action est irréversible.')) {
+        // Créer un formulaire pour la suppression
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}
 

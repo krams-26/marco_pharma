@@ -105,7 +105,7 @@
 <div class="container-fluid mt--6">
     <div class="row">
         <div class="col">
-            <div class="card">
+<div class="card">
                 <!-- Card header -->
                 <div class="card-header border-0">
                     <div class="row">
@@ -166,7 +166,7 @@
                 </div>
 
                 <!-- Table -->
-                <div class="table-responsive">
+        <div class="table-responsive">
                     <table class="table align-items-center table-flush">
                         <thead class="thead-light">
                             <tr>
@@ -180,9 +180,9 @@
                                 <th class="text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for batch in batches.items %}
-                            <tr>
+                <tbody>
+                    {% for batch in batches.items %}
+                    <tr>
                                 <td>
                                     <strong>{{ batch.product.name }}</strong>
                                 </td>
@@ -204,7 +204,7 @@
                                         <i class="fas fa-exclamation-triangle text-warning ml-2" title="Stock faible"></i>
                                     {% endif %}
                                 </td>
-                                <td>${{ "%.2f"|format(batch.purchase_price) }}</td>
+                        <td>${{ "%.2f"|format(batch.purchase_price) }}</td>
                                 <td>
                                     {% if batch.expiry_date %}
                                         <div>
@@ -256,17 +256,17 @@
                                         </div>
                                     </div>
                                 </td>
-                            </tr>
-                            {% else %}
+                    </tr>
+                    {% else %}
                             <tr>
                                 <td colspan="8" class="text-center text-muted py-4">
                                     <i class="fas fa-inbox fa-3x mb-3"></i>
                                     <p>Aucun lot trouvé</p>
                                 </td>
                             </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    {% endfor %}
+                </tbody>
+            </table>
                 </div>
 
                 <!-- Pagination -->
