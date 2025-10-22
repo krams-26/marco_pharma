@@ -1,41 +1,237 @@
 {% extends "base.html" %}
+
+{% block title %}Vente {{ sale.invoice_number }} - MARCO PHARMA{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Vente {{ sale.invoice_number }}</h2>
-    <a href="{{ url_for('pos.invoice', sale_id=sale.id) }}" class="btn btn-primary" target="_blank">
-        <i class="bi bi-printer"></i> Imprimer facture
-    </a>
+    <h2><i class="fas fa-receipt"></i> Vente {{ sale.invoice_number }}</h2>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('pos.invoice', sale_id=sale.id) }}" class="btn btn-primary" target="_blank">
+            <i class="fas fa-print"></i> Imprimer facture
+        </a>
+        <a href="{{ url_for('sales.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+    </div>
 </div>
-<div class="card">
-    <div class="card-body">
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h5>Client</h5>
-                <p>{{ sale.customer.name if sale.customer else 'Client anonyme' }}</p>
+
+<div class="row g-3">
+    <!-- Informations de la vente -->
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informations de la vente</h5>
             </div>
-            <div class="col-md-6 text-end">
-                <h5>Date</h5>
-                <p>{{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}</p>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong><i class="fas fa-user"></i> Client:</strong></p>
+                        <p>{{ sale.customer.name if sale.customer else 'Client anonyme' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong><i class="fas fa-calendar"></i> Date:</strong></p>
+                        <p>{{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong><i class="fas fa-user-tag"></i> Vendeur:</strong></p>
+                        <p>{{ sale.seller.full_name if sale.seller else 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong><i class="fas fa-info-circle"></i> Statut:</strong></p>
+                        <p>
+                            {% if sale.payment_status == 'paid' %}
+                                <span class="badge bg-success fs-6"><i class="fas fa-check-circle"></i> Payé</span>
+                            {% elif sale.payment_status == 'partial' %}
+                                <span class="badge bg-warning fs-6"><i class="fas fa-clock"></i> Paiement Partiel</span>
+                            {% else %}
+                                <span class="badge bg-danger fs-6"><i class="fas fa-times-circle"></i> En attente</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if sale.is_edited %}
+                <div class="alert alert-info mt-3">
+                    <strong><i class="bi bi-info-circle"></i> Cette vente a été modifiée</strong><br>
+                    <small>
+                        Modifiée par {{ sale.editor.full_name }} le {{ sale.edited_at.strftime('%d/%m/%Y %H:%M') }}<br>
+                        <strong>Raison:</strong> {{ sale.edit_reason }}
+                    </small>
+                </div>
+                {% endif %}
             </div>
         </div>
-        <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th>Produit</th><th>Prix unitaire</th><th>Quantité</th><th>Total</th></tr></thead>
-                <tbody>
-                    {% for item in sale.items %}
-                    <tr>
-                        <td>{{ item.product.name }}</td>
-                        <td>${{ "%.2f"|format(item.unit_price) }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>${{ "%.2f"|format(item.total) }}</td>
-                    </tr>
-                    {% endfor %}
-                    <tr><td colspan="3" class="text-end"><strong>Remise:</strong></td><td>${{ "%.2f"|format(sale.discount) }}</td></tr>
-                    <tr><td colspan="3" class="text-end"><strong>Total:</strong></td><td><strong>${{ "%.2f"|format(sale.total_amount) }}</strong></td></tr>
-                    <tr><td colspan="3" class="text-end"><strong>Payé:</strong></td><td>${{ "%.2f"|format(sale.paid_amount) }}</td></tr>
-                    <tr><td colspan="3" class="text-end"><strong>Solde dû:</strong></td><td>${{ "%.2f"|format(sale.balance_due) }}</td></tr>
-                </tbody>
-            </table>
+        
+        <!-- Détails des produits -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-list-ul"></i> Détails des produits</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Produit</th>
+                                <th class="text-center">Qté</th>
+                                <th class="text-end">Prix Unit.</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sale.items %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ item.product.name if item.product else 'Produit supprimé' }}</td>
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end price-dual">
+                                    ${{ "%.2f"|format(item.unit_price) }}
+                                    <small class="text-muted d-block">{{ (item.unit_price|usd_to_cdf)|format_number }} FC</small>
+                                </td>
+                                <td class="text-end price-dual">
+                                    ${{ "%.2f"|format(item.total) }}
+                                    <small class="text-muted d-block">{{ (item.total|usd_to_cdf)|format_number }} FC</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="4" class="text-end"><strong>Sous-total:</strong></td>
+                                <td class="text-end price-dual">
+                                    ${{ "%.2f"|format(sale.total_amount + sale.discount) }}
+                                    <small class="text-muted d-block">{{ ((sale.total_amount + sale.discount)|usd_to_cdf)|format_number }} FC</small>
+                                </td>
+                            </tr>
+                            {% if sale.discount > 0 %}
+                            <tr class="table-light">
+                                <td colspan="4" class="text-end"><strong>Remise:</strong></td>
+                                <td class="text-end price-dual text-danger">
+                                    -${{ "%.2f"|format(sale.discount) }}
+                                    <small class="text-muted d-block">-{{ (sale.discount|usd_to_cdf)|format_number }} FC</small>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            <tr class="table-success">
+                                <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+                                <td class="text-end price-dual">
+                                    <strong class="fs-5">${{ "%.2f"|format(sale.total_amount) }}</strong>
+                                    <small class="text-muted d-block"><strong>{{ (sale.total_amount|usd_to_cdf)|format_number }} FC</strong></small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="text-end">Montant payé:</td>
+                                <td class="text-end price-dual text-success">
+                                    ${{ "%.2f"|format(sale.paid_amount) }}
+                                    <small class="text-muted d-block">{{ (sale.paid_amount|usd_to_cdf)|format_number }} FC</small>
+                                </td>
+                            </tr>
+                            <tr class="{{ 'table-danger' if sale.balance_due > 0 else 'table-success' }}">
+                                <td colspan="4" class="text-end"><strong>Solde dû:</strong></td>
+                                <td class="text-end price-dual {{ 'text-danger' if sale.balance_due > 0 else 'text-success' }}">
+                                    <strong>${{ "%.2f"|format(sale.balance_due) }}</strong>
+                                    <small class="text-muted d-block"><strong>{{ (sale.balance_due|usd_to_cdf)|format_number }} FC</strong></small>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Résumé et paiements -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-dollar-sign"></i> Résumé</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small">Méthode de paiement</label>
+                    <div>
+                        {% if sale.payment_method == 'cash' %}
+                            <span class="badge bg-success"><i class="fas fa-money-bill"></i> Espèces</span>
+                        {% elif sale.payment_method == 'card' %}
+                            <span class="badge bg-primary"><i class="fas fa-credit-card"></i> Carte</span>
+                        {% elif sale.payment_method == 'mobile_money' %}
+                            <span class="badge bg-warning"><i class="fas fa-mobile-alt"></i> Mobile Money</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ sale.payment_method }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if sale.balance_due > 0 %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Cette vente a un solde impayé
+                </div>
+                <a href="{{ url_for('payments.record', sale_id=sale.id) }}" class="btn btn-warning w-100">
+                    <i class="fas fa-dollar-sign"></i> Enregistrer un paiement
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Actions</h6>
+            </div>
+            <div class="card-body">
+                {% if sale.payment_status != 'paid' and current_user.has_permission('edit_sales') %}
+                <a href="{{ url_for('sales.edit', id=sale.id) }}" class="btn btn-warning btn-sm w-100 mb-2">
+                    <i class="bi bi-pencil"></i> Modifier la vente
+                </a>
+                {% endif %}
+                
+                {% if sale.payment_status == 'pending' and current_user.has_permission('delete_sales') %}
+                <button type="button" class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="bi bi-trash"></i> Supprimer la vente
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if sale.notes %}
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-sticky-note"></i> Notes</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ sale.notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('sales.delete', id=sale.id) }}">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmer la Suppression</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Cette action restaurera les stocks et sera enregistrée dans l'audit.
+                    </div>
+                    <div class="mb-3">
+                        <label for="delete_reason" class="form-label">Raison de la suppression:</label>
+                        <textarea class="form-control" id="delete_reason" name="delete_reason" rows="3" required></textarea>
+                    </div>
+                    <p><strong>Êtes-vous sûr de vouloir supprimer cette vente ?</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Confirmer la Suppression</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

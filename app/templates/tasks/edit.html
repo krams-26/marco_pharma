@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier la Tâche{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil"></i> Modifier la Tâche #{{ task.id }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('tasks.edit', id=task.id) }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ task.title }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4">{{ task.description or '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="assigned_to" class="form-label">Assigner à</label>
+                                    <select class="form-control" id="assigned_to" name="assigned_to">
+                                        <option value="">Non assignée</option>
+                                        {% for user in users %}
+                                        <option value="{{ user.id }}" {% if task.assigned_to == user.id %}selected{% endif %}>
+                                            {{ user.full_name }} ({{ user.role }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priorité</label>
+                                    <select class="form-control" id="priority" name="priority">
+                                        <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Basse</option>
+                                        <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Moyenne</option>
+                                        <option value="high" {% if task.priority == 'high' %}selected{% endif %}>Haute</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Statut</label>
+                                    <select class="form-control" id="status" name="status">
+                                        <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>En attente</option>
+                                        <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>En cours</option>
+                                        <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Complétée</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="due_date" class="form-label">Date limite</label>
+                                    <input type="date" class="form-control" id="due_date" name="due_date" 
+                                           value="{% if task.due_date %}{{ task.due_date.strftime('%Y-%m-%d') }}{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('tasks.show', id=task.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-circle"></i> Enregistrer les Modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

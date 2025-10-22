@@ -1,42 +1,61 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 class="mb-4">Ajouter un client</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-person-plus-fill"></i> Ajouter un client</h2>
+    <a href="{{ url_for('customers.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-person-vcard"></i> Informations client</h5>
+    </div>
     <div class="card-body">
         <form method="POST">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Nom *</label>
-                    <input type="text" class="form-control" name="name" required>
+                    <label class="form-label"><i class="bi bi-person"></i> Nom *</label>
+                    <input type="text" class="form-control" name="name" required placeholder="Nom du client">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Type de client</label>
-                    <select class="form-select" name="customer_type">
+                    <label class="form-label"><i class="bi bi-tags"></i> Type de client</label>
+                    <select class="form-control" name="customer_type">
                         <option value="regular">Régulier</option>
+                        <option value="vip">VIP</option>
                         <option value="wholesale">Grossiste</option>
                     </select>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email">
+                    <label class="form-label"><i class="bi bi-envelope"></i> Email</label>
+                    <input type="email" class="form-control" name="email" placeholder="email@exemple.com">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Téléphone</label>
-                    <input type="text" class="form-control" name="phone">
+                    <label class="form-label"><i class="bi bi-telephone"></i> Téléphone</label>
+                    <input type="text" class="form-control" name="phone" placeholder="+243 000 000 000">
                 </div>
             </div>
             <div class="mb-3">
-                <label class="form-label">Adresse</label>
-                <textarea class="form-control" name="address" rows="3"></textarea>
+                <label class="form-label"><i class="bi bi-geo-alt"></i> Adresse</label>
+                <textarea class="form-control" name="address" rows="3" placeholder="Adresse complète"></textarea>
             </div>
             <div class="mb-3">
-                <label class="form-label">Limite de crédit</label>
-                <input type="number" class="form-control" name="credit_limit" step="0.01" value="0">
+                <label class="form-label"><i class="bi bi-cash"></i> Limite de crédit ($)</label>
+                <input type="number" class="form-control" name="credit_limit" step="0.01" value="0" placeholder="0.00">
             </div>
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a href="{{ url_for('customers.index') }}" class="btn btn-secondary">Annuler</a>
+            
+            <hr class="my-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Enregistrer
+                </button>
+                <a href="{{ url_for('customers.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+            </div>
         </form>
     </div>
 </div>

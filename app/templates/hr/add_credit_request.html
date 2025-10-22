@@ -6,7 +6,7 @@
         <form method="POST">
             <div class="mb-3">
                 <label class="form-label">Employé *</label>
-                <select class="form-select" name="employee_id" required>
+                <select class="form-control" name="employee_id" required>
                     <option value="">Sélectionner</option>
                     {% for employee in employees %}
                     <option value="{{ employee.id }}">{{ employee.user.full_name if employee.user else employee.employee_id }}</option>

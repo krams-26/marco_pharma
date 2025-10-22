@@ -1,5 +1,81 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Paramètres{% endblock %}
+
 {% block content %}
-<h2>Settings Module</h2>
-<p>Page en cours de développement...</p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-12">
+          <h6 class="h2 text-white d-inline-block mb-0">Paramètres</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Paramètres</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Paramètres Généraux</h3>
+        </div>
+        <div class="card-body">
+          <p class="mb-0">Configuration du système Marco Pharma</p>
+        </div>
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-money-coins"></i> Taux de Change</h3>
+        </div>
+        <div class="card-body">
+          <a href="{{ url_for('settings.exchange_rates') }}" class="btn btn-primary">
+            <i class="ni ni-settings"></i> Gérer les Taux
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-single-02"></i> Mon Profil</h3>
+        </div>
+        <div class="card-body">
+          <div class="text-center">
+            <div class="avatar avatar-xl bg-gradient-primary mx-auto mb-3">
+              <i class="ni ni-single-02"></i>
+            </div>
+            <h4>{{ current_user.full_name or current_user.username }}</h4>
+            <p class="text-muted">{{ current_user.email }}</p>
+            <span class="badge badge-primary">{{ current_user.role|title }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+.avatar-xl {
+  width: 74px;
+  height: 74px;
+  font-size: 2rem;
+}
+</style>
 {% endblock %}

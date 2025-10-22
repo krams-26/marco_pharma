@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+
+{% block title %}Alertes Activités Suspectes{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-gradient-danger pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6">
+          <h6 class="h2 text-white d-inline-block mb-0">
+            <i class="fas fa-exclamation-triangle"></i> Alertes Sécurité
+          </h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('audits.index') }}">Audits</a></li>
+              <li class="breadcrumb-item active">Alertes</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 text-right">
+          <div class="btn-group" role="group">
+            <a href="{{ url_for('audits.alerts', days=7) }}" class="btn btn-sm btn-neutral {% if days == 7 %}active{% endif %}">7j</a>
+            <a href="{{ url_for('audits.alerts', days=15) }}" class="btn btn-sm btn-neutral {% if days == 15 %}active{% endif %}">15j</a>
+            <a href="{{ url_for('audits.alerts', days=30) }}" class="btn btn-sm btn-neutral {% if days == 30 %}active{% endif %}">30j</a>
+          </div>
+          <a href="{{ url_for('audits.dashboard') }}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-chart-bar"></i> Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Statistiques alertes -->
+      <div class="row">
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Total Alertes</h5>
+                  <span class="h2 font-weight-bold mb-0 text-danger">{{ stats.total | format_number }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Échecs</h5>
+                  <span class="h2 font-weight-bold mb-0 text-danger">{{ stats.failed | format_number }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
+                    <i class="fas fa-times-circle"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Accès Refusés</h5>
+                  <span class="h2 font-weight-bold mb-0 text-warning">{{ stats.denied | format_number }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                    <i class="fas fa-ban"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Échecs Connexion</h5>
+                  <span class="h2 font-weight-bold mb-0 text-danger">{{ stats.login_failed | format_number }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                    <i class="fas fa-user-lock"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <!-- Alerte principale -->
+  <div class="row">
+    <div class="col">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span class="alert-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        <span class="alert-text">
+          <strong>Attention!</strong> Cette page liste les activités suspectes détectées sur les {{ days }} derniers jours. 
+          Veuillez vérifier et prendre les mesures nécessaires.
+        </span>
+        <button type="button" class="close" data-dismiss="alert">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Utilisateurs avec le plus d'échecs -->
+  {% if users_with_failures %}
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-user-shield text-warning"></i> Utilisateurs à Surveiller</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            {% for user in users_with_failures %}
+            <div class="col-md-2">
+              <div class="text-center">
+                <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow mb-2">
+                  <i class="fas fa-user"></i>
+                </div>
+                <h5 class="mb-0">{{ user[0] }}</h5>
+                <span class="badge badge-danger">{{ user[1] }} échecs</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Liste des activités suspectes -->
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row">
+            <div class="col">
+              <h3 class="mb-0">Activités Suspectes</h3>
+            </div>
+            <div class="col text-right">
+              <span class="badge badge-lg badge-danger">{{ audits.total }} activités</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Priorité</th>
+                <th>Date/Heure</th>
+                <th>Utilisateur</th>
+                <th>Module</th>
+                <th>Action</th>
+                <th>Détails</th>
+                <th>Résultat</th>
+                <th>IP</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for audit in audits.items %}
+              <tr class="{% if audit.result == 'denied' %}table-warning{% else %}table-danger{% endif %}">
+                <td class="text-center">
+                  {% if audit.action_type == 'login' and audit.result == 'failed' %}
+                    <i class="fas fa-exclamation-circle fa-2x text-danger" title="Tentative connexion échouée"></i>
+                  {% elif audit.result == 'denied' %}
+                    <i class="fas fa-ban fa-2x text-warning" title="Accès refusé"></i>
+                  {% elif audit.result == 'failed' %}
+                    <i class="fas fa-times-circle fa-2x text-danger" title="Échec"></i>
+                  {% else %}
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning" title="Suspect"></i>
+                  {% endif %}
+                </td>
+                <td>
+                  <strong>{{ audit.created_at.strftime('%d/%m/%Y') }}</strong>
+                  <br>
+                  <small class="text-muted">{{ audit.created_at.strftime('%H:%M:%S') }}</small>
+                </td>
+                <td>
+                  <strong>
+                    {% if audit.user %}
+                      {{ audit.user.username }}
+                      <br><small class="text-muted">{{ audit.user.role }}</small>
+                    {% else %}
+                      Système
+                    {% endif %}
+                  </strong>
+                </td>
+                <td>
+                  {% if audit.module %}
+                    <span class="badge badge-info">{{ audit.module }}</span>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-primary">{{ audit.action }}</span>
+                  {% if audit.action_type %}
+                    <br><small class="text-muted">{{ audit.action_type }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  <small>{{ (audit.details[:50] + '...') if audit.details and audit.details|length > 50 else (audit.details or '-') }}</small>
+                </td>
+                <td>
+                  {% if audit.result == 'failed' %}
+                    <span class="badge badge-danger"><i class="fas fa-times"></i> Échec</span>
+                  {% elif audit.result == 'denied' %}
+                    <span class="badge badge-warning"><i class="fas fa-ban"></i> Refusé</span>
+                  {% else %}
+                    <span class="badge badge-light">{{ audit.result }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-pill badge-secondary">{{ audit.ip_address or '-' }}</span>
+                </td>
+                <td class="text-right">
+                  <a href="{{ url_for('audits.view', id=audit.id) }}" class="btn btn-sm btn-icon-only text-primary">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="9" class="text-center text-muted py-5">
+                  <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                  <p><strong>Aucune activité suspecte détectée</strong></p>
+                  <p class="small">Aucun échec ou accès refusé sur la période sélectionnée.</p>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if audits.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not audits.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('audits.alerts', page=audits.prev_num, days=days) }}">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% for page_num in audits.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                  <li class="page-item {% if page_num == audits.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('audits.alerts', page=page_num, days=days) }}">{{ page_num }}</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not audits.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('audits.alerts', page=audits.next_num, days=days) }}">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommandations -->
+  {% if audits.total > 0 %}
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-lightbulb text-warning"></i> Recommandations</h3>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>Échecs de connexion multiples:</strong> Vérifier si c'est une tentative d'intrusion</li>
+            <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>Accès refusés répétés:</strong> Vérifier les permissions de l'utilisateur</li>
+            <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>Même IP, plusieurs échecs:</strong> Envisager de bloquer temporairement l'IP</li>
+            <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>Activité inhabituelle:</strong> Contacter l'utilisateur pour vérification</li>
+            <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>Échecs de nuit:</strong> Possibilité de bot ou tentative automatisée</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+

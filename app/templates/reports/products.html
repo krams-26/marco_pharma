@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Rapport Produits{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-capsule"></i> Rapport Produits</h2>
+    <div>
+        <a href="{{ url_for('reports.export_products_excel') }}" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel"></i> Export Excel
+        </a>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6>Total Produits</h6>
+                <h3>{{ total_products }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6>CA Total</h6>
+                <h3>{{ "%.2f"|format(total_revenue) }}$</h3>
+                <small>{{ "%.0f"|format(total_revenue|usd_to_cdf) }} FC</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6>Marge Moyenne</h6>
+                <h3>{{ "%.1f"|format(avg_margin) }}%</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Top Produits par CA</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Forme</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-center">Ventes</th>
+                        <th class="text-center">Qté Vendue</th>
+                        <th class="text-end">CA</th>
+                        <th class="text-end">Prix Vente</th>
+                        <th class="text-center">Marge %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in product_stats %}
+                    <tr>
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td><span class="badge bg-secondary">{{ product.category or '-' }}</span></td>
+                        <td class="text-center">{{ product.stock }}</td>
+                        <td class="text-center">{{ product.sales_count }}</td>
+                        <td class="text-center"><strong>{{ product.total_sold|int }}</strong></td>
+                        <td class="text-end">
+                            <strong>{{ "%.2f"|format(product.total_revenue) }}$</strong>
+                            <br><small class="text-muted">{{ "%.0f"|format(product.total_revenue|usd_to_cdf) }} FC</small>
+                        </td>
+                        <td class="text-end">{{ "%.2f"|format(product.selling_price) }}$</td>
+                        <td class="text-center">
+                            <span class="badge bg-{% if product.margin_percent >= 30 %}success{% elif product.margin_percent >= 15 %}warning{% else %}danger{% endif %}">
+                                {{ "%.1f"|format(product.margin_percent) }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">Aucune donnée</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,203 @@
+<!-- MODALS CLIENTS -->
+
+<!-- Modal Voir Détails Client -->
+<div class="modal fade" id="customerQuickViewModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-user"></i> Détails du Client
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="customer-modal-content">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Supprimer Client -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-trash"></i> Confirmer la Suppression
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="delete-customer-id">
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Attention !</strong> Cette action est irréversible.
+                </div>
+                
+                <p>Vous êtes sur le point de supprimer le client : <strong id="delete-customer-name"></strong></p>
+                
+                <div class="form-group">
+                    <label>Raison de la suppression <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="delete-customer-reason" rows="3" required placeholder="Ex: Client inactif, doublon, etc."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteCustomer">
+                    <i class="fas fa-trash"></i> Supprimer Définitivement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction globale pour afficher les détails d'un client
+function showCustomerQuickView(customerId) {
+    $.get('/customers/quick-view/' + customerId, function(c) {
+        const statusBadge = c.is_active ? 
+            '<span class="badge badge-success">Actif</span>' :
+            '<span class="badge badge-danger">Inactif</span>';
+        
+        const typeBadge = c.customer_type === 'vip' ?
+            '<span class="badge badge-warning">VIP</span>' :
+            '<span class="badge badge-primary">Régulier</span>';
+        
+        let salesHtml = '';
+        if (c.recent_sales.length > 0) {
+            c.recent_sales.forEach(sale => {
+                const statusClass = sale.status === 'paid' ? 'success' : sale.status === 'partial' ? 'warning' : 'danger';
+                salesHtml += `
+                    <tr>
+                        <td>${sale.invoice_number}</td>
+                        <td>${sale.date}</td>
+                        <td class="text-right">$${sale.total.toFixed(2)}</td>
+                        <td><span class="badge badge-${statusClass}">${sale.status}</span></td>
+                    </tr>
+                `;
+            });
+        } else {
+            salesHtml = '<tr><td colspan="4" class="text-center text-muted">Aucune vente</td></tr>';
+        }
+        
+        $('#customer-modal-content').html(`
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <h4>${c.name} ${statusBadge} ${typeBadge}</h4>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-envelope"></i> ${c.email || 'N/A'}<br>
+                        <i class="fas fa-phone"></i> ${c.phone || 'N/A'}<br>
+                        <i class="fas fa-map-marker-alt"></i> ${c.address || 'N/A'}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <p class="mb-1"><small class="text-muted">Limite crédit</small></p>
+                            <h5 class="text-primary mb-0">$${c.credit_limit.toFixed(2)}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h3 class="text-primary mb-0">${c.total_sales}</h3>
+                            <small class="text-muted">Ventes totales</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h3 class="text-success mb-0">$${c.total_amount.toFixed(2)}</h3>
+                            <small class="text-muted">Montant total</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-${c.balance_due > 0 ? 'warning' : 'success'}">
+                        <div class="card-body text-center">
+                            <h3 class="text-${c.balance_due > 0 ? 'warning' : 'success'} mb-0">$${c.balance_due.toFixed(2)}</h3>
+                            <small class="text-muted">Solde dû</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h6 class="mb-2">Dernières Ventes</h6>
+            <table class="table table-sm table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Facture</th>
+                        <th>Date</th>
+                        <th class="text-right">Montant</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>${salesHtml}</tbody>
+            </table>
+            
+            <div class="mt-3 text-center">
+                <a href="/customers/view/${c.id}" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt"></i> Vue Complète
+                </a>
+                <a href="/customers/edit/${c.id}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> Modifier
+                </a>
+            </div>
+        `);
+        
+        $('#customerQuickViewModal').modal('show');
+    });
+}
+
+// Fonction globale pour supprimer un client
+function deleteCustomer(customerId, customerName) {
+    $('#delete-customer-id').val(customerId);
+    $('#delete-customer-name').text(customerName);
+    $('#delete-customer-reason').val('');
+    $('#deleteCustomerModal').modal('show');
+}
+
+$(document).ready(function() {
+    $('#confirmDeleteCustomer').click(function() {
+        const btn = $(this);
+        const customerId = $('#delete-customer-id').val();
+        const reason = $('#delete-customer-reason').val().trim();
+        
+        if (!reason) {
+            alert('Veuillez indiquer la raison de la suppression');
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Suppression...');
+        
+        $.ajax({
+            url: '/customers/delete/' + customerId,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ reason: reason }),
+            success: function(response) {
+                $('#deleteCustomerModal').modal('hide');
+                alert('✓ ' + response.message);
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                btn.prop('disabled', false).html('<i class="fas fa-trash"></i> Supprimer Définitivement');
+            }
+        });
+    });
+});
+</script>
+

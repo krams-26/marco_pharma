@@ -1,0 +1,18 @@
+<!-- Indicateur de Scope Utilisateur -->
+{% set scope = 'all' if current_user.role == 'admin' else ('pharmacy' if current_user.role in ['manager', 'pharmacien'] else 'personal') %}
+{% set primary_pharmacy = current_user.get_primary_pharmacy() %}
+
+{% if scope == 'all' %}
+<span class="badge badge-lg badge-success">
+  <i class="fas fa-globe"></i> Vue Système Complet
+</span>
+{% elif scope == 'pharmacy' %}
+<span class="badge badge-lg badge-info">
+  <i class="fas fa-store"></i> Vue Pharmacie: {{ primary_pharmacy.name if primary_pharmacy else 'N/A' }}
+</span>
+{% else %}
+<span class="badge badge-lg badge-warning">
+  <i class="fas fa-user"></i> Mes Données Personnelles
+</span>
+{% endif %}
+

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Créer une Tâche{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Créer une Nouvelle Tâche</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('tasks.create') }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="assigned_to" class="form-label">Assigner à</label>
+                                    <select class="form-control" id="assigned_to" name="assigned_to">
+                                        <option value="">Non assignée</option>
+                                        {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priorité</label>
+                                    <select class="form-control" id="priority" name="priority">
+                                        <option value="low">Basse</option>
+                                        <option value="medium" selected>Moyenne</option>
+                                        <option value="high">Haute</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="due_date" class="form-label">Date limite</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date">
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('tasks.index') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Créer la Tâche
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

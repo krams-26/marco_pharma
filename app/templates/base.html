@@ -1,121 +1,128 @@
+<!--
+=========================================================
+* Argon Dashboard - Marco Pharma Edition
+=========================================================
+* Système de Gestion Pharmaceutique
+* Basé sur Argon Dashboard de Creative Tim
+=========================================================
+-->
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Pharmacie Moderne{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        .sidebar {
-            min-height: 100vh;
-            background: #2c3e50;
-        }
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 12px 20px;
-            border-radius: 5px;
-            margin: 3px 10px;
-        }
-        .sidebar .nav-link:hover {
-            background: #34495e;
-        }
-        .sidebar .nav-link.active {
-            background: #3498db;
-        }
-        .main-content {
-            padding: 20px;
-        }
-        .stat-card {
-            border-left: 4px solid;
-            transition: transform 0.2s;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-    </style>
-    {% block extra_css %}{% endblock %}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+  <title>
+    {% block title %}MARCO PHARMA{% endblock %} | Gestion Pharmaceutique
+  </title>
+
+  <!-- Favicon - Multiple formats pour compatibilité -->
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
+  
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/nucleo/css/nucleo.css') }}" type="text/css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/@fortawesome/fontawesome-free/css/all.min.css') }}" type="text/css">
+  
+  <!-- Argon CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/argon.min.css') }}?v=1.2.0" type="text/css">
+  
+  <!-- Custom Layout CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom-argon.css') }}" type="text/css">
+
+  <!-- Specific CSS goes HERE -->
+  {% block stylesheets %}{% endblock stylesheets %}
+
 </head>
-<body>
-    {% if current_user.is_authenticated %}
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-2 col-lg-2 px-0 sidebar">
-                <div class="p-3 text-center text-white border-bottom">
-                    <h4><i class="bi bi-hospital"></i> Pharmacie</h4>
+
+<body class="">
+
+  {% if current_user.is_authenticated %}
+
+  {% include "includes/sidenav.html" %}
+
+  <div class="main-content" id="panel">
+
+    {% include "includes/navigation.html" %}
+    
+    <div class="content-wrapper">
+      {% block content %}{% endblock content %}
                 </div>
-                <nav class="nav flex-column py-3">
-                    <a class="nav-link" href="{{ url_for('dashboard.index') }}">
-                        <i class="bi bi-speedometer2"></i> Tableau de bord
-                    </a>
-                    <a class="nav-link" href="{{ url_for('pos.index') }}">
-                        <i class="bi bi-cart-check"></i> Point de Vente
-                    </a>
-                    <a class="nav-link" href="{{ url_for('products.index') }}">
-                        <i class="bi bi-capsule"></i> Produits
-                    </a>
-                    <a class="nav-link" href="{{ url_for('customers.index') }}">
-                        <i class="bi bi-people"></i> Clients
-                    </a>
-                    <a class="nav-link" href="{{ url_for('sales.index') }}">
-                        <i class="bi bi-receipt"></i> Ventes
-                    </a>
-                    <a class="nav-link" href="{{ url_for('stock.index') }}">
-                        <i class="bi bi-box-seam"></i> Stock
-                    </a>
-                    <a class="nav-link" href="{{ url_for('payments.index') }}">
-                        <i class="bi bi-credit-card"></i> Paiements
-                    </a>
-                    <a class="nav-link" href="{{ url_for('cashier.index') }}">
-                        <i class="bi bi-cash-stack"></i> Caisse
-                    </a>
-                    <a class="nav-link" href="{{ url_for('hr.index') }}">
-                        <i class="bi bi-person-badge"></i> Personnel RH
-                    </a>
-                    <a class="nav-link" href="{{ url_for('users.index') }}">
-                        <i class="bi bi-person-circle"></i> Utilisateurs
-                    </a>
-                    <a class="nav-link" href="{{ url_for('reports.index') }}">
-                        <i class="bi bi-graph-up"></i> Rapports
-                    </a>
-                    <a class="nav-link" href="{{ url_for('audits.index') }}">
-                        <i class="bi bi-shield-check"></i> Audits
-                    </a>
-                    <a class="nav-link" href="{{ url_for('settings.index') }}">
-                        <i class="bi bi-gear"></i> Paramètres
-                    </a>
-                </nav>
-                <div class="p-3 mt-auto border-top">
-                    <div class="text-white small mb-2">
-                        <i class="bi bi-person"></i> {{ current_user.full_name or current_user.username }}
-                    </div>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-light w-100">
-                        <i class="bi bi-box-arrow-right"></i> Déconnexion
-                    </a>
+                
+    {% include "includes/footer.html" %}
+
                 </div>
-            </div>
-            <div class="col-md-10 col-lg-10 main-content">
+                
+  {% else %}
+
+  {% block auth_content %}{% endblock auth_content %}
+
+  {% endif %}
+
+  {% include "includes/scripts.html" %}
+  {% include "includes/product_quick_view_modal.html" %}
+  {% include "includes/quick_task_modal.html" %}
+  {% include "includes/customer_modals.html" %}
+  {% include "includes/all_modals.html" %}
+
+  <!-- Flash Messages -->
+  <script>
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
+                        {% for forme, message in messages %}
+          // Afficher les messages Flash via notifications Argon
+          console.log('{{ forme }}', '{{ message }}');
                         {% endfor %}
                     {% endif %}
                 {% endwith %}
-                
-                {% block content %}{% endblock %}
-            </div>
-        </div>
-    </div>
-    {% else %}
-        {% block auth_content %}{% endblock %}
-    {% endif %}
+  </script>
+
+  <!-- Dark Mode Toggle -->
+  <script>
+    // Gestion du mode sombre
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const body = document.body;
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    {% block extra_js %}{% endblock %}
+    // Charger le thème sauvegardé
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      body.classList.add('dark-mode');
+      themeIcon.classList.remove('fa-moon');
+      themeIcon.classList.add('fa-sun');
+    }
+    
+    // Toggle du thème
+    if (themeToggle) {
+      themeToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        body.classList.toggle('dark-mode');
+        
+        if (body.classList.contains('dark-mode')) {
+          // Passage en mode sombre
+          themeIcon.classList.remove('fa-moon');
+          themeIcon.classList.add('fa-sun');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          // Passage en mode clair
+          themeIcon.classList.remove('fa-sun');
+          themeIcon.classList.add('fa-moon');
+          localStorage.setItem('theme', 'light');
+        }
+      });
+    }
+  </script>
+
+  <!-- Specific JS goes HERE --> 
+  {% block javascripts %}{% endblock javascripts %}
+
 </body>
+
 </html>

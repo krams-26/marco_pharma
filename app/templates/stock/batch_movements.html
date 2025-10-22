@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Mouvements Lot {{ batch.batch_number }}{% endblock %}
+
+{% block content %}
+<div class="header bg-gradient-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-8">
+                    <h6 class="h2 text-white d-inline-block mb-0">Historique des Mouvements</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.index') }}">Stock</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.batches') }}">Lots</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.batch_view', id=batch.id) }}">{{ batch.batch_number }}</a></li>
+                            <li class="breadcrumb-item active">Mouvements</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-4 text-right">
+                    <a href="{{ url_for('stock.batch_view', id=batch.id) }}" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Lot #{{ batch.batch_number }} - {{ batch.product.name }}</h3>
+                        </div>
+                        <div class="col text-right">
+                            <span class="badge badge-lg badge-info">{{ movements.total }} mouvements</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Date/Heure</th>
+                                <th>Type de Mouvement</th>
+                                <th>Quantité</th>
+                                <th>Référence</th>
+                                <th>Utilisateur</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movement in movements.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ movement.created_at.strftime('%d/%m/%Y') }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ movement.created_at.strftime('%H:%M:%S') }}</small>
+                                </td>
+                                <td>
+                                    {% if movement.movement_type == 'entry' %}
+                                        <span class="badge badge-success"><i class="fas fa-arrow-down"></i> Entrée</span>
+                                    {% elif movement.movement_type == 'sale' %}
+                                        <span class="badge badge-primary"><i class="fas fa-shopping-cart"></i> Vente</span>
+                                    {% elif movement.movement_type == 'adjustment' %}
+                                        <span class="badge badge-warning"><i class="fas fa-sliders-h"></i> Ajustement</span>
+                                    {% elif movement.movement_type == 'transfer_in' %}
+                                        <span class="badge badge-info"><i class="fas fa-arrow-right"></i> Transfert IN</span>
+                                    {% elif movement.movement_type == 'transfer_out' %}
+                                        <span class="badge badge-secondary"><i class="fas fa-arrow-left"></i> Transfert OUT</span>
+                                    {% elif movement.movement_type == 'expiry' %}
+                                        <span class="badge badge-danger"><i class="fas fa-calendar-times"></i> Expiration</span>
+                                    {% elif movement.movement_type == 'return' %}
+                                        <span class="badge badge-warning"><i class="fas fa-undo"></i> Retour</span>
+                                    {% else %}
+                                        <span class="badge badge-light">{{ movement.movement_type }}</span>
+                                    {% endif %}
+                                    
+                                    {% if movement.reference_type %}
+                                        <br><small class="text-muted">{{ movement.reference_type }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if movement.movement_type in ['entry', 'transfer_in', 'return'] %}
+                                        <strong class="text-success">+{{ movement.quantity }}</strong>
+                                    {% else %}
+                                        <strong class="text-danger">-{{ movement.quantity }}</strong>
+                                    {% endif %}
+                                    <small class="text-muted">unités</small>
+                                </td>
+                                <td>
+                                    {% if movement.reference_id %}
+                                        <span class="badge badge-pill badge-secondary">#{{ movement.reference_id }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <i class="fas fa-user-circle"></i>
+                                    {{ movement.user.full_name or movement.user.username }}
+                                    <br>
+                                    <small class="text-muted">{{ movement.user.role }}</small>
+                                </td>
+                                <td>
+                                    {% if movement.notes %}
+                                        <small>{{ movement.notes }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <p>Aucun mouvement enregistré pour ce lot</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if movements.pages > 1 %}
+                <div class="card-footer py-4">
+                    <nav>
+                        <ul class="pagination justify-content-end mb-0">
+                            <li class="page-item {% if not movements.has_prev %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('stock.batch_movements', id=batch.id, page=movements.prev_num) }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% for page_num in movements.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == movements.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('stock.batch_movements', id=batch.id, page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            <li class="page-item {% if not movements.has_next %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('stock.batch_movements', id=batch.id, page=movements.next_num) }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

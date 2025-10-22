@@ -1,49 +1,133 @@
 {% extends "base.html" %}
+
+{% block title %}Payer un Salaire - MARCO PHARMA{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Payer un salaire</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-hand-holding-usd"></i> Payer un Salaire</h2>
+    <a href="{{ url_for('hr.salaries') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Retour
+    </a>
+</div>
+
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Détails du Paiement</h5>
+    </div>
     <div class="card-body">
         <form method="POST">
-            <div class="mb-3">
-                <label class="form-label">Employé *</label>
-                <select class="form-select" name="employee_id" required>
-                    <option value="">Sélectionner</option>
-                    {% for employee in employees %}
-                    <option value="{{ employee.id }}">{{ employee.user.full_name if employee.user else employee.employee_id }} - Salaire: ${{ employee.salary }}</option>
-                    {% endfor %}
-                </select>
-            </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Montant *</label>
-                    <input type="number" class="form-control" name="amount" step="0.01" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Période</label>
-                    <input type="text" class="form-control" name="period" placeholder="Ex: Janvier 2024">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Date de paiement *</label>
-                    <input type="date" class="form-control" name="payment_date" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Méthode</label>
-                    <select class="form-select" name="payment_method">
-                        <option value="cash">Espèces</option>
-                        <option value="bank">Virement bancaire</option>
-                        <option value="check">Chèque</option>
+                    <label class="form-label"><i class="fas fa-user"></i> Employé *</label>
+                    <select class="form-control form-select-lg" name="employee_id" required id="employee-select">
+                        <option value="">Sélectionner un employé...</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" data-salary="{{ employee.salary or 0 }}" data-position="{{ employee.position or '' }}">
+                            {{ employee.first_name }} {{ employee.last_name }} - {{ employee.position or 'N/A' }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="fas fa-calendar"></i> Période *</label>
+                    <input type="month" class="form-control form-control-lg" name="period" required value="{{ current_period }}">
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Notes</label>
-                <textarea class="form-control" name="notes" rows="3"></textarea>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="fas fa-dollar-sign"></i> Montant * ($)</label>
+                    <input type="number" class="form-control form-control-lg" name="amount" step="0.01" required id="amount-input">
+                    <small class="text-muted">Salaire de base: $<span id="base-salary">0.00</span></small>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="fas fa-calendar-day"></i> Date de Paiement *</label>
+                    <input type="date" class="form-control form-control-lg" name="payment_date" required value="{{ today }}">
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a href="{{ url_for('hr.salaries') }}" class="btn btn-secondary">Annuler</a>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="fas fa-credit-card"></i> Méthode de Paiement *</label>
+                    <select class="form-control form-select-lg" name="payment_method" required>
+                        <option value="cash">💵 Espèces</option>
+                        <option value="bank">🏦 Virement Bancaire</option>
+                        <option value="mobile">📱 Mobile Money</option>
+                        <option value="check">📝 Chèque</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="fas fa-sticky-note"></i> Notes</label>
+                    <textarea class="form-control" name="notes" rows="3" placeholder="Notes optionnelles..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Aperçu -->
+            <div class="alert alert-info" id="payment-preview" style="display: none;">
+                <h6><i class="fas fa-info-circle"></i> Aperçu du Paiement</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Employé:</strong> <span id="preview-employee">-</span></p>
+                        <p class="mb-0"><strong>Poste:</strong> <span id="preview-position">-</span></p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <p class="mb-1"><strong>Montant:</strong></p>
+                        <div class="price-dual">
+                            <strong class="fs-4 text-success" id="preview-usd">$0.00</strong>
+                            <small class="text-muted" id="preview-cdf">0 FC</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check-circle"></i> Enregistrer le Paiement
+                </button>
+                <a href="{{ url_for('hr.salaries') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
         </form>
     </div>
 </div>
+
+<script>
+const TAUX_USD_CDF = 2800;
+
+document.getElementById('employee-select').addEventListener('change', function() {
+    const option = this.options[this.selectedIndex];
+    const salary = parseFloat(option.dataset.salary) || 0;
+    const position = option.dataset.position || 'N/A';
+    const employeeName = option.text.split(' - ')[0];
+    
+    document.getElementById('amount-input').value = salary.toFixed(2);
+    document.getElementById('base-salary').textContent = salary.toFixed(2);
+    
+    document.getElementById('preview-employee').textContent = employeeName;
+    document.getElementById('preview-position').textContent = position;
+    
+    updatePreview();
+});
+
+document.getElementById('amount-input').addEventListener('input', updatePreview);
+
+function updatePreview() {
+    const amount = parseFloat(document.getElementById('amount-input').value) || 0;
+    const cdf = Math.round(amount * TAUX_USD_CDF);
+    
+    document.getElementById('preview-usd').textContent = '$' + amount.toFixed(2);
+    document.getElementById('preview-cdf').textContent = cdf.toLocaleString() + ' FC';
+    
+    if (amount > 0) {
+        document.getElementById('payment-preview').style.display = 'block';
+    } else {
+        document.getElementById('payment-preview').style.display = 'none';
+    }
+}
+</script>
 {% endblock %}

@@ -1,54 +1,186 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ customer.name }}</h2>
-    <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-primary">Modifier</a>
+    <h2><i class="bi bi-person-circle"></i> {{ customer.name }}</h2>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        <a href="{{ url_for('customers.index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
 </div>
-<div class="row">
+
+<div class="row g-3">
     <div class="col-md-4">
         <div class="card mb-3">
-            <div class="card-header bg-white"><h5 class="mb-0">Informations</h5></div>
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informations</h5>
+            </div>
             <div class="card-body">
-                <p><strong>Type:</strong> {{ 'Grossiste' if customer.customer_type == 'wholesale' else 'Régulier' }}</p>
-                <p><strong>Email:</strong> {{ customer.email or '-' }}</p>
-                <p><strong>Téléphone:</strong> {{ customer.phone or '-' }}</p>
-                <p><strong>Adresse:</strong> {{ customer.address or '-' }}</p>
-                <p><strong>Limite crédit:</strong> ${{ "%.2f"|format(customer.credit_limit) }}</p>
-                <p><strong>Crédit actuel:</strong> ${{ "%.2f"|format(customer.current_credit) }}</p>
+                <div class="mb-3">
+                    <label class="text-muted small">Type de client</label>
+                    <div>
+                        {% if customer.customer_type == 'vip' %}
+                            <span class="badge bg-warning"><i class="bi bi-star-fill"></i> VIP</span>
+                        {% elif customer.customer_type == 'wholesale' %}
+                            <span class="badge bg-info"><i class="bi bi-building"></i> Grossiste</span>
+                        {% else %}
+                            <span class="badge bg-secondary"><i class="bi bi-person"></i> Régulier</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small"><i class="bi bi-envelope"></i> Email</label>
+                    <div>{{ customer.email or '-' }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small"><i class="bi bi-telephone"></i> Téléphone</label>
+                    <div>{{ customer.phone or '-' }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small"><i class="bi bi-geo-alt"></i> Adresse</label>
+                    <div>{{ customer.address or '-' }}</div>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <label class="text-muted small"><i class="bi bi-cash"></i> Limite de crédit</label>
+                    <div class="fs-5 fw-bold text-primary">${{ "%.2f"|format(customer.credit_limit) }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small"><i class="bi bi-wallet2"></i> Crédit actuel</label>
+                    <div class="fs-5 fw-bold text-{{ 'danger' if customer.current_credit > 0 else 'success' }}">
+                        ${{ "%.2f"|format(customer.current_credit) }}
+                    </div>
+                </div>
+                
+                {% if customer.current_credit > 0 %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    Client a un crédit impayé
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Statistiques</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small">Total des achats</label>
+                    <div class="fs-5 fw-bold text-success">
+                        ${{ "%.2f"|format(sales|sum(attribute='total_amount') if sales else 0) }}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small">Nombre de transactions</label>
+                    <div class="fs-5 fw-bold text-info">{{ sales|length }}</div>
+                </div>
             </div>
         </div>
     </div>
+    
     <div class="col-md-8">
         <div class="card mb-3">
-            <div class="card-header bg-white"><h5 class="mb-0">Historique des ventes</h5></div>
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-receipt"></i> Historique des ventes</h5>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table">
-                        <thead><tr><th>Facture</th><th>Date</th><th>Montant</th><th>Statut</th></tr></thead>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Facture</th>
+                                <th>Date</th>
+                                <th>Montant</th>
+                                <th>Payé</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             {% for sale in sales %}
                             <tr>
                                 <td><a href="{{ url_for('sales.view', id=sale.id) }}">{{ sale.invoice_number }}</a></td>
                                 <td>{{ sale.sale_date.strftime('%d/%m/%Y') }}</td>
                                 <td>${{ "%.2f"|format(sale.total_amount) }}</td>
+                                <td>${{ "%.2f"|format(sale.paid_amount) }}</td>
                                 <td>
                                     {% if sale.payment_status == 'paid' %}
-                                        <span class="badge bg-success">Payé</span>
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Payé</span>
                                     {% elif sale.payment_status == 'partial' %}
-                                        <span class="badge bg-warning">Partiel</span>
+                                        <span class="badge bg-warning"><i class="bi bi-clock"></i> Partiel</span>
                                     {% else %}
-                                        <span class="badge bg-danger">En attente</span>
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> En attente</span>
                                     {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('sales.view', id=sale.id) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="4" class="text-center text-muted">Aucune vente</td></tr>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Aucune vente</td>
+                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+        
+        {% if payments %}
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-credit-card"></i> Historique des paiements</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Montant</th>
+                                <th>Méthode</th>
+                                <th>Référence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.payment_date.strftime('%d/%m/%Y') }}</td>
+                                <td class="text-success fw-bold">${{ "%.2f"|format(payment.amount) }}</td>
+                                <td>
+                                    {% if payment.payment_method == 'cash' %}
+                                        <span class="badge bg-success">Espèces</span>
+                                    {% elif payment.payment_method == 'card' %}
+                                        <span class="badge bg-primary">Carte</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ payment.payment_method }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ payment.reference or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

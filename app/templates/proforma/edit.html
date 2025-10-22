@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier Proforma{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil-square"></i> Modifier {{ proforma.proforma_number }}</h2>
+    <a href="{{ url_for('proforma.show', id=proforma.id) }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<form method="POST" id="proformaForm">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Informations Client</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Client</label>
+                            <select class="form-control" id="customer_select" name="customer_id">
+                                <option value="">Nouveau client...</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if proforma.customer_id == customer.id %}selected{% endif %}
+                                    data-name="{{ customer.name }}"
+                                    data-address="{{ customer.address }}"
+                                    data-phone="{{ customer.phone }}"
+                                    data-email="{{ customer.email }}">
+                                    {{ customer.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom du client *</label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ proforma.customer_name }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Adresse</label>
+                            <textarea class="form-control" id="customer_address" name="customer_address" rows="2">{{ proforma.customer_address or '' }}</textarea>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="text" class="form-control" id="customer_phone" name="customer_phone" value="{{ proforma.customer_phone or '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="customer_email" name="customer_email" value="{{ proforma.customer_email or '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Produits</h5>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addProductRow()">
+                        <i class="bi bi-plus"></i> Ajouter produit
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table" id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Produit</th>
+                                    <th style="width: 15%">Quantité</th>
+                                    <th style="width: 15%">Prix Unit.</th>
+                                    <th style="width: 20%">Total</th>
+                                    <th style="width: 10%"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="productRows">
+                                {% for item in proforma.items %}
+                                <tr id="row_{{ loop.index0 }}">
+                                    <td>
+                                        <select class="form-control product-select" name="product_id[]" onchange="updateProductInfo({{ loop.index0 }})" required>
+                                            <option value="">Sélectionner un produit...</option>
+                                            {% for p in products %}
+                                            <option value="{{ p.id }}" {% if p.id == item.product_id %}selected{% endif %} data-price="{{ p.selling_price }}" data-stock="{{ p.stock_quantity }}">{{ p.name }} (Stock: {{ p.stock_quantity }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control quantity-input" name="quantity[]" value="{{ item.quantity_requested }}" min="1" onchange="calculateLineTotal({{ loop.index0 }})" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control price-input" name="price[]" value="{{ item.unit_price }}" step="0.01" onchange="calculateLineTotal({{ loop.index0 }})" required>
+                                    </td>
+                                    <td>
+                                        <span class="line-total">{{ "%.2f"|format(item.line_total) }}</span> $
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="removeProductRow({{ loop.index0 }})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Détails</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Date de validité</label>
+                        <input type="date" class="form-control" name="validity_date" value="{{ proforma.validity_date.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Statut</label>
+                        <select class="form-control" name="status">
+                            <option value="draft" {% if proforma.status == 'draft' %}selected{% endif %}>Brouillon</option>
+                            <option value="sent" {% if proforma.status == 'sent' %}selected{% endif %}>Envoyée</option>
+                            <option value="accepted" {% if proforma.status == 'accepted' %}selected{% endif %}>Acceptée</option>
+                            <option value="rejected" {% if proforma.status == 'rejected' %}selected{% endif %}>Refusée</option>
+                            <option value="expired" {% if proforma.status == 'expired' %}selected{% endif %}>Expirée</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Conditions de paiement</label>
+                        <textarea class="form-control" name="payment_conditions" rows="2">{{ proforma.payment_conditions or 'Paiement à la livraison' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Conditions de livraison</label>
+                        <textarea class="form-control" name="delivery_conditions" rows="2">{{ proforma.delivery_conditions or 'Retrait en magasin' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3">{{ proforma.notes or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Totaux</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total HT:</span>
+                        <strong><span id="total_ht">{{ "%.2f"|format(proforma.total_ht) }}</span> $</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>TVA (16%):</span>
+                        <strong><span id="total_tax">{{ "%.2f"|format(proforma.total_tax) }}</span> $</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Total TTC:</strong></span>
+                        <strong class="text-primary"><span id="total_ttc">{{ "%.2f"|format(proforma.total_ttc) }}</span> $</strong>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-save"></i> Enregistrer les modifications
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const products = {{ products|tojson }};
+let rowIndex = {{ proforma.items|length }};
+
+// Même JavaScript que create.html...
+document.getElementById('customer_select').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (this.value) {
+        document.getElementById('customer_name').value = selectedOption.dataset.name || '';
+        document.getElementById('customer_address').value = selectedOption.dataset.address || '';
+        document.getElementById('customer_phone').value = selectedOption.dataset.phone || '';
+        document.getElementById('customer_email').value = selectedOption.dataset.email || '';
+    }
+});
+
+function addProductRow() {
+    const tbody = document.getElementById('productRows');
+    const row = document.createElement('tr');
+    row.id = `row_${rowIndex}`;
+    
+    row.innerHTML = `
+        <td>
+            <select class="form-control product-select" name="product_id[]" onchange="updateProductInfo(${rowIndex})" required>
+                <option value="">Sélectionner un produit...</option>
+                ${products.map(p => `<option value="${p.id}" data-price="${p.selling_price}" data-stock="${p.stock_quantity}">${p.name} (Stock: ${p.stock_quantity})</option>`).join('')}
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control quantity-input" name="quantity[]" value="1" min="1" onchange="calculateLineTotal(${rowIndex})" required>
+        </td>
+        <td>
+            <input type="number" class="form-control price-input" name="price[]" step="0.01" onchange="calculateLineTotal(${rowIndex})" required>
+        </td>
+        <td>
+            <span class="line-total">0.00</span> $
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeProductRow(${rowIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    rowIndex++;
+}
+
+function updateProductInfo(index) {
+    const row = document.getElementById(`row_${index}`);
+    const select = row.querySelector('.product-select');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (select.value) {
+        const price = parseFloat(selectedOption.dataset.price) || 0;
+        row.querySelector('.price-input').value = price.toFixed(2);
+        calculateLineTotal(index);
+    }
+}
+
+function calculateLineTotal(index) {
+    const row = document.getElementById(`row_${index}`);
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+    const total = quantity * price;
+    
+    row.querySelector('.line-total').textContent = total.toFixed(2);
+    calculateTotals();
+}
+
+function removeProductRow(index) {
+    document.getElementById(`row_${index}`).remove();
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let totalHt = 0;
+    document.querySelectorAll('.line-total').forEach(el => {
+        totalHt += parseFloat(el.textContent) || 0;
+    });
+    
+    const totalTax = totalHt * 0.16;
+    const totalTtc = totalHt * 1.16;
+    
+    document.getElementById('total_ht').textContent = totalHt.toFixed(2);
+    document.getElementById('total_tax').textContent = totalTax.toFixed(2);
+    document.getElementById('total_ttc').textContent = totalTtc.toFixed(2);
+}
+
+// Calculer les totaux initiaux
+calculateTotals();
+</script>
+{% endblock %}
+

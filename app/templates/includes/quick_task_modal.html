@@ -1,0 +1,137 @@
+<!-- Modal Créer Tâche Rapide - Accessible depuis toute l'application -->
+<div class="modal fade" id="quickTaskModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-tasks"></i> Nouvelle Tâche Rapide
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Titre <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="quick-task-title" placeholder="Ex: Vérifier stock médicament X" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-control" id="quick-task-description" rows="3" placeholder="Détails de la tâche..."></textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Assigner à</label>
+                            <select class="form-control" id="quick-task-assignee">
+                                <option value="">Moi-même</option>
+                                {% if current_user.role in ['admin', 'manager'] %}
+                                    {% for user in all_users %}
+                                    <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role }})</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Priorité</label>
+                            <select class="form-control" id="quick-task-priority">
+                                <option value="low">🟢 Basse</option>
+                                <option value="medium" selected>🟡 Moyenne</option>
+                                <option value="high">🟠 Haute</option>
+                                <option value="urgent">🔴 Urgente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Date limite</label>
+                    <input type="date" class="form-control" id="quick-task-due-date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-info" id="saveQuickTask">
+                    <i class="fas fa-save"></i> Créer la Tâche
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Définir la date minimale (aujourd'hui)
+    const today = new Date().toISOString().split('T')[0];
+    $('#quick-task-due-date').attr('min', today);
+    
+    // Charger les utilisateurs si nécessaire
+    {% if current_user.role in ['admin', 'manager'] %}
+    $.get('/api/users/active', function(users) {
+        let options = '<option value="">Moi-même</option>';
+        users.forEach(user => {
+            options += `<option value="${user.id}">${user.full_name} (${user.role})</option>`;
+        });
+        $('#quick-task-assignee').html(options);
+    });
+    {% endif %}
+    
+    // Sauvegarder la tâche
+    $('#saveQuickTask').click(function() {
+        const btn = $(this);
+        const title = $('#quick-task-title').val().trim();
+        const description = $('#quick-task-description').val().trim();
+        const assignedTo = $('#quick-task-assignee').val();
+        const priority = $('#quick-task-priority').val();
+        const dueDate = $('#quick-task-due-date').val();
+        
+        if (!title) {
+            alert('Le titre est requis');
+            $('#quick-task-title').focus();
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Création...');
+        
+        $.ajax({
+            url: '/tasks/quick-create',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                title: title,
+                description: description,
+                assigned_to: assignedTo || null,
+                priority: priority,
+                due_date: dueDate || null
+            }),
+            success: function(response) {
+                $('#quickTaskModal').modal('hide');
+                
+                // Réinitialiser le formulaire
+                $('#quick-task-title').val('');
+                $('#quick-task-description').val('');
+                $('#quick-task-assignee').val('');
+                $('#quick-task-priority').val('medium');
+                $('#quick-task-due-date').val('');
+                
+                alert('✓ Tâche créée avec succès!');
+                btn.prop('disabled', false).html('<i class="fas fa-save"></i> Créer la Tâche');
+                
+                // Recharger si on est sur la page des tâches
+                if (window.location.pathname.includes('/tasks')) {
+                    location.reload();
+                }
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                btn.prop('disabled', false).html('<i class="fas fa-save"></i> Créer la Tâche');
+            }
+        });
+    });
+});
+</script>
+

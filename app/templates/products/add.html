@@ -1,47 +1,66 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 class="mb-4">Ajouter un produit</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-capsule-pill"></i> Ajouter un produit</h2>
+    <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informations du produit</h5>
+    </div>
     <div class="card-body">
         <form method="POST">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Nom *</label>
-                    <input type="text" class="form-control" name="name" required>
+                    <label class="form-label"><i class="bi bi-tag"></i> Nom *</label>
+                    <input type="text" class="form-control" name="name" required placeholder="Nom du produit">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Code-barres</label>
-                    <input type="text" class="form-control" name="barcode">
+                    <label class="form-label"><i class="bi bi-upc-scan"></i> Code-barres</label>
+                    <input type="text" class="form-control" name="barcode" placeholder="Code-barres">
                 </div>
             </div>
+            
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Catégorie</label>
-                    <input type="text" class="form-control" name="category">
+                    <label class="form-label"><i class="bi bi-folder"></i> Forme</label>
+                    <input type="text" class="form-control" name="category" placeholder="Ex: Comprimé, Capsule, Sirop...">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Unité</label>
-                    <select class="form-select" name="unit">
+                    <label class="form-label"><i class="bi bi-box"></i> Unité</label>
+                    <select class="form-control" name="unit">
                         <option value="piece">Pièce</option>
                         <option value="box">Boîte</option>
                         <option value="bottle">Bouteille</option>
+                        <option value="strip">Plaquette</option>
+                        <option value="sachet">Sachet</option>
                     </select>
                 </div>
             </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3"><i class="bi bi-cash-coin"></i> Prix</h5>
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Prix d'achat</label>
-                    <input type="number" class="form-control" name="purchase_price" step="0.01" value="0">
+                    <label class="form-label">Prix d'achat ($)</label>
+                    <input type="number" class="form-control" name="purchase_price" step="0.01" value="0" placeholder="0.00">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Prix de vente *</label>
-                    <input type="number" class="form-control" name="selling_price" step="0.01" required>
+                    <label class="form-label">Prix de vente * ($)</label>
+                    <input type="number" class="form-control" name="selling_price" step="0.01" required placeholder="0.00">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Prix de gros</label>
-                    <input type="number" class="form-control" name="wholesale_price" step="0.01" value="0">
+                    <label class="form-label">Prix de gros ($)</label>
+                    <input type="number" class="form-control" name="wholesale_price" step="0.01" value="0" placeholder="0.00">
                 </div>
             </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3"><i class="bi bi-box-seam"></i> Stock</h5>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Quantité en stock</label>
@@ -56,22 +75,34 @@
                     <input type="date" class="form-control" name="expiry_date">
                 </div>
             </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3"><i class="bi bi-building"></i> Fournisseur</h5>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Fabricant</label>
-                    <input type="text" class="form-control" name="manufacturer">
+                    <input type="text" class="form-control" name="manufacturer" placeholder="Nom du fabricant">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Fournisseur</label>
-                    <input type="text" class="form-control" name="supplier">
+                    <input type="text" class="form-control" name="supplier" placeholder="Nom du fournisseur">
                 </div>
             </div>
+            
             <div class="mb-3">
-                <label class="form-label">Description</label>
-                <textarea class="form-control" name="description" rows="3"></textarea>
+                <label class="form-label"><i class="bi bi-file-text"></i> Description</label>
+                <textarea class="form-control" name="description" rows="3" placeholder="Description du produit..."></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a href="{{ url_for('products.index') }}" class="btn btn-secondary">Annuler</a>
+            
+            <hr class="my-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Enregistrer
+                </button>
+                <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+            </div>
         </form>
     </div>
 </div>

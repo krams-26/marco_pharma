@@ -1,7 +1,17 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 class="mb-4">Modifier l'utilisateur</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil-square"></i> Modifier l'utilisateur</h2>
+    <a href="{{ url_for('users.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-person-badge"></i> Informations utilisateur</h5>
+    </div>
     <div class="card-body">
         <form method="POST">
             <div class="row">
@@ -37,36 +47,167 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Rôle</label>
-                    <select class="form-select" name="role">
+                    <select class="form-control" name="role">
                         {% for value, label in roles %}
                         <option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <div class="form-check mt-4">
-                        <input type="checkbox" class="form-check-input" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %}>
-                        <label class="form-check-label" for="is_active">Actif</label>
-                    </div>
+                    {% set primary_pharmacy = user.get_primary_pharmacy() %}
+                    <label class="form-label">Pharmacie</label>
+                    <select class="form-control" name="pharmacy_id">
+                        <option value="">Sélectionner une pharmacie</option>
+                        {% for pharmacy in pharmacies %}
+                        <option value="{{ pharmacy.id }}" {% if primary_pharmacy and primary_pharmacy.id == pharmacy.id %}selected{% endif %}>
+                            {{ pharmacy.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
-            <div class="mb-3">
-                <h5>Permissions</h5>
-                {% set user_perms = user.get_permissions() %}
-                <div class="row">
-                    {% for perm, label in permissions %}
-                    <div class="col-md-4">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="perm_{{ perm }}" id="perm_{{ perm }}" {% if user_perms.get(perm) %}checked{% endif %}>
-                            <label class="form-check-label" for="perm_{{ perm }}">{{ label }}</label>
-                        </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="custom-control custom-checkbox mt-2">
+                        <input type="checkbox" class="custom-control-input" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %}>
+                        <label class="custom-control-label" for="is_active">Actif</label>
                     </div>
-                    {% endfor %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <button type="button" class="btn btn-outline-primary w-100" data-toggle="modal" data-target="#permissionsModal">
+                        <i class="bi bi-shield-check"></i> Gérer les Permissions
+                    </button>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Mettre à jour</button>
-            <a href="{{ url_for('users.index') }}" class="btn btn-secondary">Annuler</a>
+            
+            <hr class="my-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Mettre à jour
+                </button>
+                <a href="{{ url_for('users.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+            </div>
         </form>
     </div>
 </div>
+
+<!-- Modal Permissions -->
+{% set user_perms = user.get_permissions() %}
+<div class="modal fade" id="permissionsModal" tabindex="-1" role="dialog" aria-labelledby="permissionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white" id="permissionsModalLabel">
+                    <i class="fas fa-shield-alt"></i> Gestion des Permissions
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="alert alert-info alert-sm mb-3">
+                    <i class="fas fa-info-circle"></i> Cochez les permissions que vous souhaitez accorder à cet utilisateur.
+                </div>
+                
+                {% for module_name, module_perms in permissions_by_module.items() %}
+                <div class="card mb-3">
+                    <div class="card-header bg-gradient-primary py-2">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input module-checkbox" id="module_{{ loop.index }}" 
+                                   data-module="{{ loop.index }}" onchange="toggleModulePermissions({{ loop.index }})">
+                            <label class="custom-control-label text-white font-weight-bold" for="module_{{ loop.index }}">
+                                <i class="fas fa-layer-group"></i> {{ module_name }}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="row">
+                            {% for perm, label in module_perms %}
+                            <div class="col-md-6 mb-2">
+                                <div class="custom-control custom-checkbox custom-control-sm">
+                                    <input type="checkbox" class="custom-control-input perm-checkbox module-{{ loop.index0 }}" 
+                                           name="perm_{{ perm }}" id="perm_{{ perm }}" data-module="{{ loop.index0 }}"
+                                           {% if user_perms.get(perm) %}checked{% endif %}>
+                                    <label class="custom-control-label small" for="perm_{{ perm }}">
+                                        {{ label }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="clearAllPermissions()">
+                    <i class="fas fa-times"></i> Tout décocher
+                </button>
+                <button type="button" class="btn btn-success btn-sm" onclick="selectAllPermissions()">
+                    <i class="fas fa-check-double"></i> Tout cocher
+                </button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">
+                    <i class="fas fa-check"></i> Valider
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleModulePermissions(moduleIndex) {
+    const moduleCheckbox = document.getElementById(`module_${moduleIndex}`);
+    const permissions = document.querySelectorAll(`.module-${moduleIndex - 1}`);
+    
+    permissions.forEach(checkbox => {
+        checkbox.checked = moduleCheckbox.checked;
+    });
+}
+
+function selectAllPermissions() {
+    document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.querySelectorAll('.module-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+}
+
+function clearAllPermissions() {
+    document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll('.module-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+}
+
+// Mettre à jour la checkbox du module quand on coche/décoche des permissions
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const moduleIndex = this.getAttribute('data-module');
+            const moduleCheckbox = document.querySelector(`.module-checkbox[data-module="${parseInt(moduleIndex) + 1}"]`);
+            const modulePerms = document.querySelectorAll(`.module-${moduleIndex}`);
+            
+            let allChecked = true;
+            let noneChecked = true;
+            
+            modulePerms.forEach(perm => {
+                if (perm.checked) noneChecked = false;
+                if (!perm.checked) allChecked = false;
+            });
+            
+            if (moduleCheckbox) {
+                moduleCheckbox.checked = allChecked;
+                moduleCheckbox.indeterminate = !allChecked && !noneChecked;
+            }
+        });
+    });
+});
+</script>
+
 {% endblock %}

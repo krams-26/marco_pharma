@@ -1,5 +1,113 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Caisse{% endblock %}
+
 {% block content %}
-<h2>Cashier Module</h2>
-<p>Page en cours de développement...</p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Caisse</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Caisse</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('cashier.add_transaction') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-fat-add"></i> Nouvelle Transaction
+          </a>
+          <a href="{{ url_for('cashier.history') }}" class="btn btn-sm btn-info">
+            <i class="ni ni-bullet-list-67"></i> Historique
+          </a>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="row">
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Entrées</h5>
+                  <span class="h2 font-weight-bold mb-0 text-success">${{ "%.2f"|format(cash_in) }}</span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (cash_in|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                    <i class="ni ni-bold-down"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Sorties</h5>
+                  <span class="h2 font-weight-bold mb-0 text-danger">${{ "%.2f"|format(cash_out) }}</span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (cash_out|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                    <i class="ni ni-bold-up"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Ventes Cash</h5>
+                  <span class="h2 font-weight-bold mb-0 text-info">${{ "%.2f"|format(sales_cash) }}</span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (sales_cash|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                    <i class="ni ni-cart"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Solde</h5>
+                  <span class="h2 font-weight-bold mb-0 text-primary">${{ "%.2f"|format(balance) }}</span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (balance|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
+                    <i class="ni ni-money-coins"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

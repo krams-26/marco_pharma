@@ -1,0 +1,39 @@
+
+╔══════════════════════════════════════════════════════════╗
+║                                                          ║
+║         🏥  MARCO-PHARMA - ACCES RAPIDE  💊             ║
+║                                                          ║
+╚══════════════════════════════════════════════════════════╝
+
+
+    📍 OUVRIR L'APPLICATION:
+    
+         http://localhost:5000
+
+
+    🔐 SE CONNECTER COMME ADMINISTRATEUR:
+    
+         Username:  admin
+         Password:  admin123
+
+
+    📊 AUTRES COMPTES DISPONIBLES:
+    
+         Vendeur:       vendeur1      / vendeur123
+         Gestionnaire:  gestionnaire  / manager123
+         Pharmacien:    pharmacien    / pharma123
+
+
+    ▶  DEMARRER L'APPLICATION:
+    
+         Double-cliquez sur:  start.bat
+         
+         OU en ligne de commande:  python run.py
+
+
+═══════════════════════════════════════════════════════════════
+
+Tout est pret! Vous pouvez maintenant utiliser l'application.
+
+═══════════════════════════════════════════════════════════════
+

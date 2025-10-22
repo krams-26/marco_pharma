@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapport Clients{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Rapport Clients</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Rapports</a></li>
+              <li class="breadcrumb-item active">Clients</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('reports.index') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-bold-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <!-- Filtre pharmacie -->
+  {% if current_user.role == 'admin' and pharmacies %}
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-body">
+          <form method="GET" action="{{ url_for('reports.customers') }}" class="row">
+            <div class="col-lg-10 col-md-9">
+              <div class="form-group mb-3 mb-md-0">
+                <label class="form-control-label"><i class="ni ni-shop"></i> Pharmacie</label>
+                <select name="pharmacy_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes les Pharmacies</option>
+                  {% for pharmacy in pharmacies %}
+                  <option value="{{ pharmacy.id }}" {% if pharmacy_filter|string == pharmacy.id|string %}selected{% endif %}>
+                    {{ pharmacy.name }}{% if pharmacy.type == 'depot' %} (Dépôt){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-lg-2 col-md-3">
+              <div class="form-group mb-0">
+                <label class="form-control-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                  <i class="fas fa-search"></i> Filtrer
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Statistiques -->
+  <div class="row {% if current_user.role == 'admin' and pharmacies %}mt-4{% endif %}">
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Clients</h5>
+              <span class="h2 font-weight-bold mb-0">{{ customer_stats|length }}</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                <i class="fas fa-users"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">CA Total</h5>
+              {% set total_ca = customer_stats|sum(attribute='total_purchases') %}
+              <span class="h2 font-weight-bold mb-0">{{ "%.2f"|format(total_ca) }}$</span>
+              <p class="mt-1 mb-0 text-sm"><span class="text-nowrap">{{ "%.0f"|format(total_ca|usd_to_cdf) }} FC</span></p>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                <i class="ni ni-money-coins"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Créances</h5>
+              {% set total_balance = customer_stats|sum(attribute='balance') %}
+              <span class="h2 font-weight-bold mb-0">{{ "%.2f"|format(total_balance) }}$</span>
+              <p class="mt-1 mb-0 text-sm"><span class="text-nowrap">{{ "%.0f"|format(total_balance|usd_to_cdf) }} FC</span></p>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                <i class="ni ni-credit-card"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des clients -->
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Top Clients par CA</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>#</th>
+                <th>Client</th>
+                <th>Contact</th>
+                <th class="text-right">Total Achats</th>
+                <th class="text-right">Total Payé</th>
+                <th class="text-right">Solde Dû</th>
+                <th class="text-center">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for stat in customer_stats %}
+              <tr>
+                <td class="font-weight-bold">{{ loop.index }}</td>
+                <td class="font-weight-bold">{{ stat.customer.name }}</td>
+                <td>{{ stat.customer.phone or '-' }}</td>
+                <td class="text-right">
+                  <span class="font-weight-bold">{{ "%.2f"|format(stat.total_purchases) }}$</span>
+                  <br><small class="text-muted">{{ "%.0f"|format(stat.total_purchases|usd_to_cdf) }} FC</small>
+                </td>
+                <td class="text-right">
+                  <span class="font-weight-bold">{{ "%.2f"|format(stat.total_paid) }}$</span>
+                  <br><small class="text-muted">{{ "%.0f"|format(stat.total_paid|usd_to_cdf) }} FC</small>
+                </td>
+                <td class="text-right">
+                  <span class="font-weight-bold">{{ "%.2f"|format(stat.balance) }}$</span>
+                  <br><small class="text-muted">{{ "%.0f"|format(stat.balance|usd_to_cdf) }} FC</small>
+                </td>
+                <td class="text-center">
+                  {% if stat.balance == 0 %}
+                    <span class="badge badge-success">À jour</span>
+                  {% elif stat.balance > 0 %}
+                    <span class="badge badge-warning">Créance</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" class="text-center text-muted">Aucun client</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

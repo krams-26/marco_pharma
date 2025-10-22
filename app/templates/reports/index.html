@@ -1,5 +1,160 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Rapports{% endblock %}
+
 {% block content %}
-<h2>Reports Module</h2>
-<p>Page en cours de développement...</p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-12">
+          <h6 class="h2 text-white d-inline-block mb-0">Rapports et Analyses</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Rapports</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <!-- Rapports Disponibles -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-2">Ventes</h5>
+              <p class="mb-3 text-sm">Analyse des ventes et revenus</p>
+              <a href="{{ url_for('reports.sales') }}" class="btn btn-sm btn-primary">
+                <i class="ni ni-chart-bar-32"></i> Voir le Rapport
+              </a>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
+                <i class="ni ni-money-coins"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-2">Stock</h5>
+              <p class="mb-3 text-sm">État des stocks et mouvements</p>
+              <a href="{{ url_for('reports.stock') }}" class="btn btn-sm btn-info">
+                <i class="ni ni-box-2"></i> Voir le Rapport
+              </a>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                <i class="ni ni-box-2"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-2">Produits</h5>
+              <p class="mb-3 text-sm">Performance des produits</p>
+              <a href="{{ url_for('reports.products') }}" class="btn btn-sm btn-success">
+                <i class="ni ni-basket"></i> Voir le Rapport
+              </a>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                <i class="ni ni-basket"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-2">Clients</h5>
+              <p class="mb-3 text-sm">Analyse clients et fidélité</p>
+              <a href="{{ url_for('reports.customers') }}" class="btn btn-sm btn-warning">
+                <i class="ni ni-single-02"></i> Voir le Rapport
+              </a>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                <i class="ni ni-single-02"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-2">Mensuel</h5>
+              <p class="mb-3 text-sm">Rapport mensuel consolidé</p>
+              <a href="{{ url_for('reports.monthly') }}" class="btn btn-sm btn-danger">
+                <i class="ni ni-calendar-grid-58"></i> Voir le Rapport
+              </a>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                <i class="ni ni-calendar-grid-58"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if current_user.role == 'admin' %}
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-2">Pharmacies</h5>
+              <p class="mb-3 text-sm">Comparaison des pharmacies</p>
+              <a href="{{ url_for('reports.pharmacies') }}" class="btn btn-sm btn-primary">
+                <i class="ni ni-shop"></i> Voir le Rapport
+              </a>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
+                <i class="ni ni-shop"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
 {% endblock %}

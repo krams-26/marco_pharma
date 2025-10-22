@@ -1,0 +1,206 @@
+<nav class="sidenav navbar navbar-vertical fixed-left navbar-expand-xs navbar-light bg-white" id="sidenav-main">
+  <!-- Brand FIXE en haut -->
+  <div class="sidenav-header align-items-center">
+    <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
+      <img src="{{ url_for('static', filename='img/marco-pharma-logo.png') }}" class="navbar-brand-img" alt="Marco Pharma" style="max-height: 50px;">
+    </a>
+  </div>
+
+  <!-- Navigation SCROLLABLE -->
+  <div class="sidenav-scrollable">
+    <div class="navbar-inner">
+      <div class="collapse navbar-collapse show" id="sidenav-collapse-main">
+        <ul class="navbar-nav">
+          <!-- Dashboard -->
+          {% if current_user.has_permission('view_dashboard') %}
+          <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('dashboard.index') }}">
+              <i class="ni ni-tv-2 text-primary"></i>
+              <span class="nav-link-text">Tableau de bord</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Produits -->
+          {% if current_user.has_permission('manage_products') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('products.index') }}">
+              <i class="ni ni-basket text-orange"></i>
+              <span class="nav-link-text">Produits</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Stock -->
+          {% if current_user.has_permission('manage_stock') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('stock.index') }}">
+              <i class="ni ni-box-2 text-blue"></i>
+              <span class="nav-link-text">Stock</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Ventes -->
+          {% if current_user.has_permission('manage_sales') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('sales.index') }}">
+              <i class="ni ni-cart text-green"></i>
+              <span class="nav-link-text">Ventes</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- POS -->
+          {% if current_user.has_permission('manage_sales') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('pos.index') }}">
+              <i class="ni ni-money-coins text-success"></i>
+              <span class="nav-link-text">Point de Vente</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Clients -->
+          {% if current_user.has_permission('manage_customers') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('customers.index') }}">
+              <i class="ni ni-single-02 text-yellow"></i>
+              <span class="nav-link-text">Clients</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Fournisseurs -->
+          {% if current_user.has_permission('manage_suppliers') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('suppliers.index') }}">
+              <i class="ni ni-delivery-fast text-cyan"></i>
+              <span class="nav-link-text">Fournisseurs</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Caisse -->
+          {% if current_user.has_permission('manage_cashier') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('cashier.index') }}">
+              <i class="ni ni-credit-card text-info"></i>
+              <span class="nav-link-text">Caisse</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Paiements -->
+          {% if current_user.has_permission('manage_payments') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('payments.index') }}">
+              <i class="ni ni-money-coins text-success"></i>
+              <span class="nav-link-text">Paiements</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- RH -->
+          {% if current_user.has_permission('manage_hr') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('hr.index') }}">
+              <i class="ni ni-badge text-pink"></i>
+              <span class="nav-link-text">RH / Personnel</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Tâches -->
+          {% if current_user.has_permission('view_tasks') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('tasks.index') }}">
+              <i class="ni ni-check-bold text-teal"></i>
+              <span class="nav-link-text">Tâches</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Approbations -->
+          {% if current_user.has_permission('view_approvals') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('approvals.index') }}">
+              <i class="ni ni-check-bold text-success"></i>
+              <span class="nav-link-text">Approbations</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Pharmacies -->
+          {% if current_user.has_permission('manage_settings') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('pharmacies.index') }}">
+              <i class="ni ni-shop text-default"></i>
+              <span class="nav-link-text">Pharmacies</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Utilisateurs -->
+          {% if current_user.has_permission('manage_users') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('users.index') }}">
+              <i class="ni ni-circle-08 text-info"></i>
+              <span class="nav-link-text">Utilisateurs</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Rapports -->
+          {% if current_user.has_permission('view_reports') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('reports.index') }}">
+              <i class="ni ni-chart-bar-32 text-primary"></i>
+              <span class="nav-link-text">Rapports</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Audits -->
+          {% if current_user.has_permission('view_audits') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('audits.index') }}">
+              <i class="ni ni-lock-circle-open text-warning"></i>
+              <span class="nav-link-text">Audits</span>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Notifications -->
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('notifications.index') }}">
+              <i class="ni ni-bell-55 text-danger"></i>
+              <span class="nav-link-text">Notifications</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paramètres et Déconnexion FIXES en bas -->
+  <div class="sidenav-footer">
+    <ul class="navbar-nav">
+      {% if current_user.has_permission('manage_settings') %}
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('settings.index') }}">
+          <i class="ni ni-settings-gear-65 text-gray"></i>
+          <span class="nav-link-text">Paramètres</span>
+        </a>
+      </li>
+      {% endif %}
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+          <i class="ni ni-user-run text-red"></i>
+          <span class="nav-link-text">Déconnexion</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+

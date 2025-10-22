@@ -1,44 +1,261 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Enregistrer un Paiement{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Enregistrer un paiement</h2>
-<div class="card mb-3">
-    <div class="card-body">
-        <h5>Facture: {{ sale.invoice_number }}</h5>
-        <p><strong>Client:</strong> {{ sale.customer.name if sale.customer else 'Client anonyme' }}</p>
-        <p><strong>Total:</strong> ${{ "%.2f"|format(sale.total_amount) }}</p>
-        <p><strong>Payé:</strong> ${{ "%.2f"|format(sale.paid_amount) }}</p>
-        <p><strong>Solde dû:</strong> <span class="text-danger">${{ "%.2f"|format(sale.balance_due) }}</span></p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Enregistrer un Paiement</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('payments.pending') }}">Paiements</a></li>
+              <li class="breadcrumb-item active">Enregistrer</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('payments.pending') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-bold-left"></i> Retour
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
-<div class="card">
-    <div class="card-body">
-        <form method="POST">
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <!-- Informations Facture -->
+    <div class="col-lg-5">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-single-copy-04"></i> Facture {{ sale.invoice_number }}</h3>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="text-muted text-sm">Client</label>
+            <h4>{{ sale.customer.name if sale.customer else 'Client anonyme' }}</h4>
+          </div>
+          
+          <div class="mb-3">
+            <label class="text-muted text-sm">Date de vente</label>
+            <p class="mb-0">{{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}</p>
+          </div>
+
+          <hr>
+
+          <!-- Montants -->
+          <div class="mb-3">
+            <label class="text-muted text-sm">Montant Total</label>
+            <h3 class="mb-0">
+              ${{ "%.2f"|format(sale.total_amount) }}
+              <small class="text-muted d-block">{{ (sale.total_amount|usd_to_cdf)|format_number }} FC</small>
+            </h3>
+          </div>
+
+          <div class="mb-3">
+            <label class="text-muted text-sm">Déjà Payé</label>
+            <h4 class="text-success mb-0">
+              ${{ "%.2f"|format(sale.paid_amount) }}
+              <small class="text-muted d-block">{{ (sale.paid_amount|usd_to_cdf)|format_number }} FC</small>
+            </h4>
+          </div>
+
+          <hr class="my-3">
+
+          <div>
+            <label class="text-muted text-sm">Solde Restant</label>
+            <h2 class="text-danger mb-0" id="current-balance">
+              ${{ "%.2f"|format(sale.balance_due) }}
+              <small class="text-muted d-block">{{ (sale.balance_due|usd_to_cdf)|format_number }} FC</small>
+            </h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique Paiements -->
+      {% if sale.payments %}
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-bullet-list-67"></i> Paiements Effectués</h3>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-items-center table-flush mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Montant</th>
+                  <th>Méthode</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for payment in sale.payments %}
+                <tr>
+                  <td><small>{{ payment.payment_date.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                  <td>
+                    <span class="font-weight-bold">${{ "%.2f"|format(payment.amount) }}</span><br>
+                    <small class="text-muted">{{ (payment.amount|usd_to_cdf)|format_number }} FC</small>
+                  </td>
+                  <td><span class="badge badge-info">{{ payment.payment_method }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Formulaire Paiement -->
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-money-coins"></i> Nouveau Paiement</h3>
+        </div>
+        <div class="card-body">
+          <form method="POST" id="payment-form">
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Montant *</label>
-                    <input type="number" class="form-control" name="amount" step="0.01" max="{{ sale.balance_due }}" required>
+              <div class="col-md-6 mb-4">
+                <label class="form-control-label">Montant à Payer (USD) *</label>
+                <input type="number" class="form-control form-control-lg" name="amount" step="0.01" max="{{ sale.balance_due }}" required id="payment-amount" placeholder="0.00">
+                <small class="form-text text-muted">Maximum: ${{ "%.2f"|format(sale.balance_due) }}</small>
+                
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="document.getElementById('payment-amount').value='{{ sale.balance_due }}'">
+                  <i class="ni ni-check-bold"></i> Payer le Solde Complet
+                </button>
+              </div>
+
+              <div class="col-md-6 mb-4">
+                <label class="form-control-label">Méthode de Paiement *</label>
+                <select class="form-control form-control-lg" name="payment_method" required>
+                  <option value="cash">💵 Espèces</option>
+                  <option value="mobile">📱 Mobile Money</option>
+                  <option value="card">💳 Carte Bancaire</option>
+                  <option value="bank">🏦 Virement</option>
+                  <option value="check">📝 Chèque</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-4">
+                <label class="form-control-label">Référence</label>
+                <input type="text" class="form-control" name="reference" placeholder="N° transaction, chèque...">
+              </div>
+
+              <div class="col-md-6 mb-4">
+                <label class="form-control-label">Notes</label>
+                <textarea class="form-control" name="notes" rows="2" placeholder="Notes optionnelles..."></textarea>
+              </div>
+            </div>
+
+            <!-- Aperçu Calcul -->
+            <div class="card border-primary shadow">
+              <div class="card-header bg-primary">
+                <h5 class="text-white mb-0"><i class="ni ni-chart-bar-32"></i> Calcul du Nouveau Solde</h5>
+              </div>
+              <div class="card-body bg-white">
+                <div class="d-flex justify-content-between mb-3 p-2 bg-light rounded">
+                  <span class="text-dark font-weight-bold">Solde Actuel:</span>
+                  <strong class="text-danger h5 mb-0">
+                    ${{ "%.2f"|format(sale.balance_due) }}
+                  </strong>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Méthode de paiement *</label>
-                    <select class="form-select" name="payment_method" required>
-                        <option value="cash">Espèces</option>
-                        <option value="card">Carte</option>
-                        <option value="bank">Virement</option>
-                        <option value="mobile">Mobile Money</option>
-                    </select>
+
+                <div class="d-flex justify-content-between mb-3 p-2 bg-light rounded">
+                  <span class="text-dark font-weight-bold">Montant à Payer:</span>
+                  <strong class="text-primary h5 mb-0" id="preview-amount">$0.00</strong>
                 </div>
+
+                <hr class="my-2 border-dark">
+
+                <div class="d-flex justify-content-between p-3 bg-gradient-success rounded">
+                  <span class="text-white h6 mb-0 font-weight-bold">Nouveau Solde:</span>
+                  <span class="h4 mb-0" id="new-balance-display">
+                    <strong class="text-white" id="new-balance-usd">${{ "%.2f"|format(sale.balance_due) }}</strong>
+                  </span>
+                </div>
+                <div class="text-right mt-1">
+                  <small class="text-dark font-weight-bold" id="new-balance-cdf">{{ (sale.balance_due|usd_to_cdf)|format_number }} FC</small>
+                </div>
+
+                <div class="mt-3 text-center" id="status-preview"></div>
+              </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Référence</label>
-                <input type="text" class="form-control" name="reference">
+
+            <div class="mt-4 text-center">
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="ni ni-check-bold"></i> Enregistrer le Paiement
+              </button>
+              <a href="{{ url_for('payments.pending') }}" class="btn btn-secondary btn-lg">
+                <i class="ni ni-fat-remove"></i> Annuler
+              </a>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Notes</label>
-                <textarea class="form-control" name="notes" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a href="{{ url_for('payments.pending') }}" class="btn btn-secondary">Annuler</a>
-        </form>
+          </form>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+const TAUX_USD_CDF = 2800;
+const currentBalance = {{ sale.balance_due }};
+
+// Calculer en temps réel
+$('#payment-amount').on('input', function() {
+    const amount = parseFloat($(this).val()) || 0;
+    const newBalance = currentBalance - amount;
+    
+    // Mise à jour affichage
+    $('#preview-amount').text('$' + amount.toFixed(2));
+    $('#new-balance-usd').text('$' + newBalance.toFixed(2));
+    $('#new-balance-cdf').text(Math.round(newBalance * TAUX_USD_CDF).toLocaleString() + ' FC');
+    
+    // Indicateur statut
+    let statusHtml = '';
+    if (newBalance <= 0) {
+        statusHtml = '<span class="badge badge-success badge-lg"><i class="ni ni-check-bold"></i> FACTURE SOLDÉE</span>';
+        $('#new-balance-display').removeClass('text-danger').addClass('text-success');
+    } else if (amount > 0) {
+        statusHtml = '<span class="badge badge-warning badge-lg"><i class="ni ni-time-alarm"></i> PAIEMENT PARTIEL</span>';
+        $('#new-balance-display').removeClass('text-success').addClass('text-danger');
+    } else {
+        statusHtml = '';
+        $('#new-balance-display').removeClass('text-success text-danger');
+    }
+    $('#status-preview').html(statusHtml);
+});
+
+// Validation avant soumission
+$('#payment-form').on('submit', function(e) {
+    const amount = parseFloat($('#payment-amount').val()) || 0;
+    
+    if (amount <= 0) {
+        e.preventDefault();
+        alert('Le montant doit être supérieur à zéro');
+        return false;
+    }
+    
+    if (amount > currentBalance) {
+        e.preventDefault();
+        alert('Le montant ne peut pas dépasser le solde dû ($' + currentBalance.toFixed(2) + ')');
+        return false;
+    }
+    
+    return true;
+});
+</script>
 {% endblock %}

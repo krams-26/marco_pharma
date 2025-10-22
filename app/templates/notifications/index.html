@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Notifications</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Notifications</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Toutes les Notifications</h3>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Message</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for notif in notifications.items %}
+              <tr>
+                <td><small>{{ notif.created_at.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                <td>
+                  {% if notif.type == 'low_stock' %}
+                    <span class="badge badge-warning"><i class="fas fa-box"></i> Stock Faible</span>
+                  {% elif notif.type == 'expired' %}
+                    <span class="badge badge-danger"><i class="fas fa-calendar"></i> Expiré</span>
+                  {% elif notif.type == 'payment' %}
+                    <span class="badge badge-info"><i class="fas fa-money"></i> Paiement</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ notif.type }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ notif.message }}</td>
+                <td>
+                  {% if notif.is_read %}
+                    <span class="badge badge-success">Lu</span>
+                  {% else %}
+                    <span class="badge badge-warning">Non lu</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucune notification
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if notifications.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not notifications.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ notifications.prev_num }}"><i class="fas fa-angle-left"></i></a>
+              </li>
+              {% for page_num in range(1, notifications.pages + 1) %}
+                {% if page_num == notifications.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == notifications.pages or (page_num >= notifications.page - 2 and page_num <= notifications.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not notifications.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ notifications.next_num }}"><i class="fas fa-angle-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

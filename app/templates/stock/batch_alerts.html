@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Alertes Lots Expirant{% endblock %}
+
+{% block content %}
+<div class="header bg-gradient-danger pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6">
+                    <h6 class="h2 text-white d-inline-block mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Alertes d'Expiration
+                    </h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.index') }}">Stock</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.batches') }}">Lots</a></li>
+                            <li class="breadcrumb-item active">Alertes</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 text-right">
+                    <a href="{{ url_for('stock.batches') }}" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-boxes"></i> Tous les Lots
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistiques Alertes -->
+            <div class="row">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-stats">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col">
+                                    <h5 class="card-title text-uppercase text-muted mb-0">Déjà Expirés</h5>
+                                    <span class="h2 font-weight-bold mb-0 text-danger">{{ stats.expired | format_number }}</span>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-stats">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col">
+                                    <h5 class="card-title text-uppercase text-muted mb-0">≤ 30 jours</h5>
+                                    <span class="h2 font-weight-bold mb-0 text-danger">{{ stats.expiring_30 | format_number }}</span>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-stats">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col">
+                                    <h5 class="card-title text-uppercase text-muted mb-0">31-60 jours</h5>
+                                    <span class="h2 font-weight-bold mb-0 text-warning">{{ stats.expiring_60 | format_number }}</span>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-stats">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col">
+                                    <h5 class="card-title text-uppercase text-muted mb-0">61-90 jours</h5>
+                                    <span class="h2 font-weight-bold mb-0 text-info">{{ stats.expiring_90 | format_number }}</span>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+    <div class="row">
+        <div class="col">
+            <!-- Alertes -->
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span class="alert-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                <span class="alert-text">
+                    <strong>Attention!</strong> Cette page liste les lots qui expirent bientôt ou sont déjà expirés. 
+                    Veuillez prendre les mesures nécessaires (vente promotionnelle, retour fournisseur, destruction).
+                </span>
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="card">
+                <!-- Card header -->
+                <div class="card-header border-0">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3 class="mb-0">Lots Nécessitant une Attention</h3>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <a href="{{ url_for('stock.export_batches', format='excel', status='active') }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtres -->
+                <div class="card-body bg-secondary">
+                    <form method="get" class="row align-items-end">
+                        {% if pharmacies %}
+                        <div class="col-md-4 form-group">
+                            <label class="form-control-label">Pharmacie</label>
+                            <select name="pharmacy_id" class="form-control form-control-sm">
+                                <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes</option>
+                                {% for pharmacy in pharmacies %}
+                                <option value="{{ pharmacy.id }}" {% if pharmacy_filter == pharmacy.id|string %}selected{% endif %}>
+                                    {{ pharmacy.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-4 form-group">
+                            <label class="form-control-label">Période d'Expiration</label>
+                            <select name="days" class="form-control form-control-sm">
+                                <option value="30" {% if days_filter == '30' %}selected{% endif %}>30 jours</option>
+                                <option value="60" {% if days_filter == '60' %}selected{% endif %}>60 jours</option>
+                                <option value="90" {% if days_filter == '90' %}selected{% endif %}>90 jours</option>
+                                <option value="180" {% if days_filter == '180' %}selected{% endif %}>6 mois</option>
+                                <option value="365" {% if days_filter == '365' %}selected{% endif %}>1 an</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <button type="submit" class="btn btn-primary btn-sm mr-2">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
+                            <a href="{{ url_for('stock.batches_expiring') }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-redo"></i> Réinitialiser
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Priorité</th>
+                                <th>Produit</th>
+                                <th>N° Lot</th>
+                                <th>Pharmacie</th>
+                                <th>Quantité</th>
+                                <th>Expiration</th>
+                                <th>Jours Restants</th>
+                                <th>Valeur</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for batch in batches.items %}
+                            <tr {% if batch.is_expired %}class="table-danger"{% elif batch.days_until_expiry <= 30 %}class="table-warning"{% endif %}>
+                                <td class="text-center">
+                                    {% if batch.is_expired %}
+                                        <i class="fas fa-times-circle fa-2x text-danger" title="Expiré"></i>
+                                    {% elif batch.days_until_expiry <= 15 %}
+                                        <i class="fas fa-exclamation-circle fa-2x text-danger" title="Urgent"></i>
+                                    {% elif batch.days_until_expiry <= 30 %}
+                                        <i class="fas fa-exclamation-triangle fa-2x text-warning" title="Important"></i>
+                                    {% elif batch.days_until_expiry <= 60 %}
+                                        <i class="fas fa-info-circle fa-2x text-info" title="À surveiller"></i>
+                                    {% else %}
+                                        <i class="fas fa-clock fa-2x text-muted" title="Normal"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ batch.product.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ batch.product.category }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-pill badge-info">{{ batch.batch_number }}</span>
+                                </td>
+                                <td>
+                                    {% if batch.pharmacy %}
+                                        <small>{{ batch.pharmacy.name }}</small>
+                                    {% else %}
+                                        <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="{% if batch.quantity > 50 %}text-danger{% elif batch.quantity > 20 %}text-warning{% endif %}">
+                                        {{ batch.quantity }}
+                                    </strong> unités
+                                </td>
+                                <td>
+                                    {% if batch.expiry_date %}
+                                        <strong>{{ batch.expiry_date.strftime('%d/%m/%Y') }}</strong>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if batch.days_until_expiry is not none %}
+                                        {% if batch.days_until_expiry < 0 %}
+                                            <span class="badge badge-danger badge-lg">
+                                                <i class="fas fa-times"></i> Expiré depuis {{ -batch.days_until_expiry }} jours
+                                            </span>
+                                        {% elif batch.days_until_expiry == 0 %}
+                                            <span class="badge badge-danger badge-lg">
+                                                <i class="fas fa-exclamation-triangle"></i> Expire Aujourd'hui!
+                                            </span>
+                                        {% elif batch.days_until_expiry <= 7 %}
+                                            <span class="badge badge-danger badge-lg">
+                                                <i class="fas fa-fire"></i> {{ batch.days_until_expiry }} jours
+                                            </span>
+                                        {% elif batch.days_until_expiry <= 30 %}
+                                            <span class="badge badge-warning badge-lg">
+                                                <i class="fas fa-exclamation-circle"></i> {{ batch.days_until_expiry }} jours
+                                            </span>
+                                        {% elif batch.days_until_expiry <= 60 %}
+                                            <span class="badge badge-info badge-lg">
+                                                {{ batch.days_until_expiry }} jours
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary badge-lg">
+                                                {{ batch.days_until_expiry }} jours
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="text-danger">
+                                        ${{ "%.2f"|format(batch.quantity * batch.purchase_price) }}
+                                    </strong>
+                                </td>
+                                <td class="text-right">
+                                    <div class="dropdown">
+                                        <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                                            <a class="dropdown-item" href="{{ url_for('stock.batch_view', id=batch.id) }}">
+                                                <i class="fas fa-eye"></i> Voir détails
+                                            </a>
+                                            <a class="dropdown-item" href="{{ url_for('stock.batch_edit', id=batch.id) }}">
+                                                <i class="fas fa-edit"></i> Modifier
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item text-success" href="{{ url_for('pos.index') }}">
+                                                <i class="fas fa-shopping-cart"></i> Créer Vente Promo
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                                    <p><strong>Aucun lot nécessitant une attention immédiate</strong></p>
+                                    <p class="small">Tous vos lots sont en bon état pour la période sélectionnée.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if batches.pages > 1 %}
+                <div class="card-footer py-4">
+                    <nav>
+                        <ul class="pagination justify-content-end mb-0">
+                            <li class="page-item {% if not batches.has_prev %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('stock.batches_expiring', page=batches.prev_num, pharmacy_id=pharmacy_filter, days=days_filter) }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% for page_num in batches.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == batches.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('stock.batches_expiring', page=page_num, pharmacy_id=pharmacy_filter, days=days_filter) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            <li class="page-item {% if not batches.has_next %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('stock.batches_expiring', page=batches.next_num, pharmacy_id=pharmacy_filter, days=days_filter) }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recommandations -->
+            {% if batches.items %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-lightbulb text-warning"></i> Recommandations</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>Lots expirés:</strong> Retirer immédiatement du stock et détruire selon la procédure</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>≤ 30 jours:</strong> Organiser une vente promotionnelle ou contacter le fournisseur pour un retour</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>30-60 jours:</strong> Surveiller de près et planifier des actions commerciales</li>
+                        <li class="mb-2"><i class="fas fa-check text-success mr-2"></i> <strong>60-90 jours:</strong> Maintenir en surveillance régulière</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

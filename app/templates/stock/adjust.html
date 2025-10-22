@@ -6,7 +6,7 @@
         <form method="POST">
             <div class="mb-3">
                 <label class="form-label">Produit *</label>
-                <select class="form-select" name="product_id" required>
+                <select class="form-control" name="product_id" required>
                     <option value="">Sélectionner un produit</option>
                     {% for product in products %}
                     <option value="{{ product.id }}">{{ product.name }} (Stock: {{ product.stock_quantity }})</option>
@@ -15,7 +15,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Type de mouvement *</label>
-                <select class="form-select" name="movement_type" required>
+                <select class="form-control" name="movement_type" required>
                     <option value="in">Entrée</option>
                     <option value="out">Sortie</option>
                 </select>

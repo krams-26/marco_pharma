@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
-from app.models import db, User, Audit
+from app.models import db, User
+from app.helpers import ActivityLogger
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/')
+@auth_bp.route('/', methods=['GET', 'POST'])
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -21,22 +22,33 @@ def login():
             if user.is_active:
                 login_user(user, remember=remember)
                 
-                audit = Audit(
+                # Logger la connexion réussie
+                ActivityLogger.log_login(
                     user_id=user.id,
-                    action='login',
-                    entity_type='user',
-                    entity_id=user.id,
-                    details=f'Connexion réussie de {user.username}',
-                    ip_address=request.remote_addr
+                    username=user.username,
+                    result='success',
+                    details=f'Connexion réussie: {user.username} ({user.role})'
                 )
-                db.session.add(audit)
-                db.session.commit()
                 
                 next_page = request.args.get('next')
                 return redirect(next_page or url_for('dashboard.index'))
             else:
-                flash('Votre compte est désactivé.', 'danger')
+                # Logger la tentative sur compte désactivé
+                ActivityLogger.log_login(
+                    user_id=user.id if user else None,
+                    username=username,
+                    result='denied',
+                    details=f'Tentative de connexion sur compte désactivé: {username}'
+                )
+                flash('Votre compte est désactivé. Contactez l\'administrateur.', 'danger')
         else:
+            # Logger l'échec de connexion
+            ActivityLogger.log_login(
+                user_id=user.id if user else None,
+                username=username,
+                result='failed',
+                details=f'Échec de connexion: identifiants incorrects pour {username}'
+            )
             flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
     
     return render_template('auth/login.html')
@@ -44,16 +56,11 @@ def login():
 @auth_bp.route('/logout')
 @login_required
 def logout():
-    audit = Audit(
+    # Logger la déconnexion
+    ActivityLogger.log_logout(
         user_id=current_user.id,
-        action='logout',
-        entity_type='user',
-        entity_id=current_user.id,
-        details=f'Déconnexion de {current_user.username}',
-        ip_address=request.remote_addr
+        username=current_user.username
     )
-    db.session.add(audit)
-    db.session.commit()
     
     logout_user()
     flash('Vous avez été déconnecté avec succès.', 'info')

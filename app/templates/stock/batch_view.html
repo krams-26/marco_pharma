@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Détails Lot {{ batch.batch_number }}{% endblock %}
+
+{% block content %}
+<div class="header bg-gradient-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-8">
+                    <h6 class="h2 text-white d-inline-block mb-0">Détails du Lot #{{ batch.batch_number }}</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.index') }}">Stock</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.batches') }}">Lots</a></li>
+                            <li class="breadcrumb-item active">{{ batch.batch_number }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-4 text-right">
+                    <a href="{{ url_for('stock.batch_edit', id=batch.id) }}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    <a href="{{ url_for('stock.batches') }}" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+    <div class="row">
+        <!-- Informations du Lot -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Informations du Lot</h3>
+                        </div>
+                        <div class="col text-right">
+                            {% if batch.status == 'active' %}
+                                <span class="badge badge-lg badge-success">Actif</span>
+                            {% elif batch.status == 'expired' %}
+                                <span class="badge badge-lg badge-danger">Expiré</span>
+                            {% elif batch.status == 'depleted' %}
+                                <span class="badge badge-lg badge-secondary">Épuisé</span>
+                            {% elif batch.status == 'recalled' %}
+                                <span class="badge badge-lg badge-warning">Rappelé</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="mb-3"><i class="fas fa-box text-primary"></i> Informations Produit</h4>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="40%">Produit:</th>
+                                    <td><strong>{{ batch.product.name }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Catégorie/Forme:</th>
+                                    <td>{{ batch.product.category }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Code-barres:</th>
+                                    <td>{{ batch.product.barcode }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Pharmacie:</th>
+                                    <td>
+                                        {% if batch.pharmacy %}
+                                            <span class="badge badge-info">{{ batch.pharmacy.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Non assigné</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="mb-3"><i class="fas fa-hashtag text-success"></i> Informations Lot</h4>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="40%">N° de Lot:</th>
+                                    <td><span class="badge badge-primary badge-lg">{{ batch.batch_number }}</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Quantité Actuelle:</th>
+                                    <td>
+                                        <strong class="text-success" style="font-size: 1.2em;">{{ batch.quantity }}</strong> unités
+                                        {% if batch.quantity <= 0 %}
+                                            <i class="fas fa-ban text-danger ml-2"></i>
+                                        {% elif batch.quantity < (batch.initial_quantity * 0.2) %}
+                                            <i class="fas fa-exclamation-triangle text-warning ml-2"></i>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Quantité Initiale:</th>
+                                    <td>{{ batch.initial_quantity }} unités</td>
+                                </tr>
+                                <tr>
+                                    <th>Vendues:</th>
+                                    <td>{{ batch.initial_quantity - batch.quantity }} unités</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="mb-3"><i class="fas fa-calendar text-warning"></i> Dates</h4>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="40%">Date Fabrication:</th>
+                                    <td>
+                                        {% if batch.manufacture_date %}
+                                            {{ batch.manufacture_date.strftime('%d/%m/%Y') }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseignée</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Date Expiration:</th>
+                                    <td>
+                                        {% if batch.expiry_date %}
+                                            <strong>{{ batch.expiry_date.strftime('%d/%m/%Y') }}</strong>
+                                            {% if batch.days_until_expiry is not none %}
+                                                {% if batch.days_until_expiry < 0 %}
+                                                    <span class="badge badge-danger">Expiré depuis {{ -batch.days_until_expiry }} jours</span>
+                                                {% elif batch.days_until_expiry <= 30 %}
+                                                    <span class="badge badge-danger">Dans {{ batch.days_until_expiry }} jours</span>
+                                                {% elif batch.days_until_expiry <= 60 %}
+                                                    <span class="badge badge-warning">Dans {{ batch.days_until_expiry }} jours</span>
+                                                {% elif batch.days_until_expiry <= 90 %}
+                                                    <span class="badge badge-info">Dans {{ batch.days_until_expiry }} jours</span>
+                                                {% else %}
+                                                    <span class="badge badge-success">Dans {{ batch.days_until_expiry }} jours</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Non renseignée</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Date Réception:</th>
+                                    <td>{{ batch.received_date.strftime('%d/%m/%Y à %H:%M') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="mb-3"><i class="fas fa-dollar-sign text-info"></i> Informations Financières</h4>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="40%">Prix d'Achat Unitaire:</th>
+                                    <td><strong class="text-success">${{ "%.2f"|format(batch.purchase_price) }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Coût Unitaire:</th>
+                                    <td>
+                                        {% if batch.unit_cost %}
+                                            ${{ "%.2f"|format(batch.unit_cost) }}
+                                        {% else %}
+                                            ${{ "%.2f"|format(batch.purchase_price) }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Valeur Totale:</th>
+                                    <td><strong class="text-primary">${{ "%.2f"|format(batch.quantity * batch.purchase_price) }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Fournisseur:</th>
+                                    <td>
+                                        {% if batch.supplier_rel %}
+                                            <a href="{{ url_for('suppliers.show', id=batch.supplier_id) }}">{{ batch.supplier_rel.name }}</a>
+                                        {% elif batch.supplier %}
+                                            {{ batch.supplier }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseigné</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique des Mouvements -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0"><i class="fas fa-history"></i> Historique des Mouvements</h3>
+                        </div>
+                        <div class="col text-right">
+                            <a href="{{ url_for('stock.batch_movements', id=batch.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-list"></i> Voir Tout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-items-center table-flush">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Quantité</th>
+                                    <th>Utilisateur</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movement in movements[:10] %}
+                                <tr>
+                                    <td><small>{{ movement.created_at.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                                    <td>
+                                        {% if movement.movement_type == 'entry' %}
+                                            <span class="badge badge-success">Entrée</span>
+                                        {% elif movement.movement_type == 'sale' %}
+                                            <span class="badge badge-primary">Vente</span>
+                                        {% elif movement.movement_type == 'adjustment' %}
+                                            <span class="badge badge-warning">Ajustement</span>
+                                        {% elif movement.movement_type == 'transfer_in' %}
+                                            <span class="badge badge-info">Transfert IN</span>
+                                        {% elif movement.movement_type == 'transfer_out' %}
+                                            <span class="badge badge-secondary">Transfert OUT</span>
+                                        {% elif movement.movement_type == 'expiry' %}
+                                            <span class="badge badge-danger">Expiration</span>
+                                        {% elif movement.movement_type == 'return' %}
+                                            <span class="badge badge-warning">Retour</span>
+                                        {% else %}
+                                            <span class="badge badge-light">{{ movement.movement_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movement.movement_type in ['entry', 'transfer_in', 'return'] %}
+                                            <span class="text-success">+{{ movement.quantity }}</span>
+                                        {% else %}
+                                            <span class="text-danger">-{{ movement.quantity }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small>{{ movement.user.full_name or movement.user.username }}</small></td>
+                                    <td><small>{{ movement.notes or '-' }}</small></td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Aucun mouvement enregistré</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-xl-4">
+            <!-- Carte de Statut -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Statut du Lot</h3>
+                </div>
+                <div class="card-body text-center">
+                    {% if batch.is_expired %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle fa-3x mb-3"></i>
+                            <h4>Lot Expiré</h4>
+                            <p class="mb-0">Ce lot a expiré le {{ batch.expiry_date.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                    {% elif batch.is_expiring_soon %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                            <h4>Lot Expirant Bientôt</h4>
+                            <p class="mb-0">Expire dans {{ batch.days_until_expiry }} jours</p>
+                        </div>
+                    {% elif batch.quantity <= 0 %}
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-ban fa-3x mb-3"></i>
+                            <h4>Lot Épuisé</h4>
+                            <p class="mb-0">Stock épuisé</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle fa-3x mb-3"></i>
+                            <h4>Lot Actif</h4>
+                            <p class="mb-0">En bon état</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions Rapides -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Actions Rapides</h3>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('stock.batch_edit', id=batch.id) }}" class="btn btn-block btn-warning mb-2">
+                        <i class="fas fa-edit"></i> Modifier le Lot
+                    </a>
+                    <a href="{{ url_for('stock.batch_movements', id=batch.id) }}" class="btn btn-block btn-info mb-2">
+                        <i class="fas fa-history"></i> Historique Complet
+                    </a>
+                    <a href="{{ url_for('stock.batches') }}" class="btn btn-block btn-secondary">
+                        <i class="fas fa-list"></i> Retour à la Liste
+                    </a>
+                </div>
+            </div>
+
+            <!-- Informations Système -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Informations Système</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>ID:</th>
+                            <td>#{{ batch.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Créé le:</th>
+                            <td><small>{{ batch.created_at.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                        </tr>
+                        <tr>
+                            <th>Modifié le:</th>
+                            <td><small>{{ batch.updated_at.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                        </tr>
+                        <tr>
+                            <th>Actif:</th>
+                            <td>
+                                {% if batch.is_active %}
+                                    <span class="badge badge-success">Oui</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Non</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

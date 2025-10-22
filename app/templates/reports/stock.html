@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapport de Stock{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Rapport de Stock</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Rapports</a></li>
+              <li class="breadcrumb-item active">Stock</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('reports.index') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-bold-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <!-- Filtre pharmacie -->
+  {% if current_user.role == 'admin' and pharmacies %}
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-body">
+          <form method="GET" action="{{ url_for('reports.stock') }}" class="row">
+            <div class="col-lg-10 col-md-9">
+              <div class="form-group mb-3 mb-md-0">
+                <label class="form-control-label"><i class="ni ni-shop"></i> Pharmacie</label>
+                <select name="pharmacy_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes les Pharmacies</option>
+                  {% for pharmacy in pharmacies %}
+                  <option value="{{ pharmacy.id }}" {% if pharmacy_filter|string == pharmacy.id|string %}selected{% endif %}>
+                    {{ pharmacy.name }}{% if pharmacy.type == 'depot' %} (Dépôt){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-lg-2 col-md-3">
+              <div class="form-group mb-0">
+                <label class="form-control-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                  <i class="fas fa-search"></i> Filtrer
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Statistiques -->
+  <div class="row {% if current_user.role == 'admin' and pharmacies %}mt-4{% endif %}">
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Produits</h5>
+              <span class="h2 font-weight-bold mb-0">{{ products|length }}</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                <i class="ni ni-box-2"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Stock Faible</h5>
+              <span class="h2 font-weight-bold mb-0">{{ low_stock|length }}</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Valeur Totale</h5>
+              <span class="h2 font-weight-bold mb-0">{{ "%.2f"|format(total_value) }}$</span>
+              <p class="mt-1 mb-0 text-sm"><span class="text-nowrap">{{ "%.0f"|format(total_value|usd_to_cdf) }} FC</span></p>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                <i class="ni ni-money-coins"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertes Stock Faible -->
+  {% if low_stock %}
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card border-warning">
+        <div class="card-header bg-warning">
+          <h3 class="mb-0 text-dark"><i class="fas fa-exclamation-triangle"></i> Alertes Stock Faible ({{ low_stock|length }})</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Produit</th>
+                <th>Forme</th>
+                <th class="text-center">Stock Actuel</th>
+                <th class="text-center">Stock Min</th>
+                <th class="text-right">Prix Achat</th>
+                <th class="text-right">Valeur</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in low_stock %}
+              <tr class="table-warning">
+                <td class="font-weight-bold">{{ product.name }}</td>
+                <td><span class="badge badge-secondary">{{ product.category or '-' }}</span></td>
+                <td class="text-center">
+                  <span class="badge badge-danger">{{ product.stock_quantity }}</span>
+                </td>
+                <td class="text-center">{{ product.min_stock_level }}</td>
+                <td class="text-right">{{ "%.2f"|format(product.purchase_price) }}$</td>
+                <td class="text-right font-weight-bold">{{ "%.2f"|format(product.stock_quantity * product.purchase_price) }}$</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- État Complet du Stock -->
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">État Complet du Stock</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Produit</th>
+                <th>Forme</th>
+                <th class="text-center">Stock</th>
+                <th class="text-center">Stock Min</th>
+                <th class="text-right">Prix Achat</th>
+                <th class="text-right">Prix Vente</th>
+                <th class="text-right">Valeur Stock</th>
+                <th class="text-center">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in products %}
+              <tr {% if product.is_low_stock %}class="table-warning"{% endif %}>
+                <td class="font-weight-bold">{{ product.name }}</td>
+                <td><span class="badge badge-secondary">{{ product.category or '-' }}</span></td>
+                <td class="text-center">
+                  <span class="badge badge-{% if product.is_low_stock %}danger{% else %}success{% endif %}">
+                    {{ product.stock_quantity }}
+                  </span>
+                </td>
+                <td class="text-center">{{ product.min_stock_level }}</td>
+                <td class="text-right">{{ "%.2f"|format(product.purchase_price) }}$</td>
+                <td class="text-right">{{ "%.2f"|format(product.selling_price) }}$</td>
+                <td class="text-right">
+                  <span class="font-weight-bold">{{ "%.2f"|format(product.stock_quantity * product.purchase_price) }}$</span>
+                  <br><small class="text-muted">{{ "%.0f"|format((product.stock_quantity * product.purchase_price)|usd_to_cdf) }} FC</small>
+                </td>
+                <td class="text-center">
+                  {% if product.is_low_stock %}
+                    <span class="badge badge-warning">Faible</span>
+                  {% elif product.stock_quantity == 0 %}
+                    <span class="badge badge-danger">Épuisé</span>
+                  {% else %}
+                    <span class="badge badge-success">Normal</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="8" class="text-center text-muted">Aucun produit</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

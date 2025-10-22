@@ -14,10 +14,10 @@
                     
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {% for forme, message in messages %}
+                                <div class="alert alert-{{ forme }} alert-dismissible fade show" role="alert">
                                     {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    <button type="button" class="close" data-bs-dismiss="alert"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
@@ -32,9 +32,9 @@
                             <label class="form-label">Mot de passe</label>
                             <input type="password" class="form-control" name="password" required>
                         </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" name="remember" id="remember">
-                            <label class="form-check-label" for="remember">
+                        <div class="mb-3 custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" name="remember" id="remember">
+                            <label class="custom-control-label" for="remember">
                                 Se souvenir de moi
                             </label>
                         </div>

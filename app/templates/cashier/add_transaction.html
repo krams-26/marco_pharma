@@ -1,31 +1,73 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 class="mb-4">Nouvelle transaction caisse</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-plus-circle"></i> Nouvelle transaction caisse</h2>
+    <a href="{{ url_for('cashier.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Détails de la transaction</h5>
+    </div>
     <div class="card-body">
         <form method="POST">
-            <div class="mb-3">
-                <label class="form-label">Type *</label>
-                <select class="form-select" name="transaction_type" required>
-                    <option value="in">Entrée</option>
-                    <option value="out">Sortie</option>
-                </select>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-arrow-left-right"></i> Type *</label>
+                    <select class="form-control" name="transaction_type" required id="transaction_type">
+                        <option value="in">💰 Entrée (Dépôt)</option>
+                        <option value="out">💸 Sortie (Retrait)</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-cash"></i> Montant * ($)</label>
+                    <input type="number" class="form-control" name="amount" step="0.01" required placeholder="0.00" id="amount">
+                </div>
             </div>
+            
             <div class="mb-3">
-                <label class="form-label">Montant *</label>
-                <input type="number" class="form-control" name="amount" step="0.01" required>
+                <label class="form-label"><i class="bi bi-pencil"></i> Description *</label>
+                <input type="text" class="form-control" name="description" required placeholder="Motif de la transaction">
             </div>
+            
             <div class="mb-3">
-                <label class="form-label">Description *</label>
-                <input type="text" class="form-control" name="description" required>
+                <label class="form-label"><i class="bi bi-hash"></i> Référence</label>
+                <input type="text" class="form-control" name="reference" placeholder="Numéro de référence (optionnel)">
             </div>
-            <div class="mb-3">
-                <label class="form-label">Référence</label>
-                <input type="text" class="form-control" name="reference">
+            
+            <div class="alert alert-info" id="preview" style="display: none;">
+                <h6><i class="bi bi-info-circle"></i> Aperçu de la transaction</h6>
+                <p class="mb-0"><strong>Type:</strong> <span id="preview_type"></span></p>
+                <p class="mb-0"><strong>Montant:</strong> $<span id="preview_amount">0.00</span></p>
             </div>
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a href="{{ url_for('cashier.index') }}" class="btn btn-secondary">Annuler</a>
+            
+            <hr class="my-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Enregistrer
+                </button>
+                <a href="{{ url_for('cashier.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+            </div>
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('transaction_type').addEventListener('change', updatePreview);
+document.getElementById('amount').addEventListener('input', updatePreview);
+
+function updatePreview() {
+    const type = document.getElementById('transaction_type').value;
+    const amount = document.getElementById('amount').value || '0.00';
+    
+    document.getElementById('preview_type').textContent = type === 'in' ? 'Entrée' : 'Sortie';
+    document.getElementById('preview_amount').textContent = parseFloat(amount).toFixed(2);
+    document.getElementById('preview').style.display = 'block';
+}
+</script>
 {% endblock %}

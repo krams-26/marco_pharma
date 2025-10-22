@@ -1,0 +1,385 @@
+<!-- ========================================
+     TOUS LES MODALS DE L'APPLICATION
+     Fichier centralisé pour meilleure maintenance
+     ======================================== -->
+
+<!-- MODAL: Modifier Vente Simple -->
+<div class="modal fade" id="editSaleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-white"><i class="fas fa-edit"></i> Modifier Vente</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-sale-id">
+                <div class="form-group">
+                    <label>Remise ($)</label>
+                    <input type="number" class="form-control" id="edit-sale-discount" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea class="form-control" id="edit-sale-notes" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning" id="saveEditSale"><i class="fas fa-save"></i> Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Détails Paiement -->
+<div class="modal fade" id="paymentDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white"><i class="fas fa-dollar-sign"></i> Détails du Paiement</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="payment-details-content">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Ajustement Stock Rapide -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white"><i class="fas fa-boxes"></i> Ajuster Stock</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="adjust-product-id">
+                <div class="alert alert-info" id="adjust-current-stock"></div>
+                <div class="form-group">
+                    <label>Type d'ajustement</label>
+                    <select class="form-control" id="adjust-type">
+                        <option value="in">➕ Entrée (Ajout)</option>
+                        <option value="out">➖ Sortie (Retrait)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantité</label>
+                    <input type="number" class="form-control" id="adjust-quantity" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Référence</label>
+                    <input type="text" class="form-control" id="adjust-reference">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea class="form-control" id="adjust-notes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="saveAdjustStock"><i class="fas fa-save"></i> Ajuster</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Transfert Inter-Pharmacies -->
+<div class="modal fade" id="transferStockModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white"><i class="fas fa-exchange-alt"></i> Transfert Inter-Pharmacies</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Produit</label>
+                    <select class="form-control" id="transfer-product"></select>
+                </div>
+                <div class="form-group">
+                    <label>De (Pharmacie Source)</label>
+                    <select class="form-control" id="transfer-from"></select>
+                </div>
+                <div class="form-group">
+                    <label>Vers (Pharmacie Destination)</label>
+                    <select class="form-control" id="transfer-to"></select>
+                </div>
+                <div class="form-group">
+                    <label>Quantité</label>
+                    <input type="number" class="form-control" id="transfer-quantity" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea class="form-control" id="transfer-notes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-info" id="saveTransfer"><i class="fas fa-exchange-alt"></i> Transférer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Détails Lot -->
+<div class="modal fade" id="batchDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white"><i class="fas fa-box-open"></i> Détails du Lot</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="batch-details-content">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Modifier Prix Rapide -->
+<div class="modal fade" id="quickEditPriceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-white"><i class="fas fa-tag"></i> Modifier Prix</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="price-product-id">
+                <div class="form-group">
+                    <label>Nouveau prix de vente ($)</label>
+                    <input type="number" class="form-control" id="price-new-price" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning btn-sm" id="saveNewPrice"><i class="fas fa-save"></i> Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Alertes Stock -->
+<div class="modal fade" id="stockAlertsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white"><i class="fas fa-exclamation-triangle"></i> Alertes de Stock</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="stock-alerts-content">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Modifier Statut Tâche -->
+<div class="modal fade" id="updateTaskStatusModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white"><i class="fas fa-tasks"></i> Statut</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="task-status-id">
+                <div class="form-group">
+                    <label>Nouveau statut</label>
+                    <select class="form-control" id="task-new-status">
+                        <option value="pending">⏳ En attente</option>
+                        <option value="in_progress">🔄 En cours</option>
+                        <option value="completed">✅ Terminée</option>
+                        <option value="cancelled">❌ Annulée</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-info btn-sm" id="saveTaskStatus"><i class="fas fa-save"></i> Modifier</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Détails Tâche -->
+<div class="modal fade" id="taskDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white"><i class="fas fa-tasks"></i> Détails de la Tâche</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="task-details-content">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Lire Notification -->
+<div class="modal fade" id="notificationModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white"><i class="fas fa-bell"></i> Notification</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="notification-content">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Créer Notification -->
+<div class="modal fade" id="createNotificationModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white"><i class="fas fa-bell"></i> Nouvelle Notification</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Destinataire(s)</label>
+                    <select class="form-control" id="notif-users" multiple>
+                        <option value="all">Tous les utilisateurs</option>
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}">{{ user.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Titre</label>
+                    <input type="text" class="form-control" id="notif-title">
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea class="form-control" id="notif-message" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="sendNotification"><i class="fas fa-paper-plane"></i> Envoyer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Convertir Proforma -->
+<div class="modal fade" id="convertProformaModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white"><i class="fas fa-check-circle"></i> Convertir en Vente</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="convert-proforma-id">
+                <div class="alert alert-info">
+                    Cette proforma va être convertie en vente définitive.
+                </div>
+                <div class="form-group">
+                    <label>Méthode de paiement</label>
+                    <select class="form-control" id="convert-payment-method">
+                        <option value="cash">💵 Espèces</option>
+                        <option value="card">💳 Carte</option>
+                        <option value="mobile_money">📱 Mobile Money</option>
+                        <option value="bank_transfer">🏦 Virement</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="confirmConvert"><i class="fas fa-check"></i> Convertir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Aperçu Proforma -->
+<div class="modal fade" id="proformaPreviewModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white"><i class="fas fa-file-invoice"></i> Aperçu Proforma</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="proforma-preview-content">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Sélection Période Rapports -->
+<div class="modal fade" id="reportPeriodModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white"><i class="fas fa-calendar"></i> Période</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Date début</label>
+                    <input type="date" class="form-control" id="report-start-date">
+                </div>
+                <div class="form-group">
+                    <label>Date fin</label>
+                    <input type="date" class="form-control" id="report-end-date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary btn-sm" id="applyReportPeriod"><i class="fas fa-check"></i> Appliquer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Options Export -->
+<div class="modal fade" id="exportOptionsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white"><i class="fas fa-download"></i> Exporter</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="export-entity-type">
+                <div class="list-group">
+                    <button class="list-group-item list-group-item-action export-btn" data-format="csv">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                    <button class="list-group-item list-group-item-action export-btn" data-format="excel">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <button class="list-group-item list-group-item-action export-btn" data-format="pdf">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Détails Fournisseur -->
+<div class="modal fade" id="supplierDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white"><i class="fas fa-truck"></i> Détails Fournisseur</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="supplier-details-content">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Continué dans le prochain bloc... -->
+

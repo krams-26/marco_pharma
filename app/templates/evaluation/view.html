@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Évaluation {{ evaluation.employee.employee_id }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clipboard-check"></i> Évaluation {{ evaluation.employee.employee_id }}</h2>
+    <div>
+        <a href="{{ url_for('evaluation.edit', id=evaluation.id) }}" class="btn btn-warning"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{{ url_for('evaluation.index') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Retour</a>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white"><h5 class="mb-0">Critères Évalués</h5></div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead><tr><th>Critère</th><th>Note</th><th>Score</th></tr></thead>
+                    <tbody>
+                        {% for c in evaluation.criteria %}
+                        <tr>
+                            <td>{{ c.criteria_name }}</td>
+                            <td>{{ "%.1f"|format(c.score) }}/{{ c.max_score|int }}</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    {% set percent = (c.score / c.max_score * 100)|int %}
+                                    <div class="progress-bar bg-{% if percent >= 80 %}success{% elif percent >= 60 %}warning{% else %}danger{% endif %}" style="width: {{ percent }}%">{{ percent }}%</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Commentaires</h5></div>
+            <div class="card-body">
+                {% if evaluation.strengths %}<p><strong>Points Forts:</strong> {{ evaluation.strengths }}</p>{% endif %}
+                {% if evaluation.improvements %}<p><strong>À Améliorer:</strong> {{ evaluation.improvements }}</p>{% endif %}
+                {% if evaluation.future_goals %}<p><strong>Objectifs:</strong> {{ evaluation.future_goals }}</p>{% endif %}
+                {% if evaluation.comments %}<p><strong>Commentaires:</strong> {{ evaluation.comments }}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white"><h5 class="mb-0">Informations</h5></div>
+            <div class="card-body">
+                <p><strong>Employé:</strong> {{ evaluation.employee.employee_id }}</p>
+                <p><strong>Poste:</strong> {{ evaluation.employee.position }}</p>
+                <p><strong>Évaluateur:</strong> {{ evaluation.evaluator.full_name }}</p>
+                <p><strong>Date:</strong> {{ evaluation.evaluation_date.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Période:</strong> {{ evaluation.period_evaluated }}</p>
+                <hr>
+                <p class="mb-0"><strong>Note Globale:</strong></p>
+                <h1 class="text-center mb-0 text-{% if evaluation.overall_score >= 8 %}success{% elif evaluation.overall_score >= 6 %}warning{% else %}danger{% endif %}">
+                    {{ "%.1f"|format(evaluation.overall_score) }}/10
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

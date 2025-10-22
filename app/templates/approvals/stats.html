@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistiques des Approbations{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-graph-up"></i> Statistiques des Approbations</h2>
+        <a href="{{ url_for('approvals.index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Par Statut</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            En attente
+                            <span class="badge bg-warning rounded-pill">{{ stats.by_status.pending }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Approuvées
+                            <span class="badge bg-success rounded-pill">{{ stats.by_status.approved }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Rejetées
+                            <span class="badge bg-danger rounded-pill">{{ stats.by_status.rejected }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Par Priorité</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Haute
+                            <span class="badge bg-danger rounded-pill">{{ stats.by_priority.high }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Moyenne
+                            <span class="badge bg-warning rounded-pill">{{ stats.by_priority.medium }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Basse
+                            <span class="badge bg-secondary rounded-pill">{{ stats.by_priority.low }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Par Type</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for type, count in stats.by_type.items() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ type }}
+                            <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center text-muted">Aucune donnée</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Demandes Récentes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Titre</th>
+                            <th>Type</th>
+                            <th>Demandeur</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approval in stats.recent %}
+                        <tr>
+                            <td>{{ approval.id }}</td>
+                            <td><a href="{{ url_for('approvals.show', id=approval.id) }}">{{ approval.title }}</a></td>
+                            <td>{{ approval.request_type }}</td>
+                            <td>{{ approval.requester.full_name }}</td>
+                            <td>
+                                {% if approval.status == 'approved' %}
+                                <span class="badge bg-success">Approuvée</span>
+                                {% elif approval.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejetée</span>
+                                {% else %}
+                                <span class="badge bg-warning">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ approval.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

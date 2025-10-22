@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Vente Crédit {{ sale.invoice_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-receipt"></i> {{ sale.invoice_number }}</h2>
+    <a href="{{ url_for('credit_sales.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Informations Vente</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Client:</strong> {{ sale.customer.name if sale.customer else '-' }}</p>
+                        <p><strong>Date:</strong> {{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p><strong>Vendeur:</strong> {{ sale.seller.full_name or sale.seller.username }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Pharmacie:</strong> {{ sale.pharmacy.name if sale.pharmacy else '-' }}</p>
+                        <p><strong>Total:</strong> {{ "%.2f"|format(sale.total_amount) }} $</p>
+                        <p><strong>Statut:</strong> 
+                            {% if sale.credit_status == 'paid' %}
+                            <span class="badge bg-success">Payé</span>
+                            {% elif sale.credit_status == 'partially_paid' %}
+                            <span class="badge bg-warning">Partiel</span>
+                            {% else %}
+                            <span class="badge bg-danger">Non payé</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Produits</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-center">Quantité</th>
+                            <th class="text-end">Prix Unit.</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in sale.items %}
+                        <tr>
+                            <td>{{ item.product.name if item.product else '-' }}</td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end">{{ "%.2f"|format(item.unit_price) }} $</td>
+                            <td class="text-end">{{ "%.2f"|format(item.total) }} $</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Historique des Paiements</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Montant</th>
+                            <th>Méthode</th>
+                            <th>Référence</th>
+                            <th>Enregistré par</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payment_history %}
+                        <tr>
+                            <td>{{ payment.payment_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td><strong>{{ "%.2f"|format(payment.amount) }} $</strong></td>
+                            <td>{{ payment.payment_method }}</td>
+                            <td>{{ payment.reference or '-' }}</td>
+                            <td>{{ payment.creator.full_name if payment.creator else '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Aucun paiement enregistré</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Solde</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Total:</span>
+                        <strong>{{ "%.2f"|format(sale.total_amount) }} $</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Payé:</span>
+                        <strong class="text-success">{{ "%.2f"|format(sale.total_amount - sale.balance_due) }} $</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Restant:</strong></span>
+                        <strong class="text-danger fs-4">{{ "%.2f"|format(sale.balance_due) }} $</strong>
+                    </div>
+                </div>
+                
+                <div class="progress mb-3">
+                    {% set progress = ((sale.total_amount - sale.balance_due) / sale.total_amount * 100)|int %}
+                    <div class="progress-bar bg-success" style="width: {{ progress }}%">{{ progress }}%</div>
+                </div>
+            </div>
+        </div>
+
+        {% if sale.balance_due > 0 %}
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Ajouter Paiement</h5>
+            </div>
+            <div class="card-body">
+                <form id="paymentForm">
+                    <input type="hidden" name="sale_id" value="{{ sale.id }}">
+                    <div class="mb-3">
+                        <label class="form-label">Montant *</label>
+                        <input type="number" class="form-control" id="payment_amount" name="amount" step="0.01" max="{{ sale.balance_due }}" required>
+                        <div class="form-text">Max: {{ "%.2f"|format(sale.balance_due) }} $</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Méthode *</label>
+                        <select class="form-control" name="payment_method" required>
+                            <option value="cash">Espèces</option>
+                            <option value="card">Carte</option>
+                            <option value="transfer">Virement</option>
+                            <option value="mobile_money">Mobile Money</option>
+                            <option value="check">Chèque</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Référence</label>
+                        <input type="text" class="form-control" name="reference">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-cash"></i> Enregistrer Paiement
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    fetch('/credit-sales/add-payment/{{ sale.id }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Paiement enregistré avec succès!');
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Erreur: ' + error);
+    });
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,93 @@
+═══════════════════════════════════════════════════════════════════════
+  DÉPLOIEMENT RAPIDE - MARCO-PHARMA SUR PYTHONANYWHERE
+═══════════════════════════════════════════════════════════════════════
+
+📌 VERSION PYTHON : Python 3.11
+
+═══════════════════════════════════════════════════════════════════════
+  ÉTAPES RAPIDES (13 étapes)
+═══════════════════════════════════════════════════════════════════════
+
+1️⃣  Créer un compte sur https://www.pythonanywhere.com
+
+2️⃣  Créer une base MySQL nommée "marphar" (onglet Databases)
+
+3️⃣  Noter les infos de connexion :
+    - Host: votre_username.mysql.pythonanywhere-services.com
+    - User: votre_username
+    - Pass: [votre mot de passe MySQL]
+    - Database: votre_username$marphar
+
+4️⃣  Uploader le code (via Git ou Files)
+    Console Bash : git clone [url] ou upload manuel
+
+5️⃣  Créer l'environnement virtuel :
+    mkvirtualenv --python=/usr/bin/python3.11 marco-pharma-env
+
+6️⃣  Installer les dépendances :
+    pip install -r requirements.txt
+
+7️⃣  Créer le fichier .env avec :
+    SECRET_KEY=...
+    DATABASE_URL=mysql+pymysql://user:pass@host/db
+    FLASK_ENV=production
+
+8️⃣  Initialiser la base de données :
+    python3
+    >>> from app import create_app
+    >>> from app.models import db
+    >>> app = create_app()
+    >>> with app.app_context():
+    ...     db.create_all()
+
+9️⃣  Créer une Web App (onglet Web)
+    - Manual configuration
+    - Python 3.11
+
+🔟  Configurer le WSGI (copier contenu de wsgi_pythonanywhere.py)
+
+1️⃣1️⃣  Configurer le Virtualenv :
+    /home/votre_username/.virtualenvs/marco-pharma-env
+
+1️⃣2️⃣  Configurer Static files :
+    URL: /static/
+    Path: /home/votre_username/Marco-Pharma/app/static
+
+1️⃣3️⃣  Installer python-dotenv et Recharger :
+    pip install python-dotenv
+    Cliquez sur "Reload" dans l'onglet Web
+
+═══════════════════════════════════════════════════════════════════════
+  CONNEXION PAR DÉFAUT
+═══════════════════════════════════════════════════════════════════════
+
+Username: admin
+Password: admin123
+
+⚠️  CHANGEZ LE MOT DE PASSE IMMÉDIATEMENT APRÈS LA PREMIÈRE CONNEXION !
+
+═══════════════════════════════════════════════════════════════════════
+  FICHIERS CRÉÉS POUR VOUS AIDER
+═══════════════════════════════════════════════════════════════════════
+
+✅ GUIDE_DEPLOIEMENT_PYTHONANYWHERE.md  → Guide détaillé complet
+✅ wsgi_pythonanywhere.py               → Template WSGI
+✅ config.env.example                   → Exemple de configuration
+✅ generate_secret_key.py               → Générateur de clé secrète
+✅ requirements.txt                     → Dépendances à jour
+✅ runtime.txt                          → Version Python
+
+═══════════════════════════════════════════════════════════════════════
+  BESOIN D'AIDE ?
+═══════════════════════════════════════════════════════════════════════
+
+Consultez le fichier GUIDE_DEPLOIEMENT_PYTHONANYWHERE.md pour :
+- Instructions détaillées pas à pas
+- Solutions aux problèmes courants
+- Conseils de sécurité
+- Maintenance et mise à jour
+
+═══════════════════════════════════════════════════════════════════════
+
+BON DÉPLOIEMENT ! 🚀
+

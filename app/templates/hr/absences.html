@@ -1,28 +1,241 @@
 {% extends "base.html" %}
+
+{% block title %}Gestion des Absences - MARCO PHARMA{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Absences</h2>
-    <a href="{{ url_for('hr.add_absence') }}" class="btn btn-primary">Enregistrer une absence</a>
+    <h2><i class="fas fa-calendar-times"></i> Gestion des Absences</h2>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addAbsenceModal">
+        <i class="fas fa-plus-circle"></i> Enregistrer une Absence
+    </button>
 </div>
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Absences ce Mois</h6>
+                <h3 class="mb-0 text-warning">{{ month_absences|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Absences Aujourd'hui</h6>
+                <h3 class="mb-0 text-info">{{ today_absences|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Absences Non Justifiées</h6>
+                <h3 class="mb-0 text-danger">{{ unjustified_absences|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des absences -->
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Liste des Absences</h5>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th>Employé</th><th>Date</th><th>Raison</th><th>Notes</th></tr></thead>
-                <tbody>
-                    {% for absence in absences.items %}
+            <table class="table table-hover">
+                <thead>
                     <tr>
-                        <td>{{ absence.employee.user.full_name if absence.employee.user else '-' }}</td>
+                        <th>Date</th>
+                        <th>Employé</th>
+                        <th>Motif</th>
+                        <th>Justification</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for absence in absences.items if absences %}
+                    <tr>
                         <td>{{ absence.absence_date.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ absence.reason or '-' }}</td>
-                        <td>{{ absence.notes or '-' }}</td>
+                        <td>
+                            <strong>{{ absence.employee.first_name }} {{ absence.employee.last_name }}</strong>
+                            <small class="text-muted d-block">{{ absence.employee.position or 'N/A' }}</small>
+                        </td>
+                        <td>
+                            {% if absence.reason == 'maladie' %}
+                                <span class="badge bg-warning"><i class="fas fa-briefcase-medical"></i> Maladie</span>
+                            {% elif absence.reason == 'conge' %}
+                                <span class="badge bg-info"><i class="fas fa-umbrella-beach"></i> Congé</span>
+                            {% elif absence.reason == 'personnel' %}
+                                <span class="badge bg-primary"><i class="fas fa-user"></i> Personnel</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ absence.reason }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if absence.is_justified %}
+                                <span class="badge bg-success"><i class="fas fa-check"></i> Justifiée</span>
+                            {% else %}
+                                <span class="badge bg-danger"><i class="fas fa-times"></i> Non justifiée</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ absence.notes or '-' }}</small></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="4" class="text-center text-muted">Aucune absence</td></tr>
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Aucune absence enregistrée</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        
+        {% if absences and absences.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if absences.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ absences.prev_num }}">Précédent</a></li>
+                {% endif %}
+                
+                {% for page_num in absences.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == absences.page %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if absences.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ absences.next_num }}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
+
+<!-- Modal Enregistrer Absence -->
+<div class="modal fade" id="addAbsenceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-calendar-times"></i> Enregistrer une Absence
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Employé <span class="text-danger">*</span></label>
+                    <select class="form-control" id="absence-employee" required>
+                        <option value="">Sélectionner un employé</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}">{{ employee.full_name }} - {{ employee.position }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="absence-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Motif <span class="text-danger">*</span></label>
+                    <select class="form-control" id="absence-reason" required>
+                        <option value="maladie">🏥 Maladie</option>
+                        <option value="conge">🏖️ Congé</option>
+                        <option value="personnel">👤 Personnel</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="absence-justified">
+                        <label class="custom-control-label" for="absence-justified">
+                            Absence justifiée
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea class="form-control" id="absence-notes" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning" id="saveAbsence">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Définir la date par défaut (aujourd'hui)
+    $('#absence-date').val(new Date().toISOString().split('T')[0]);
+    
+    $('#saveAbsence').click(function() {
+        const btn = $(this);
+        const employeeId = $('#absence-employee').val();
+        const absenceDate = $('#absence-date').val();
+        const reason = $('#absence-reason').val();
+        const isJustified = $('#absence-justified').is(':checked');
+        const notes = $('#absence-notes').val();
+        
+        if (!employeeId || !absenceDate || !reason) {
+            alert('Veuillez remplir tous les champs requis');
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enregistrement...');
+        
+        $.ajax({
+            url: '/hr/quick-add-absence',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                employee_id: employeeId,
+                absence_date: absenceDate,
+                reason: reason,
+                is_justified: isJustified,
+                notes: notes
+            }),
+            success: function(response) {
+                $('#addAbsenceModal').modal('hide');
+                alert('✓ ' + response.message);
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                btn.prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer');
+            }
+        });
+    });
+    
+    // Réinitialiser le formulaire quand le modal se ferme
+    $('#addAbsenceModal').on('hidden.bs.modal', function() {
+        $('#absence-employee').val('');
+        $('#absence-date').val(new Date().toISOString().split('T')[0]);
+        $('#absence-reason').val('maladie');
+        $('#absence-justified').prop('checked', false);
+        $('#absence-notes').val('');
+        $('#saveAbsence').prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer');
+    });
+});
+</script>
 {% endblock %}

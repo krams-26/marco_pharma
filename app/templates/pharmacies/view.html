@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ pharmacy.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-shop"></i> {{ pharmacy.name }}</h2>
+    <div>
+        <a href="{{ url_for('pharmacies.assign_user', id=pharmacy.id) }}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Affecter utilisateur
+        </a>
+        <a href="{{ url_for('pharmacies.edit', id=pharmacy.id) }}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        <a href="{{ url_for('pharmacies.index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Utilisateurs</h6>
+                <h3>{{ stats.users_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Produits</h6>
+                <h3>{{ stats.products_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Ventes</h6>
+                <h3>{{ stats.sales_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">CA Total</h6>
+                <h3>{{ "%.2f"|format(stats.total_revenue) }} $</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0">Informations</h5></div>
+            <div class="card-body">
+                <p><strong>Type:</strong> {% if pharmacy.type == 'depot' %}<span class="badge bg-info">Dépôt</span>{% else %}<span class="badge bg-success">Pharmacie</span>{% endif %}</p>
+                <p><strong>Code:</strong> {{ pharmacy.code or '-' }}</p>
+                <p><strong>Adresse:</strong> {{ pharmacy.address or '-' }}</p>
+                <p><strong>Téléphone:</strong> {{ pharmacy.phone or '-' }}</p>
+                <p><strong>Email:</strong> {{ pharmacy.email or '-' }}</p>
+                <p><strong>Gérant:</strong> {{ pharmacy.manager_name or '-' }}</p>
+                <p><strong>Licence:</strong> {{ pharmacy.license_number or '-' }}</p>
+                <p><strong>Heures:</strong> {{ pharmacy.opening_hours or '-' }}</p>
+                <p><strong>Objectif:</strong> {{ "%.2f"|format(pharmacy.revenue_target) }} $</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0">Utilisateurs Affectés</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Utilisateur</th>
+                                <th>Rôle</th>
+                                <th>Principal</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ua in users %}
+                            <tr>
+                                <td>{{ ua.user.full_name or ua.user.username }}</td>
+                                <td><span class="badge bg-secondary">{{ ua.user.role }}</span></td>
+                                <td>{% if ua.is_primary %}<span class="badge bg-success">Oui</span>{% endif %}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('pharmacies.remove_user', pharmacy_id=pharmacy.id, user_id=ua.user_id) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Retirer cet utilisateur ?')">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">Aucun utilisateur affecté</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

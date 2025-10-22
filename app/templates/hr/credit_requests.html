@@ -1,8 +1,13 @@
 {% extends "base.html" %}
+
+{% block title %}Demandes d'Avance - MARCO PHARMA{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Demandes de crédit</h2>
-    <a href="{{ url_for('hr.add_credit_request') }}" class="btn btn-primary">Nouvelle demande</a>
+    <h2><i class="fas fa-credit-card"></i> Demandes d'Avance</h2>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCreditModal">
+        <i class="fas fa-plus-circle"></i> Nouvelle Demande
+    </button>
 </div>
 <div class="card">
     <div class="card-body">
@@ -40,4 +45,112 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Demande d'Avance -->
+<div class="modal fade" id="addCreditModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-credit-card"></i> Nouvelle Demande d'Avance
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Employé <span class="text-danger">*</span></label>
+                    <select class="form-control" id="credit-employee" required>
+                        <option value="">Sélectionner un employé</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}">{{ employee.full_name }} - {{ employee.position }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Montant <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" class="form-control" id="credit-amount" step="0.01" min="0" required>
+                    </div>
+                    <small class="form-text text-muted" id="credit-cdf-equivalent"></small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Raison de la demande <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="credit-reason" rows="4" placeholder="Expliquez pourquoi vous demandez cette avance..." required></textarea>
+                    <small class="form-text text-muted">Cette demande sera soumise pour approbation.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-info" id="saveCredit">
+                    <i class="fas fa-paper-plane"></i> Soumettre la Demande
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Convertir en CDF
+    $('#credit-amount').on('input', function() {
+        const usd = $(this).val();
+        if (usd > 0) {
+            const cdf = usd * 2800; // Taux de change approximatif
+            $('#credit-cdf-equivalent').text(`≈ ${cdf.toLocaleString('fr-FR')} FC`);
+        } else {
+            $('#credit-cdf-equivalent').text('');
+        }
+    });
+    
+    $('#saveCredit').click(function() {
+        const btn = $(this);
+        const employeeId = $('#credit-employee').val();
+        const amount = parseFloat($('#credit-amount').val());
+        const reason = $('#credit-reason').val().trim();
+        
+        if (!employeeId || !amount || amount <= 0 || !reason) {
+            alert('Veuillez remplir tous les champs requis');
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Envoi...');
+        
+        $.ajax({
+            url: '/hr/quick-add-credit',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                employee_id: employeeId,
+                amount: amount,
+                reason: reason
+            }),
+            success: function(response) {
+                $('#addCreditModal').modal('hide');
+                alert('✓ ' + response.message);
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Soumettre la Demande');
+            }
+        });
+    });
+    
+    // Réinitialiser le formulaire
+    $('#addCreditModal').on('hidden.bs.modal', function() {
+        $('#credit-employee').val('');
+        $('#credit-amount').val('');
+        $('#credit-reason').val('');
+        $('#credit-cdf-equivalent').text('');
+        $('#saveCredit').prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Soumettre la Demande');
+    });
+});
+</script>
 {% endblock %}

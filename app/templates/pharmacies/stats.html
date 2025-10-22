@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Statistiques Pharmacies{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-bar-chart-line"></i> Statistiques par Pharmacie</h2>
+    <a href="{{ url_for('pharmacies.index') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Retour</a>
+</div>
+<div class="row">
+    {% for stat in pharmacy_stats %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-{% if stat.pharmacy.type == 'depot' %}info{% else %}success{% endif %} text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-{% if stat.pharmacy.type == 'depot' %}building{% else %}shop{% endif %}"></i> {{ stat.pharmacy.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <p><strong>Ventes:</strong> {{ stat.sales_count }}</p>
+                        <p><strong>Produits:</strong> {{ stat.products_count }}</p>
+                        <p><strong>Utilisateurs:</strong> {{ stat.users_count }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p><strong>CA Total:</strong><br>{{ "%.2f"|format(stat.total_revenue) }} $</p>
+                        <p><strong>Objectif:</strong><br>{{ "%.2f"|format(stat.pharmacy.revenue_target) }} $</p>
+                        <div class="progress">
+                            <div class="progress-bar {% if stat.target_progress >= 100 %}bg-success{% elif stat.target_progress >= 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 style="width: {{ stat.target_progress|int }}%" 
+                                 title="{{ '%.1f'|format(stat.target_progress) }}%">
+                                {{ '%.0f'|format(stat.target_progress) }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+

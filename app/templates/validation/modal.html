@@ -1,0 +1,151 @@
+<!-- Modal de Validation de Code - Réutilisable -->
+<div class="modal fade" id="validationCodeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="bi bi-shield-lock"></i> Code de Validation Requis
+                </h5>
+                <button type="button" class="close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="validation-step-1">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Action sensible détectée!</strong><br>
+                        Cette action nécessite une validation par code administrateur.
+                    </div>
+                    
+                    <p class="mb-3">
+                        <strong>Action:</strong> <span id="validation-action-name"></span><br>
+                        <strong>Référence:</strong> <span id="validation-reference"></span>
+                    </p>
+                    
+                    <button type="button" class="btn btn-primary w-100" onclick="requestValidationCode()">
+                        <i class="bi bi-send"></i> Demander un Code
+                    </button>
+                </div>
+                
+                <div id="validation-step-2" style="display:none;">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i>
+                        Code demandé avec succès! L'administrateur a été notifié.
+                    </div>
+                    
+                    <p class="text-muted">
+                        Le code expirera dans <strong id="code-expiry"></strong> minutes.
+                    </p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Entrez le code reçu:</label>
+                        <input type="text" class="form-control text-center" id="validation-code-input" 
+                               placeholder="XXXXXXXX" maxlength="8" style="font-size: 1.5em; letter-spacing: 0.2em;">
+                    </div>
+                    
+                    <button type="button" class="btn btn-success w-100" onclick="validateCode()">
+                        <i class="bi bi-check-lg"></i> Valider le Code
+                    </button>
+                </div>
+                
+                <div id="validation-step-error" style="display:none;">
+                    <div class="alert alert-danger" id="validation-error-message"></div>
+                    <button type="button" class="btn btn-secondary w-100" onclick="resetValidationModal()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Réessayer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let validationData = {};
+
+function showValidationModal(actionName, referenceType, referenceId, callback) {
+    validationData = {
+        actionName: actionName,
+        referenceType: referenceType,
+        referenceId: referenceId,
+        callback: callback
+    };
+    
+    document.getElementById('validation-action-name').textContent = actionName;
+    document.getElementById('validation-reference').textContent = `${referenceType} #${referenceId}`;
+    
+    resetValidationModal();
+    
+    const modal = new bootstrap.Modal(document.getElementById('validationCodeModal'));
+    modal.show();
+}
+
+function requestValidationCode() {
+    fetch('/validation/request', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            reference_type: validationData.referenceType,
+            reference_id: validationData.referenceId,
+            type: 'status_change'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('validation-step-1').style.display = 'none';
+            document.getElementById('validation-step-2').style.display = 'block';
+            document.getElementById('code-expiry').textContent = '30';
+        } else {
+            showValidationError(data.message);
+        }
+    })
+    .catch(error => showValidationError('Erreur réseau: ' + error));
+}
+
+function validateCode() {
+    const code = document.getElementById('validation-code-input').value.toUpperCase().trim();
+    
+    if (!code || code.length !== 8) {
+        showValidationError('Code invalide (8 caractères requis)');
+        return;
+    }
+    
+    fetch('/validation/validate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            code: code,
+            reference_type: validationData.referenceType,
+            reference_id: validationData.referenceId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('validationCodeModal'));
+            modal.hide();
+            
+            if (validationData.callback) {
+                validationData.callback();
+            }
+        } else {
+            showValidationError(data.message);
+        }
+    })
+    .catch(error => showValidationError('Erreur: ' + error));
+}
+
+function showValidationError(message) {
+    document.getElementById('validation-error-message').textContent = message;
+    document.getElementById('validation-step-1').style.display = 'none';
+    document.getElementById('validation-step-2').style.display = 'none';
+    document.getElementById('validation-step-error').style.display = 'block';
+}
+
+function resetValidationModal() {
+    document.getElementById('validation-step-1').style.display = 'block';
+    document.getElementById('validation-step-2').style.display = 'none';
+    document.getElementById('validation-step-error').style.display = 'none';
+    document.getElementById('validation-code-input').value = '';
+}
+</script>
+

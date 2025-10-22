@@ -1,0 +1,114 @@
+<!-- Modal Vue Rapide Produit - Réutilisable -->
+<div class="modal fade" id="productQuickViewModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-pills"></i> Détails du Produit
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="product-modal-content">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showProductQuickView(productId) {
+    $.get('/products/quick-view/' + productId, function(p) {
+        const stockBadge = p.stock_quantity <= p.min_stock_level ?
+            `<span class="badge badge-danger">${p.stock_quantity} (Rupture!)</span>` :
+            `<span class="badge badge-success">${p.stock_quantity}</span>`;
+        
+        const expiryBadge = p.is_expired ?
+            `<span class="badge badge-danger">Expiré le ${p.expiry_date}</span>` :
+            p.expiry_date ?
+            `<span class="badge badge-info">Expire le ${p.expiry_date}</span>` :
+            '<span class="text-muted">Aucune</span>';
+        
+        $('#product-modal-content').html(`
+            <div class="row">
+                <div class="col-md-8">
+                    <h4 class="mb-3">${p.name}</h4>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-barcode"></i> Code-barres:</strong><br>
+                            ${p.barcode || 'N/A'}
+                        </div>
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-tag"></i> Catégorie:</strong><br>
+                            ${p.category || 'N/A'}
+                        </div>
+                    </div>
+                    
+                    ${p.description ? `<div class="mb-3"><strong>Description:</strong><br><p class="text-muted">${p.description}</p></div>` : ''}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Prix Achat:</strong><br>
+                            <span class="text-info">$${p.purchase_price.toFixed(2)}</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Prix Vente:</strong><br>
+                            <span class="text-success">$${p.selling_price.toFixed(2)}</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Prix Gros:</strong><br>
+                            <span class="text-primary">$${p.wholesale_price.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-boxes"></i> Stock:</strong><br>
+                            ${stockBadge}
+                            <small class="text-muted d-block">Seuil min: ${p.min_stock_level}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-calendar-alt"></i> Expiration:</strong><br>
+                            ${expiryBadge}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Fabricant:</strong> ${p.manufacturer || 'N/A'}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Fournisseur:</strong> ${p.supplier || 'N/A'}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Informations</h6>
+                            <ul class="list-unstyled small">
+                                <li><strong>Unité:</strong> ${p.unit}</li>
+                                <li><strong>Pharmacie:</strong> ${p.pharmacy_name}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="/products/edit/${p.id}" class="btn btn-warning btn-sm btn-block">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `);
+        
+        $('#productQuickViewModal').modal('show');
+    });
+}
+</script>
+

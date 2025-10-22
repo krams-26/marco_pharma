@@ -1,43 +1,113 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 class="mb-4">Historique caisse</h2>
-<div class="card">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clock-history"></i> Historique caisse</h2>
+    <a href="{{ url_for('cashier.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="card mb-3">
     <div class="card-body">
-        <form method="GET" class="row mb-3">
-            <div class="col-md-5">
-                <input type="date" name="date_from" class="form-control" placeholder="Date début">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label"><i class="bi bi-calendar-event"></i> Date début</label>
+                <input type="date" name="date_from" class="form-control" value="{{ request.args.get('date_from', '') }}">
             </div>
-            <div class="col-md-5">
-                <input type="date" name="date_to" class="form-control" placeholder="Date fin">
+            <div class="col-md-4">
+                <label class="form-label"><i class="bi bi-calendar-check"></i> Date fin</label>
+                <input type="date" name="date_to" class="form-control" value="{{ request.args.get('date_to', '') }}">
             </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100">Filtrer</button>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Filtrer
+                </button>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Liste des transactions</h5>
+    </div>
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Montant</th><th>Référence</th></tr></thead>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date & Heure</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Montant</th>
+                        <th>Référence</th>
+                        <th>Par</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {% for transaction in transactions.items %}
                     <tr>
                         <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
                             {% if transaction.transaction_type == 'in' %}
-                                <span class="badge bg-success">Entrée</span>
+                                <span class="badge bg-success"><i class="bi bi-arrow-down-circle"></i> Entrée</span>
                             {% else %}
-                                <span class="badge bg-danger">Sortie</span>
+                                <span class="badge bg-danger"><i class="bi bi-arrow-up-circle"></i> Sortie</span>
                             {% endif %}
                         </td>
                         <td>{{ transaction.description }}</td>
-                        <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                        <td>
+                            {% if transaction.transaction_type == 'in' %}
+                                <span class="text-success fw-bold">+${{ "%.2f"|format(transaction.amount) }}</span>
+                            {% else %}
+                                <span class="text-danger fw-bold">-${{ "%.2f"|format(transaction.amount) }}</span>
+                            {% endif %}
+                        </td>
                         <td>{{ transaction.reference or '-' }}</td>
+                        <td>
+                            {% if transaction.creator %}
+                                {{ transaction.creator.username }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="text-center text-muted">Aucune transaction</td></tr>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Aucune transaction trouvée</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        
+        {% if transactions.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if transactions.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ transactions.prev_num }}">Précédent</a></li>
+                {% endif %}
+                
+                {% for page_num in transactions.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == transactions.page %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if transactions.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ transactions.next_num }}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

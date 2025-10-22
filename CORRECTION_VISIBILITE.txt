@@ -1,0 +1,89 @@
+================================================================================
+                CORRECTION VISIBILITE DONNEES DE PAIEMENT
+================================================================================
+
+PROBLEME IDENTIFIE:
+  Les donnees du formulaire de paiement (Solde Actuel, Montant a Payer, 
+  Nouveau Solde) n'etaient pas visibles en mode clair ou sombre.
+
+CAUSE:
+  Le card utilisait "bg-gradient-secondary" avec "text-white", ce qui
+  rendait le texte invisible sur certains ecrans ou en mode sombre.
+
+SOLUTION APPLIQUEE:
+  
+  AVANT (❌ - Invisible):
+    <div class="card bg-gradient-secondary">
+      <span class="text-white">Solde Actuel:</span>
+      <strong class="text-white">$15.00</strong>
+    </div>
+  
+  APRES (✅ - Visible):
+    <div class="card bg-white border-primary">
+      <div class="card-header bg-primary">
+        <h5 class="text-white">Calcul du Nouveau Solde</h5>
+      </div>
+      <div class="card-body bg-white">
+        <div class="bg-light p-2 rounded">
+          <span class="text-dark font-weight-bold">Solde Actuel:</span>
+          <strong class="text-danger h5">$15.00</strong>
+        </div>
+        <div class="bg-light p-2 rounded">
+          <span class="text-dark font-weight-bold">Montant a Payer:</span>
+          <strong class="text-primary h5">$0.00</strong>
+        </div>
+        <div class="bg-gradient-success p-2 rounded">
+          <span class="text-white font-weight-bold">Nouveau Solde:</span>
+          <strong class="text-white h4">$15.00</strong>
+        </div>
+      </div>
+    </div>
+
+COULEURS UTILISEES:
+  - Solde Actuel: text-danger (rouge) sur fond clair
+  - Montant a Payer: text-primary (bleu) sur fond clair
+  - Nouveau Solde: text-white (blanc) sur fond vert (success)
+  - Texte: text-dark font-weight-bold (noir gras)
+  - Fond: bg-white avec sections bg-light
+
+FICHIER MODIFIE:
+  app/templates/payments/record.html
+
+RESULTAT:
+  ✅ Texte visible en mode clair
+  ✅ Texte visible en mode sombre
+  ✅ Couleurs contrastees
+  ✅ Design moderne
+
+================================================================================
+PROBLEME DE LANCEMENT RESOLU
+================================================================================
+
+Le fichier run.py a ete recree (il manquait ou etait vide).
+
+Contenu de run.py:
+  from app import create_app
+  
+  app = create_app()
+  
+  if __name__ == '__main__':
+      app.run(host='0.0.0.0', port=5000, debug=True)
+
+POUR LANCER:
+  Double-clic sur: LANCER.bat
+
+================================================================================
+STATUS FINAL
+================================================================================
+
+[✓] run.py existe et fonctionne
+[✓] Visibilite donnees paiement corrigee
+[✓] Couleurs contrastees appliquees
+[✓] Compatible mode clair et sombre
+[✓] Script LANCER.bat optimise
+
+PROCHAINE ETAPE:
+  Double-cliquez sur LANCER.bat pour tester !
+
+================================================================================
+

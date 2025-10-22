@@ -1,45 +1,321 @@
 {% extends "base.html" %}
+
+{% block title %}Demandes de Congé - MARCO PHARMA{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Demandes de congé</h2>
-    <a href="{{ url_for('hr.add_leave_request') }}" class="btn btn-primary">Nouvelle demande</a>
+    <h2><i class="fas fa-calendar-check"></i> Demandes de Congé</h2>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addLeaveModal">
+        <i class="fas fa-plus-circle"></i> Nouvelle Demande
+    </button>
 </div>
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">En Attente</h6>
+                <h3 class="mb-0 text-warning">{{ pending_count|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Approuvées</h6>
+                <h3 class="mb-0 text-success">{{ approved_count|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Rejetées</h6>
+                <h3 class="mb-0 text-danger">{{ rejected_count|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Total ce Mois</h6>
+                <h3 class="mb-0 text-info">{{ month_total|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des demandes -->
 <div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Liste des Demandes</h5>
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-primary active" onclick="filterRequests('all')">Toutes</button>
+            <button class="btn btn-sm btn-outline-warning" onclick="filterRequests('pending')">En attente</button>
+            <button class="btn btn-sm btn-outline-success" onclick="filterRequests('approved')">Approuvées</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="filterRequests('rejected')">Rejetées</button>
+        </div>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th>Employé</th><th>Dates</th><th>Type</th><th>Statut</th><th>Actions</th></tr></thead>
-                <tbody>
-                    {% for request in requests.items %}
+            <table class="table table-hover">
+                <thead>
                     <tr>
-                        <td>{{ request.employee.user.full_name if request.employee.user else '-' }}</td>
-                        <td>{{ request.start_date.strftime('%d/%m/%Y') }} - {{ request.end_date.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ request.leave_type or '-' }}</td>
+                        <th>Employé</th>
+                        <th>Type de Congé</th>
+                        <th>Date Début</th>
+                        <th>Date Fin</th>
+                        <th>Durée</th>
+                        <th>Motif</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests.items if requests %}
+                    <tr class="request-row" data-status="{{ request.status }}">
                         <td>
-                            {% if request.status == 'approved' %}
-                                <span class="badge bg-success">Approuvé</span>
-                            {% elif request.status == 'rejected' %}
-                                <span class="badge bg-danger">Rejeté</span>
+                            <strong>{{ request.employee.first_name }} {{ request.employee.last_name }}</strong>
+                            <small class="text-muted d-block">{{ request.employee.position or 'N/A' }}</small>
+                        </td>
+                        <td>
+                            {% if request.leave_type == 'annual' %}
+                                <span class="badge bg-primary"><i class="fas fa-umbrella-beach"></i> Annuel</span>
+                            {% elif request.leave_type == 'sick' %}
+                                <span class="badge bg-warning"><i class="fas fa-briefcase-medical"></i> Maladie</span>
+                            {% elif request.leave_type == 'maternity' %}
+                                <span class="badge bg-info"><i class="fas fa-baby"></i> Maternité</span>
                             {% else %}
-                                <span class="badge bg-warning">En attente</span>
+                                <span class="badge bg-secondary">{{ request.leave_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ request.start_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ request.end_date.strftime('%d/%m/%Y') }}</td>
+                        <td><span class="badge bg-info">{{ request.duration|default(0) }} jours</span></td>
+                        <td><small>{{ request.reason or '-' }}</small></td>
+                        <td>
+                            {% if request.status == 'pending' %}
+                                <span class="badge bg-warning"><i class="fas fa-clock"></i> En attente</span>
+                            {% elif request.status == 'approved' %}
+                                <span class="badge bg-success"><i class="fas fa-check-circle"></i> Approuvée</span>
+                            {% elif request.status == 'rejected' %}
+                                <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Rejetée</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if request.status == 'pending' %}
-                            <form method="POST" action="{{ url_for('hr.approve_leave', id=request.id) }}" style="display:inline;">
-                                <button class="btn btn-sm btn-success">Approuver</button>
+                            <form method="POST" action="{{ url_for('hr.approve_leave', id=request.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i>
+                                </button>
                             </form>
-                            <form method="POST" action="{{ url_for('hr.reject_leave', id=request.id) }}" style="display:inline;">
-                                <button class="btn btn-sm btn-danger">Rejeter</button>
+                            <form method="POST" action="{{ url_for('hr.reject_leave', id=request.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </form>
+                            {% else %}
+                                <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="text-center text-muted">Aucune demande</td></tr>
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Aucune demande de congé</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+        
+        {% if requests and requests.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if requests.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ requests.prev_num }}">Précédent</a></li>
+                {% endif %}
+                
+                {% for page_num in requests.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == requests.page %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if requests.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ requests.next_num }}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function filterRequests(status) {
+    const rows = document.querySelectorAll('.request-row');
+    
+    rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+            row.style.display = 'table-row';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Mise à jour des boutons
+    document.querySelectorAll('.btn-group button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+// Modal Demande de Congé
+$(document).ready(function() {
+    // Calculer la durée automatiquement
+    function calculateDuration() {
+        const startDate = $('#leave-start-date').val();
+        const endDate = $('#leave-end-date').val();
+        
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            
+            if (duration > 0) {
+                $('#leave-duration-display').text(duration + ' jour(s)');
+            } else {
+                $('#leave-duration-display').text('Dates invalides');
+            }
+        }
+    }
+    
+    $('#leave-start-date, #leave-end-date').on('change', calculateDuration);
+    
+    $('#saveLeave').click(function() {
+        const btn = $(this);
+        const employeeId = $('#leave-employee').val();
+        const leaveType = $('#leave-type').val();
+        const startDate = $('#leave-start-date').val();
+        const endDate = $('#leave-end-date').val();
+        const reason = $('#leave-reason').val();
+        
+        if (!employeeId || !leaveType || !startDate || !endDate) {
+            alert('Veuillez remplir tous les champs requis');
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enregistrement...');
+        
+        $.ajax({
+            url: '/hr/quick-add-leave',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                employee_id: employeeId,
+                leave_type: leaveType,
+                start_date: startDate,
+                end_date: endDate,
+                reason: reason
+            }),
+            success: function(response) {
+                $('#addLeaveModal').modal('hide');
+                alert('✓ ' + response.message);
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                btn.prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer');
+            }
+        });
+    });
+    
+    // Réinitialiser le formulaire
+    $('#addLeaveModal').on('hidden.bs.modal', function() {
+        $('#leave-employee').val('');
+        $('#leave-type').val('annual');
+        $('#leave-start-date').val('');
+        $('#leave-end-date').val('');
+        $('#leave-reason').val('');
+        $('#leave-duration-display').text('0 jour(s)');
+        $('#saveLeave').prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer');
+    });
+});
+</script>
+
+<!-- Modal Demande de Congé -->
+<div class="modal fade" id="addLeaveModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-calendar-check"></i> Nouvelle Demande de Congé
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Employé <span class="text-danger">*</span></label>
+                    <select class="form-control" id="leave-employee" required>
+                        <option value="">Sélectionner un employé</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}">{{ employee.full_name }} - {{ employee.position }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Type de Congé <span class="text-danger">*</span></label>
+                    <select class="form-control" id="leave-type" required>
+                        <option value="annual">🏖️ Congé Annuel</option>
+                        <option value="sick">🏥 Congé Maladie</option>
+                        <option value="maternity">👶 Congé Maternité</option>
+                        <option value="unpaid">💼 Congé Sans Solde</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Date Début <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="leave-start-date" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Date Fin <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="leave-end-date" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Durée:</strong> <span id="leave-duration-display">0 jour(s)</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Motif</label>
+                    <textarea class="form-control" id="leave-reason" rows="3" placeholder="Raison de la demande..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="saveLeave">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
         </div>
     </div>
 </div>

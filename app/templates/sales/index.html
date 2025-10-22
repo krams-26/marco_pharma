@@ -1,5 +1,517 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Ventes{% endblock %}
+
 {% block content %}
-<h2>Sales Module</h2>
-<p>Page en cours de développement...</p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Ventes</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Ventes</li>
+            </ol>
+          </nav>
+          <div class="mt-2">
+            {% include 'includes/scope_indicator.html' %}
+          </div>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          {% if stats.pending_validation > 0 %}
+          <span class="badge badge-lg badge-warning mr-2">
+            <i class="fas fa-clock"></i> {{ stats.pending_validation }} à valider
+          </span>
+          {% endif %}
+          {% if current_user.has_permission('manage_sales') %}
+          <a href="{{ url_for('pos.index') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-fat-add"></i> Nouvelle Vente
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Historique des Ventes</h3>
+            </div>
+            <div class="col text-right">
+              {% if current_user.has_permission('manage_sales') %}
+              <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown">
+                  <i class="ni ni-cloud-download-95"></i> Exporter
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                  <a class="dropdown-item" href="{{ url_for('sales.export', format='csv') }}?pharmacy_id={{ pharmacy_filter }}&search={{ search or '' }}">
+                    <i class="fas fa-file-csv"></i> CSV
+                  </a>
+                  <a class="dropdown-item" href="{{ url_for('sales.export', format='excel') }}?pharmacy_id={{ pharmacy_filter }}&search={{ search or '' }}">
+                    <i class="fas fa-file-excel"></i> Excel
+                  </a>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card-body border-bottom">
+          <form method="GET" class="row">
+            <div class="col-lg-2 col-md-4">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="fas fa-eye"></i> Affichage</label>
+                <select name="view" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="all" {% if view_type == 'all' %}selected{% endif %}>Toutes</option>
+                  <option value="temp" {% if view_type == 'temp' %}selected{% endif %}>À valider</option>
+                  <option value="final" {% if view_type == 'final' %}selected{% endif %}>Validées</option>
+                </select>
+              </div>
+            </div>
+
+            {% if current_user.role == 'admin' and pharmacies %}
+            <div class="col-lg-2 col-md-4">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="ni ni-shop"></i> Pharmacie</label>
+                <select name="pharmacy_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes</option>
+                  {% for pharmacy in pharmacies %}
+                  <option value="{{ pharmacy.id }}" {% if pharmacy_filter|string == pharmacy.id|string %}selected{% endif %}>
+                    {{ pharmacy.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}4{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="fas fa-search"></i> Recherche</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Référence..." value="{{ search }}">
+              </div>
+            </div>
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}4{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                  <i class="fas fa-filter"></i> Filtrer
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Type</th>
+                <th>Référence</th>
+                <th>Date</th>
+                <th>Vendeur</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sale in sales %}
+              <tr {% if sale.type == 'temp' and sale.status == 'pending' %}class="table-warning"{% endif %}>
+                <td>
+                  {% if sale.type == 'temp' %}
+                  <span class="badge badge-warning">Temporaire</span>
+                  {% else %}
+                  <span class="badge badge-success">Finale</span>
+                  {% endif %}
+                </td>
+                <td><span class="badge badge-pill badge-primary">{{ sale.reference }}</span></td>
+                <td><small>{{ sale.date.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                <td><small><i class="fas fa-user"></i> {{ sale.seller }}</small></td>
+                <td>{{ sale.customer }}</td>
+                <td>
+                  <span class="text-success font-weight-bold">${{ "%.2f"|format(sale.total) }}</span><br>
+                  <small class="text-muted">{{ (sale.total|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  {% if sale.type == 'temp' %}
+                    {% if sale.status == 'pending' %}
+                    <span class="badge badge-warning">À valider</span>
+                    {% elif sale.status == 'validated' %}
+                    <span class="badge badge-success">Validée</span>
+                    {% else %}
+                    <span class="badge badge-danger">Rejetée</span>
+                    {% endif %}
+                  {% else %}
+                    {% if sale.status == 'paid' %}
+                    <span class="badge badge-success">Payé</span>
+                    {% elif sale.status == 'partial' %}
+                    <span class="badge badge-info">Partiel</span>
+                    {% else %}
+                    <span class="badge badge-danger">En attente</span>
+                    {% endif %}
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  {% if sale.type == 'temp' %}
+                    {% if sale.status == 'pending' and (current_user.has_permission('manage_cashier') or current_user.has_permission('sales_validate')) %}
+                    <button class="btn btn-sm btn-success validate-sale" data-id="{{ sale.id }}" title="Valider">
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger reject-sale" data-id="{{ sale.id }}" title="Rejeter">
+                      <i class="fas fa-times"></i>
+                    </button>
+                    {% elif sale.status == 'validated' and sale.data.final_sale %}
+                    <a href="{{ url_for('pos.invoice', sale_id=sale.data.sale_id) }}" class="btn btn-sm btn-primary" target="_blank" title="Imprimer">
+                      <i class="fas fa-print"></i>
+                    </a>
+                    {% endif %}
+                  {% else %}
+                    <button class="btn btn-sm btn-info quick-view-sale" data-id="{{ sale.id }}" title="Détails rapides">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    {% if sale.status != 'paid' and (current_user.has_permission('manage_payments') or current_user.has_permission('manage_cashier')) %}
+                    <button class="btn btn-sm btn-success quick-payment" 
+                            data-id="{{ sale.id }}" 
+                            data-invoice="{{ sale.reference }}" 
+                            data-balance="{{ sale.paid }}" 
+                            title="Paiement rapide">
+                      <i class="fas fa-dollar-sign"></i>
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('pos.invoice', sale_id=sale.id) }}" class="btn btn-sm btn-primary" target="_blank" title="Imprimer">
+                      <i class="fas fa-print"></i>
+                    </a>
+                    {% if current_user.has_permission('edit_sales') and sale.status != 'paid' %}
+                    <a href="{{ url_for('sales.edit', id=sale.id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucune vente trouvée
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages and total_pages > 1 %}
+        <div class="card-footer py-4">
+          <nav aria-label="Pagination">
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ page - 1 }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&view={{ view_type }}">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% for page_num in range(1, total_pages + 1) %}
+                {% if page_num == page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == total_pages or (page_num >= page - 2 and page_num <= page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&view={{ view_type }}">{{ page_num }}</a></li>
+                {% elif page_num == page - 3 or page_num == page + 3 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ page + 1 }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&view={{ view_type }}">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+// Paiement rapide
+$('.quick-payment').click(function() {
+    const btn = $(this);
+    const saleId = btn.data('id');
+    const invoice = btn.data('invoice');
+    const balance = parseFloat(btn.data('balance'));
+    
+    $('#payment-sale-id').val(saleId);
+    $('#payment-invoice').text(invoice);
+    $('#payment-balance').text(balance.toFixed(2));
+    $('#payment-amount').val(balance.toFixed(2));
+    $('#payment-amount').attr('max', balance);
+    
+    $('#quickPaymentModal').modal('show');
+});
+
+$('#saveQuickPayment').click(function() {
+    const btn = $(this);
+    const saleId = $('#payment-sale-id').val();
+    const amount = parseFloat($('#payment-amount').val());
+    const method = $('#payment-method').val();
+    const notes = $('#payment-notes').val();
+    
+    if (!amount || amount <= 0) {
+        alert('Montant invalide');
+        return;
+    }
+    
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Traitement...');
+    
+    $.ajax({
+        url: '/payments/quick-record',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            sale_id: saleId,
+            amount: amount,
+            payment_method: method,
+            notes: notes
+        }),
+        success: function(response) {
+            $('#quickPaymentModal').modal('hide');
+            alert('✓ Paiement enregistré avec succès!');
+            location.reload();
+        },
+        error: function(xhr) {
+            alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+            btn.prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer');
+        }
+    });
+});
+
+// Vue rapide d'une vente
+$('.quick-view-sale').click(function() {
+    const id = $(this).data('id');
+    
+    $.get('/sales/quick-view/' + id, function(sale) {
+        let itemsHtml = '';
+        sale.items.forEach((item, index) => {
+            itemsHtml += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${item.name}</td>
+                    <td class="text-center">${item.quantity}</td>
+                    <td class="text-right">$${item.unit_price.toFixed(2)}</td>
+                    <td class="text-right"><strong>$${item.total.toFixed(2)}</strong></td>
+                </tr>
+            `;
+        });
+        
+        const statusBadge = sale.payment_status == 'paid' ? 
+            '<span class="badge badge-success">Payé</span>' :
+            sale.payment_status == 'partial' ?
+            '<span class="badge badge-warning">Partiel</span>' :
+            '<span class="badge badge-danger">En attente</span>';
+        
+        $('#quickViewModal .modal-body').html(`
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Facture:</strong> ${sale.invoice_number}<br>
+                    <strong>Date:</strong> ${sale.date}<br>
+                    <strong>Vendeur:</strong> ${sale.seller}
+                </div>
+                <div class="col-md-6">
+                    <strong>Client:</strong> ${sale.customer}<br>
+                    <strong>Méthode:</strong> ${sale.payment_method || 'N/A'}<br>
+                    <strong>Statut:</strong> ${statusBadge}
+                </div>
+            </div>
+            
+            ${sale.notes ? `<div class="alert alert-info"><strong>Notes:</strong> ${sale.notes}</div>` : ''}
+            
+            <h6 class="mb-2">Articles</h6>
+            <table class="table table-sm table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Produit</th>
+                        <th class="text-center">Qté</th>
+                        <th class="text-right">Prix Unit.</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>${itemsHtml}</tbody>
+                <tfoot>
+                    ${sale.discount > 0 ? `<tr><td colspan="4" class="text-right">Remise:</td><td class="text-right text-danger">-$${sale.discount.toFixed(2)}</td></tr>` : ''}
+                    <tr class="table-success">
+                        <td colspan="4" class="text-right"><strong>TOTAL:</strong></td>
+                        <td class="text-right"><strong>$${sale.total_amount.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="text-right">Payé:</td>
+                        <td class="text-right text-success">$${sale.paid_amount.toFixed(2)}</td>
+                    </tr>
+                    <tr class="${sale.balance_due > 0 ? 'table-warning' : 'table-success'}">
+                        <td colspan="4" class="text-right"><strong>Solde:</strong></td>
+                        <td class="text-right ${sale.balance_due > 0 ? 'text-danger' : 'text-success'}">
+                            <strong>$${sale.balance_due.toFixed(2)}</strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <div class="mt-3 text-center">
+                <a href="/pos/invoice/${id}" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-print"></i> Imprimer Facture
+                </a>
+                <a href="/sales/view/${id}" class="btn btn-secondary">
+                    <i class="fas fa-external-link-alt"></i> Vue Complète
+                </a>
+            </div>
+        `);
+        
+        $('#quickViewModal').modal('show');
+    });
+});
+
+// Valider une vente temporaire
+$('.validate-sale').click(function() {
+    const id = $(this).data('id');
+    const btn = $(this);
+    
+    if (!confirm('Confirmer la validation de cette vente ?')) {
+        return;
+    }
+    
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+    
+    $.ajax({
+        url: '/sales/temp/' + id + '/validate',
+        method: 'POST',
+        success: function(response) {
+            alert('✓ ' + response.message);
+            location.reload();
+        },
+        error: function(xhr) {
+            alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+            btn.prop('disabled', false).html('<i class="fas fa-check"></i>');
+        }
+    });
+});
+
+// Rejeter une vente temporaire
+$('.reject-sale').click(function() {
+    const id = $(this).data('id');
+    const reason = prompt('Raison du rejet:');
+    
+    if (!reason) return;
+    
+    const btn = $(this);
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+    
+    $.ajax({
+        url: '/sales/temp/' + id + '/reject',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ reason: reason }),
+        success: function(response) {
+            alert('Vente rejetée');
+            location.reload();
+        },
+        error: function(xhr) {
+            alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+            btn.prop('disabled', false).html('<i class="fas fa-times"></i>');
+        }
+    });
+});
+</script>
+
+<!-- Modal Détails Vente Rapide -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-receipt"></i> Détails de la Vente
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Paiement Rapide -->
+<div class="modal fade" id="quickPaymentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-dollar-sign"></i> Enregistrer un Paiement
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="payment-sale-id">
+                
+                <div class="alert alert-info">
+                    <strong>Facture:</strong> <span id="payment-invoice"></span><br>
+                    <strong>Solde restant:</strong> $<span id="payment-balance"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Montant à payer <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="payment-amount" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Méthode de paiement</label>
+                    <select class="form-control" id="payment-method">
+                        <option value="cash">Espèces</option>
+                        <option value="card">Carte bancaire</option>
+                        <option value="mobile_money">Mobile Money</option>
+                        <option value="bank_transfer">Virement</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Notes (optionnel)</label>
+                    <textarea class="form-control" id="payment-notes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="saveQuickPayment">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

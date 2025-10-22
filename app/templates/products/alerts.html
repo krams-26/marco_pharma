@@ -1,55 +1,126 @@
 {% extends "base.html" %}
+
+{% block title %}Alertes Stock - MARCO PHARMA{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Alertes Produits</h2>
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-warning text-white">
-                <h5 class="mb-0">Stock Faible</h5>
-            </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-exclamation-triangle text-warning"></i> Alertes de Stock</h2>
+    <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Retour aux produits
+    </a>
+</div>
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-warning">
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead><tr><th>Produit</th><th>Stock</th><th>Minimum</th></tr></thead>
-                        <tbody>
-                            {% for product in low_stock %}
-                            <tr>
-                                <td>{{ product.name }}</td>
-                                <td><span class="badge bg-warning">{{ product.stock_quantity }}</span></td>
-                                <td>{{ product.min_stock_level }}</td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="3" class="text-center text-muted">Aucune alerte</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                <h6 class="text-muted mb-1">Stock Faible</h6>
+                <h3 class="mb-0 text-warning">{{ low_stock|length if low_stock else 0 }}</h3>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">Produits Expirés</h5>
-            </div>
+    
+    <div class="col-md-4">
+        <div class="card border-danger">
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead><tr><th>Produit</th><th>Date d'expiration</th></tr></thead>
-                        <tbody>
-                            {% for product in expired %}
-                            <tr>
-                                <td>{{ product.name }}</td>
-                                <td><span class="badge bg-danger">{{ product.expiry_date.strftime('%d/%m/%Y') }}</span></td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="2" class="text-center text-muted">Aucune alerte</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                <h6 class="text-muted mb-1">Produits Expirés</h6>
+                <h3 class="mb-0 text-danger">{{ expired|length if expired else 0 }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Expirant Bientôt</h6>
+                <h3 class="mb-0 text-info">{{ expiring_soon|length if expiring_soon else 0 }}</h3>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Stock faible -->
+<div class="card mb-3">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-exclamation-triangle text-warning"></i> Produits à Stock Faible</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Forme</th>
+                        <th class="text-center">Stock Actuel</th>
+                        <th class="text-center">Stock Minimum</th>
+                        <th class="text-end">Prix de vente</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in low_stock if low_stock %}
+                    <tr>
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td>{{ product.category or '-' }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-warning">{{ product.stock_quantity }}</span>
+                        </td>
+                        <td class="text-center">{{ product.min_stock_level }}</td>
+                        <td class="text-end price-dual">
+                            ${{ "%.2f"|format(product.selling_price) }}
+                            <small class="text-muted d-block">{{ (product.selling_price|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('stock.add_batch', product_id=product.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus"></i> Réapprovisionner
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Aucun produit à stock faible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Produits expirés -->
+{% if expired %}
+<div class="card mb-3">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-calendar-times text-danger"></i> Produits Expirés</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Date d'expiration</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-end">Valeur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in expired %}
+                    <tr class="table-danger">
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td>{{ product.expiry_date.strftime('%d/%m/%Y') if product.expiry_date else '-' }}</td>
+                        <td class="text-center">{{ product.stock_quantity }}</td>
+                        <td class="text-end price-dual">
+                            ${{ "%.2f"|format(product.stock_quantity * product.purchase_price) }}
+                            <small class="text-muted d-block">{{ ((product.stock_quantity * product.purchase_price)|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

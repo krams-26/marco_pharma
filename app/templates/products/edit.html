@@ -1,57 +1,84 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 class="mb-4">Modifier le produit</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil-square"></i> Modifier le produit</h2>
+    <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informations du produit</h5>
+    </div>
     <div class="card-body">
         <form method="POST">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Nom *</label>
+                    <label class="form-label"><i class="bi bi-tag"></i> Nom *</label>
                     <input type="text" class="form-control" name="name" value="{{ product.name }}" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Code-barres</label>
+                    <label class="form-label"><i class="bi bi-upc-scan"></i> Code-barres</label>
                     <input type="text" class="form-control" name="barcode" value="{{ product.barcode or '' }}">
                 </div>
             </div>
+            
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Catégorie</label>
+                    <label class="form-label"><i class="bi bi-folder"></i> Forme</label>
                     <input type="text" class="form-control" name="category" value="{{ product.category or '' }}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Unité</label>
-                    <select class="form-select" name="unit">
+                    <label class="form-label"><i class="bi bi-box"></i> Unité</label>
+                    <select class="form-control" name="unit">
                         <option value="piece" {% if product.unit == 'piece' %}selected{% endif %}>Pièce</option>
                         <option value="box" {% if product.unit == 'box' %}selected{% endif %}>Boîte</option>
                         <option value="bottle" {% if product.unit == 'bottle' %}selected{% endif %}>Bouteille</option>
+                        <option value="strip" {% if product.unit == 'strip' %}selected{% endif %}>Plaquette</option>
+                        <option value="sachet" {% if product.unit == 'sachet' %}selected{% endif %}>Sachet</option>
                     </select>
                 </div>
             </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3"><i class="bi bi-cash-coin"></i> Prix</h5>
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Prix d'achat</label>
+                    <label class="form-label">Prix d'achat ($)</label>
                     <input type="number" class="form-control" name="purchase_price" step="0.01" value="{{ product.purchase_price }}">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Prix de vente *</label>
+                    <label class="form-label">Prix de vente * ($)</label>
                     <input type="number" class="form-control" name="selling_price" step="0.01" value="{{ product.selling_price }}" required>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Prix de gros</label>
+                    <label class="form-label">Prix de gros ($)</label>
                     <input type="number" class="form-control" name="wholesale_price" step="0.01" value="{{ product.wholesale_price }}">
                 </div>
             </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3"><i class="bi bi-box-seam"></i> Stock</h5>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Quantité actuelle</label>
+                    <input type="number" class="form-control" value="{{ product.stock_quantity }}" disabled>
+                    <small class="text-muted">Modifiez le stock via le module Stock</small>
+                </div>
+                <div class="col-md-4 mb-3">
                     <label class="form-label">Stock minimum</label>
                     <input type="number" class="form-control" name="min_stock_level" value="{{ product.min_stock_level }}">
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label">Date d'expiration</label>
                     <input type="date" class="form-control" name="expiry_date" value="{{ product.expiry_date.strftime('%Y-%m-%d') if product.expiry_date else '' }}">
                 </div>
             </div>
+            
+            <hr class="my-4">
+            <h5 class="mb-3"><i class="bi bi-building"></i> Fournisseur</h5>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Fabricant</label>
@@ -62,12 +89,21 @@
                     <input type="text" class="form-control" name="supplier" value="{{ product.supplier or '' }}">
                 </div>
             </div>
+            
             <div class="mb-3">
-                <label class="form-label">Description</label>
+                <label class="form-label"><i class="bi bi-file-text"></i> Description</label>
                 <textarea class="form-control" name="description" rows="3">{{ product.description or '' }}</textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Mettre à jour</button>
-            <a href="{{ url_for('products.index') }}" class="btn btn-secondary">Annuler</a>
+            
+            <hr class="my-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Mettre à jour
+                </button>
+                <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+            </div>
         </form>
     </div>
 </div>

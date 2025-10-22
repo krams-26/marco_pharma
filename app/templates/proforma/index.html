@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Proforma{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Factures Proforma</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Proforma</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('proforma.create') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-fat-add"></i> Nouvelle Proforma
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Liste des Proformas</h3>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>N° Proforma</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Montant TTC</th>
+                <th>Statut</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pf in proformas.items %}
+              <tr>
+                <td><span class="badge badge-pill badge-primary">{{ pf.proforma_number }}</span></td>
+                <td><small>{{ pf.issue_date.strftime('%d/%m/%Y') }}</small></td>
+                <td>{{ pf.customer.name if pf.customer else '-' }}</td>
+                <td>
+                  <span class="text-success font-weight-bold">${{ "%.2f"|format(pf.total_ttc) }}</span><br>
+                  <small class="text-muted">{{ (pf.total_ttc|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  {% if pf.status == 'draft' %}
+                    <span class="badge badge-secondary">Brouillon</span>
+                  {% elif pf.status == 'sent' %}
+                    <span class="badge badge-info">Envoyé</span>
+                  {% elif pf.status == 'accepted' %}
+                    <span class="badge badge-success">Accepté</span>
+                  {% elif pf.status == 'rejected' %}
+                    <span class="badge badge-danger">Rejeté</span>
+                  {% else %}
+                    <span class="badge badge-warning">{{ pf.status }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  <a href="{{ url_for('proforma.show', id=pf.id) }}" class="btn btn-sm btn-icon btn-info">
+                    <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                  </a>
+                  <a href="{{ url_for('proforma.edit', id=pf.id) }}" class="btn btn-sm btn-icon btn-primary">
+                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucune proforma trouvée
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if proformas.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not proformas.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ proformas.prev_num }}"><i class="fas fa-angle-left"></i></a>
+              </li>
+              {% for page_num in range(1, proformas.pages + 1) %}
+                {% if page_num == proformas.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == proformas.pages or (page_num >= proformas.page - 2 and page_num <= proformas.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not proformas.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ proformas.next_num }}"><i class="fas fa-angle-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

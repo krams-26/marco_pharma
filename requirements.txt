@@ -1,0 +1,29 @@
+# Flask et extensions principales
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.2
+Flask-Migrate==4.0.5
+Flask-WTF==1.2.1
+Werkzeug==2.3.7
+
+# Base de données
+PyMySQL==1.1.0
+SQLAlchemy==2.0.23
+cryptography==41.0.3
+
+# Validation et traitement
+email-validator==2.0.0
+WTForms==3.1.1
+python-dotenv==1.0.0
+
+# Export et génération de documents
+openpyxl==3.1.2
+reportlab==4.0.4
+python-barcode==0.16.1
+Pillow==10.0.1
+
+# Utilitaires
+python-dateutil==2.8.2
+
+# Serveur WSGI pour production
+gunicorn==21.2.0

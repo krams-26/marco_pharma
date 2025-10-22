@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Rapport Pharmacies{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-shop"></i> Rapport par Pharmacie</h2>
+    <div>
+        <a href="{{ url_for('reports.export_pharmacies_excel') }}" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel"></i> Export Excel
+        </a>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>Total Réseau:</strong> {{ "%.2f"|format(grand_total) }}$ 
+    <small class="text-muted">({{ "%.0f"|format(grand_total|usd_to_cdf) }} FC)</small>
+</div>
+
+<div class="row">
+    {% for stat in pharmacy_stats %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-{% if stat.pharmacy.type == 'depot' %}info{% else %}primary{% endif %} text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-{% if stat.pharmacy.type == 'depot' %}building{% else %}shop{% endif %}"></i>
+                    {{ stat.pharmacy.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Ventes:</strong> {{ stat.sales_count }}<br>
+                            <strong>CA Total:</strong> {{ "%.2f"|format(stat.total_sales) }}$
+                            <br><small class="text-muted">{{ "%.0f"|format(stat.total_sales|usd_to_cdf) }} FC</small>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Payé:</strong> <span class="text-success">{{ "%.2f"|format(stat.total_paid) }}$</span><br>
+                            <strong>En attente:</strong> <span class="text-danger">{{ "%.2f"|format(stat.total_pending) }}$</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Produits:</strong> {{ stat.products_count }}<br>
+                            <strong>Alertes stock:</strong> <span class="text-warning">{{ stat.low_stock_count }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Valeur stock:</strong><br>
+                            {{ "%.2f"|format(stat.stock_value) }}$
+                            <br><small class="text-muted">{{ "%.0f"|format(stat.stock_value|usd_to_cdf) }} FC</small>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <strong>Objectif:</strong> {{ "%.2f"|format(stat.pharmacy.revenue_target) }}$
+                    <div class="progress mt-2">
+                        <div class="progress-bar {% if stat.target_progress >= 100 %}bg-success{% elif stat.target_progress >= 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             style="width: {{ stat.target_progress|int }}%">
+                            {{ "%.1f"|format(stat.target_progress) }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier la Vente{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil"></i> Modifier la Vente {{ sale.invoice_number }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>Attention:</strong> La modification d'une vente affectera les stocks et sera enregistrée dans l'audit trail.
+                    </div>
+
+                    <form method="post" action="{{ url_for('sales.edit', id=sale.id) }}" id="editSaleForm">
+                        <div class="mb-3">
+                            <label for="edit_reason" class="form-label">Raison de la modification <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="edit_reason" name="edit_reason" rows="3" required 
+                                      placeholder="Expliquez pourquoi vous modifiez cette vente..."></textarea>
+                        </div>
+
+                        <h5 class="mb-3">Articles</h5>
+                        <div id="items-container">
+                            {% for item in sale.items %}
+                            <div class="row mb-2 item-row">
+                                <div class="col-md-5">
+                                    <select class="form-control form-select-sm product-select" name="product_id[]" required>
+                                        <option value="">Sélectionner un produit</option>
+                                        {% for product in products %}
+                                        <option value="{{ product.id }}" 
+                                                data-price="{{ product.selling_price }}"
+                                                data-stock="{{ product.stock_quantity }}"
+                                                {% if product.id == item.product_id %}selected{% endif %}>
+                                            {{ product.name }} (Stock: {{ product.stock_quantity }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" class="form-control form-control-sm quantity-input" 
+                                           name="quantity[]" placeholder="Qté" min="1" value="{{ item.quantity }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" step="0.01" class="form-control form-control-sm price-input" 
+                                           name="price[]" placeholder="Prix" min="0.01" value="{{ item.unit_price }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" step="0.01" class="form-control form-control-sm item-total" 
+                                           placeholder="Total" value="{{ item.total }}" readonly>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-sm btn-danger remove-item">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-secondary mb-3" id="addItem">
+                            <i class="bi bi-plus"></i> Ajouter un article
+                        </button>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="discount" class="form-label">Remise ($)</label>
+                                    <input type="number" step="0.01" class="form-control" id="discount" 
+                                           name="discount" value="{{ sale.discount }}" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tax" class="form-label">Taxe ($)</label>
+                                    <input type="number" step="0.01" class="form-control" id="tax" 
+                                           name="tax" value="{{ sale.tax }}" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2">{{ sale.notes or '' }}</textarea>
+                        </div>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h5>Résumé</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Sous-total:</strong> $<span id="subtotal">0.00</span></p>
+                                        <p><strong>Remise:</strong> $<span id="discount-display">0.00</span></p>
+                                        <p><strong>Taxe:</strong> $<span id="tax-display">0.00</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h4><strong>Total:</strong> $<span id="grand-total">0.00</span></h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('sales.view', id=sale.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-circle"></i> Enregistrer les Modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemsContainer = document.getElementById('items-container');
+    const addItemBtn = document.getElementById('addItem');
+    const productOptions = `
+        <option value="">Sélectionner un produit</option>
+        {% for product in products %}
+        <option value="{{ product.id }}" data-price="{{ product.selling_price }}" data-stock="{{ product.stock_quantity }}">
+            {{ product.name }} (Stock: {{ product.stock_quantity }})
+        </option>
+        {% endfor %}
+    `;
+
+    function calculateRow(row) {
+        const qty = parseFloat(row.querySelector('.quantity-input').value) || 0;
+        const price = parseFloat(row.querySelector('.price-input').value) || 0;
+        const total = qty * price;
+        row.querySelector('.item-total').value = total.toFixed(2);
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let subtotal = 0;
+        document.querySelectorAll('.item-total').forEach(input => {
+            subtotal += parseFloat(input.value) || 0;
+        });
+        
+        const discount = parseFloat(document.getElementById('discount').value) || 0;
+        const tax = parseFloat(document.getElementById('tax').value) || 0;
+        const grandTotal = subtotal - discount + tax;
+        
+        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('discount-display').textContent = discount.toFixed(2);
+        document.getElementById('tax-display').textContent = tax.toFixed(2);
+        document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
+    }
+
+    addItemBtn.addEventListener('click', function() {
+        const newRow = document.createElement('div');
+        newRow.className = 'row mb-2 item-row';
+        newRow.innerHTML = `
+            <div class="col-md-5">
+                <select class="form-control form-select-sm product-select" name="product_id[]" required>
+                    ${productOptions}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control form-control-sm quantity-input" 
+                       name="quantity[]" placeholder="Qté" min="1" required>
+            </div>
+            <div class="col-md-2">
+                <input type="number" step="0.01" class="form-control form-control-sm price-input" 
+                       name="price[]" placeholder="Prix" min="0.01" required>
+            </div>
+            <div class="col-md-2">
+                <input type="number" step="0.01" class="form-control form-control-sm item-total" 
+                       placeholder="Total" readonly>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-danger remove-item">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        `;
+        itemsContainer.appendChild(newRow);
+        attachRowEvents(newRow);
+    });
+
+    function attachRowEvents(row) {
+        row.querySelector('.product-select').addEventListener('change', function() {
+            const option = this.options[this.selectedIndex];
+            if (option.value) {
+                row.querySelector('.price-input').value = option.dataset.price;
+                calculateRow(row);
+            }
+        });
+
+        row.querySelector('.quantity-input').addEventListener('input', () => calculateRow(row));
+        row.querySelector('.price-input').addEventListener('input', () => calculateRow(row));
+
+        row.querySelector('.remove-item').addEventListener('click', function() {
+            row.remove();
+            calculateTotal();
+        });
+    }
+
+    document.querySelectorAll('.item-row').forEach(attachRowEvents);
+    document.getElementById('discount').addEventListener('input', calculateTotal);
+    document.getElementById('tax').addEventListener('input', calculateTotal);
+
+    calculateTotal();
+});
+</script>
+{% endblock %}
+

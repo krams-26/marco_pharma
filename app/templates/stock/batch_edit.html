@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier Lot {{ batch.batch_number }}{% endblock %}
+
+{% block content %}
+<div class="header bg-gradient-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-8">
+                    <h6 class="h2 text-white d-inline-block mb-0">Modifier le Lot #{{ batch.batch_number }}</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.index') }}">Stock</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.batches') }}">Lots</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('stock.batch_view', id=batch.id) }}">{{ batch.batch_number }}</a></li>
+                            <li class="breadcrumb-item active">Modifier</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-4 text-right">
+                    <a href="{{ url_for('stock.batch_view', id=batch.id) }}" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+    <div class="row">
+        <div class="col-xl-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Modifier les Informations du Lot</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Note:</strong> Seules certaines informations peuvent être modifiées après la création du lot. 
+                        Les quantités ne peuvent être modifiées que via les mouvements de stock.
+                    </div>
+
+                    <form method="POST">
+                        <!-- Informations Non Modifiables -->
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label">Produit <span class="text-muted">(non modifiable)</span></label>
+                                <input type="text" class="form-control" value="{{ batch.product.name }}" disabled>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label">N° de Lot <span class="text-muted">(non modifiable)</span></label>
+                                <input type="text" class="form-control" value="{{ batch.batch_number }}" disabled>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label">Quantité Actuelle <span class="text-muted">(non modifiable)</span></label>
+                                <input type="text" class="form-control" value="{{ batch.quantity }} unités" disabled>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label">Pharmacie <span class="text-muted">(non modifiable)</span></label>
+                                <input type="text" class="form-control" value="{{ batch.pharmacy.name if batch.pharmacy else 'Non assigné' }}" disabled>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Informations Modifiables -->
+                        <h4 class="mb-3"><i class="fas fa-edit text-primary"></i> Informations Modifiables</h4>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label" for="supplier_id">Fournisseur</label>
+                                <select name="supplier_id" id="supplier_id" class="form-control">
+                                    <option value="">-- Aucun --</option>
+                                    {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}" {% if batch.supplier_id == supplier.id %}selected{% endif %}>
+                                        {{ supplier.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Sélectionnez le fournisseur de ce lot</small>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label" for="supplier">Nom Fournisseur (Texte)</label>
+                                <input type="text" name="supplier" id="supplier" class="form-control" 
+                                       value="{{ batch.supplier or '' }}" placeholder="Nom du fournisseur">
+                                <small class="form-text text-muted">Ou entrez directement le nom</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label" for="manufacture_date">Date de Fabrication</label>
+                                <input type="date" name="manufacture_date" id="manufacture_date" class="form-control" 
+                                       value="{{ batch.manufacture_date.strftime('%Y-%m-%d') if batch.manufacture_date else '' }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-control-label" for="expiry_date">Date d'Expiration *</label>
+                                <input type="date" name="expiry_date" id="expiry_date" class="form-control" 
+                                       value="{{ batch.expiry_date.strftime('%Y-%m-%d') if batch.expiry_date else '' }}" required>
+                                <small class="form-text text-muted">Date d'expiration du lot</small>
+                            </div>
+                        </div>
+
+                        <!-- Informations de Référence -->
+                        <hr class="my-4">
+                        <h4 class="mb-3"><i class="fas fa-info-circle text-info"></i> Informations de Référence</h4>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-control-label">Prix d'Achat</label>
+                                    <input type="text" class="form-control" value="${{ '%.2f'|format(batch.purchase_price) }}" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-control-label">Quantité Initiale</label>
+                                    <input type="text" class="form-control" value="{{ batch.initial_quantity }} unités" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-control-label">Date Réception</label>
+                                    <input type="text" class="form-control" value="{{ batch.received_date.strftime('%d/%m/%Y') }}" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <hr class="my-4">
+                        <div class="text-right">
+                            <a href="{{ url_for('stock.batch_view', id=batch.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer les Modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Avertissements -->
+            {% if batch.is_expired %}
+            <div class="alert alert-danger mt-4">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Attention:</strong> Ce lot est expiré depuis le {{ batch.expiry_date.strftime('%d/%m/%Y') }}.
+            </div>
+            {% elif batch.is_expiring_soon %}
+            <div class="alert alert-warning mt-4">
+                <i class="fas fa-clock"></i>
+                <strong>Attention:</strong> Ce lot expire dans {{ batch.days_until_expiry }} jours.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

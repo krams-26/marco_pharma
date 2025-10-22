@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Évaluations Personnel{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clipboard-check"></i> Évaluations du Personnel</h2>
+    <a href="{{ url_for('evaluation.dashboard') }}" class="btn btn-info">
+        <i class="bi bi-bar-chart"></i> Dashboard Évaluations
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card"><div class="card-body"><h6 class="text-muted">Total</h6><h3>{{ stats.total }}</h3></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary"><div class="card-body"><h6>Brouillons</h6><h3>{{ stats.draft }}</h3></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success"><div class="card-body"><h6>Validées</h6><h3>{{ stats.validated }}</h3></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info"><div class="card-body"><h6>Note Moyenne</h6><h3>{{ "%.1f"|format(stats.avg_score) }}/10</h3></div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Liste des Évaluations</h5></div>
+    <div class="card-body">
+        <form method="GET" class="row g-3 mb-3">
+            <div class="col-md-5">
+                <select name="employee_id" class="form-control">
+                    <option value="">Tous les employés</option>
+                    {% for emp in employees %}
+                    <option value="{{ emp.id }}" {% if filter_employee == emp.id|string %}selected{% endif %}>{{ emp.employee_id }} - {{ emp.position }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-control">
+                    <option value="">Tous statuts</option>
+                    <option value="draft" {% if filter_status == 'draft' %}selected{% endif %}>Brouillon</option>
+                    <option value="submitted" {% if filter_status == 'submitted' %}selected{% endif %}>Soumis</option>
+                    <option value="validated" {% if filter_status == 'validated' %}selected{% endif %}>Validé</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-secondary"><i class="bi bi-search"></i> Filtrer</button>
+                <a href="{{ url_for('evaluation.index') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>Employé</th><th>Date</th><th>Période</th><th>Note</th><th>Statut</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for eval in evaluations.items %}
+                    <tr>
+                        <td><strong>{{ eval.employee.employee_id }}</strong> ({{ eval.employee.position }})</td>
+                        <td>{{ eval.evaluation_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ eval.period_evaluated }}</td>
+                        <td><span class="badge bg-{% if eval.overall_score >= 8 %}success{% elif eval.overall_score >= 6 %}warning{% else %}danger{% endif %}">{{ "%.1f"|format(eval.overall_score) }}/10</span></td>
+                        <td>
+                            {% if eval.status == 'draft' %}<span class="badge bg-secondary">Brouillon</span>
+                            {% elif eval.status == 'submitted' %}<span class="badge bg-primary">Soumis</span>
+                            {% elif eval.status == 'validated' %}<span class="badge bg-success">Validé</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('evaluation.view', id=eval.id) }}" class="btn btn-sm btn-info"><i class="bi bi-eye"></i></a>
+                            <a href="{{ url_for('evaluation.edit', id=eval.id) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted">Aucune évaluation</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

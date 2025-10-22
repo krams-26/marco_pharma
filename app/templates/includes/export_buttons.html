@@ -1,0 +1,15 @@
+<!-- Boutons d'Export -->
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="ni ni-cloud-download-95"></i> Exporter
+    </button>
+    <div class="dropdown-menu">
+        <a class="dropdown-item" href="{{ export_url }}?format=csv{{ '&pharmacy_id=' + pharmacy_filter if pharmacy_filter else '' }}{{ '&search=' + search if search else '' }}">
+            <i class="fas fa-file-csv"></i> CSV
+        </a>
+        <a class="dropdown-item" href="{{ export_url }}?format=excel{{ '&pharmacy_id=' + pharmacy_filter if pharmacy_filter else '' }}{{ '&search=' + search if search else '' }}">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+    </div>
+</div>
+

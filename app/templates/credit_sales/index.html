@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Ventes à Crédit{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Ventes à Crédit</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Crédit</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('credit_sales.stats') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-chart-bar-32"></i> Statistiques
+          </a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="row">
+        <div class="col-xl-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Total Crédit</h5>
+                  <span class="h2 font-weight-bold mb-0 text-warning">${{ "%.2f"|format(total_credit|default(0)) }}</span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (total_credit|default(0)|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                    <i class="ni ni-credit-card"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">En Retard</h5>
+                  <span class="h2 font-weight-bold mb-0 text-danger">${{ "%.2f"|format(overdue_credit|default(0)) }}</span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (overdue_credit|default(0)|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                    <i class="ni ni-time-alarm"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Paiements Mois</h5>
+                  <span class="h2 font-weight-bold mb-0 text-success">${{ "%.2f"|format(month_payments|default(0)) }}</span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (month_payments|default(0)|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                    <i class="ni ni-check-bold"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Liste des Ventes à Crédit</h3>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Facture</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Payé</th>
+                <th>Solde</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sale in credit_sales.items %}
+              <tr>
+                <td><span class="badge badge-pill badge-primary">{{ sale.invoice_number }}</span></td>
+                <td><small>{{ sale.sale_date.strftime('%d/%m/%Y') }}</small></td>
+                <td>{{ sale.customer.name if sale.customer else '-' }}</td>
+                <td>
+                  <span class="font-weight-bold">${{ "%.2f"|format(sale.total_amount) }}</span><br>
+                  <small class="text-muted">{{ (sale.total_amount|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  <span class="text-success">${{ "%.2f"|format(sale.paid_amount) }}</span><br>
+                  <small class="text-muted">{{ (sale.paid_amount|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  <span class="text-danger font-weight-bold">${{ "%.2f"|format(sale.balance_due) }}</span><br>
+                  <small class="text-muted">{{ (sale.balance_due|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  {% if sale.credit_status == 'unpaid' %}
+                    <span class="badge badge-danger">Non Payé</span>
+                  {% elif sale.credit_status == 'partial' %}
+                    <span class="badge badge-warning">Partiel</span>
+                  {% elif sale.credit_status == 'paid' %}
+                    <span class="badge badge-success">Payé</span>
+                  {% elif sale.credit_status == 'overdue' %}
+                    <span class="badge badge-danger">En Retard</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucune vente à crédit
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if credit_sales.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not credit_sales.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ credit_sales.prev_num }}"><i class="fas fa-angle-left"></i></a>
+              </li>
+              {% for page_num in range(1, credit_sales.pages + 1) %}
+                {% if page_num == credit_sales.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == credit_sales.pages or (page_num >= credit_sales.page - 2 and page_num <= credit_sales.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not credit_sales.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ credit_sales.next_num }}"><i class="fas fa-angle-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

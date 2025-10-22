@@ -1,0 +1,19 @@
+<footer class="footer">
+  <div class="row align-items-center justify-content-between">
+    <div class="col-auto">
+      <div class="copyright text-muted">
+        © {{ "now"|format_datetime("%Y") }} <strong>Marco Pharma</strong>
+      </div>
+    </div>
+    <div class="col-auto">
+      <ul class="nav nav-footer">
+        <li class="nav-item">
+          <a href="{{ url_for('settings.index') }}" class="nav-link">
+            <i class="ni ni-settings-gear-65"></i> Paramètres
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</footer>
+

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Importer des Produits{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Importer des Produits</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('products.index') }}">Produits</a></li>
+              <li class="breadcrumb-item active">Import</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-bold-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-lg-8 offset-lg-2">
+      <!-- Instructions -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-bulb-61"></i> Instructions</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Format du fichier CSV</h4>
+            <p>Le fichier CSV doit contenir les colonnes suivantes (en-têtes):</p>
+            <ul class="mb-0">
+              <li><strong>Nom</strong> (Obligatoire) - Nom du produit</li>
+              <li><strong>Prix Vente</strong> (Obligatoire) - Prix de vente en USD</li>
+              <li>Description - Description du produit</li>
+              <li>Code-barres - Code-barres unique</li>
+              <li>Forme - Forme du produit</li>
+              <li>Unité - Unité de mesure (défaut: piece)</li>
+              <li>Prix Achat - Prix d'achat en USD</li>
+              <li>Prix Gros - Prix de gros en USD</li>
+              <li>Stock - Quantité en stock</li>
+              <li>Stock Min - Niveau de stock minimum</li>
+              <li>Fabricant - Nom du fabricant</li>
+              <li>Fournisseur - Nom du fournisseur</li>
+            </ul>
+          </div>
+
+          <div class="alert alert-warning">
+            <strong><i class="fas fa-exclamation-triangle"></i> Important:</strong>
+            <ul class="mb-0">
+              <li>Le fichier doit être au format CSV (séparateur: virgule)</li>
+              <li>L'encodage doit être UTF-8</li>
+              <li>Les produits seront associés à votre pharmacie par défaut</li>
+              <li>Les lignes avec des erreurs seront ignorées</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire d'Upload -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-cloud-upload-96"></i> Importer le Fichier</h3>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+              <label class="form-control-label">Fichier CSV</label>
+              <div class="custom-file">
+                <input type="file" name="file" class="custom-file-input" id="csvFile" accept=".csv" required>
+                <label class="custom-file-label" for="csvFile">Choisir un fichier...</label>
+              </div>
+              <small class="form-text text-muted">Format accepté: .csv uniquement</small>
+            </div>
+
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="ni ni-cloud-upload-96"></i> Importer les Produits
+              </button>
+              <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+                <i class="ni ni-fat-remove"></i> Annuler
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Template CSV -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="ni ni-single-copy-04"></i> Template CSV</h3>
+        </div>
+        <div class="card-body">
+          <p>Téléchargez ce template pour faciliter l'import:</p>
+          <a href="#" onclick="downloadTemplate()" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-download"></i> Télécharger le Template
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Update le label du fichier quand un fichier est sélectionné
+document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+  const fileName = e.target.files[0].name;
+  const label = e.target.nextElementSibling;
+  label.textContent = fileName;
+});
+
+// Télécharger un template CSV
+function downloadTemplate() {
+  const csvContent = "Nom,Description,Code-barres,Forme,Unité,Prix Achat,Prix Vente,Prix Gros,Stock,Stock Min,Fabricant,Fournisseur\n" +
+                    "Paracétamol 500mg,Antalgique et antipyrétique,1234567890,Médicaments,boite,2.50,5.00,4.00,100,20,PharmaCo,SupplierX\n" +
+                    "Amoxicilline 250mg,Antibiotique,9876543210,Médicaments,boite,3.00,6.50,5.50,50,15,MediLab,SupplierY";
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'template_produits.csv');
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+</script>
+
+{% endblock %}
+

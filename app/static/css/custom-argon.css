@@ -1,0 +1,451 @@
+/*
+ * Custom Argon Dashboard - Marco Pharma
+ * Layout fixe avec navbar et footer réduits
+ */
+
+/* ==================== LAYOUT FIXE ==================== */
+
+body {
+  overflow-x: hidden;
+}
+
+/* Sidebar fixe avec structure */
+.sidenav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 250px;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Logo fixe en haut */
+.sidenav-header {
+  flex-shrink: 0;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  background: #fff;
+}
+
+.sidenav-header .navbar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sidenav-header .navbar-brand-img {
+  max-height: 2.5rem;
+  max-width: 100%;
+}
+
+/* Zone scrollable du menu */
+.sidenav-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidenav-scrollable::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidenav-scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidenav-scrollable::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+/* Footer de la sidebar FIXE en bas */
+.sidenav-footer {
+  flex-shrink: 0;
+  background: #f7fafc;
+  border-top: 1px solid #e9ecef;
+  padding: 0.5rem 0;
+}
+
+.sidenav-footer .navbar-nav {
+  padding: 0;
+  margin: 0;
+}
+
+.sidenav-footer .nav-link {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.875rem;
+}
+
+/* Main content avec padding pour navbar et footer */
+.main-content {
+  position: relative;
+  margin-left: 250px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== NAVBAR FIXE ET RÉDUIT ==================== */
+
+.navbar-top {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 250px;
+  height: 50px !important;
+  min-height: 50px !important;
+  padding: 0.5rem 1.5rem !important;
+  z-index: 1040;
+  background: #5e72e4;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-top .container-fluid {
+  padding: 0;
+}
+
+.navbar-top .navbar-nav .nav-link {
+  padding: 0.5rem 0.75rem;
+}
+
+.navbar-top .avatar {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.navbar-search .form-control {
+  height: 36px;
+  font-size: 0.875rem;
+}
+
+/* ==================== CONTENT ZONE SCROLLABLE ==================== */
+
+.content-wrapper {
+  margin-top: 50px;
+  min-height: calc(100vh - 50px - 40px);
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+
+/* Headers avec background (comme dashboard) */
+.header.bg-primary {
+  margin-top: -50px;
+  padding-top: 50px;
+}
+
+/* Container-fluid dans content */
+.content-wrapper > .container-fluid {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* ==================== FOOTER FIXE ET RÉDUIT ==================== */
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 250px;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0.5rem 1.5rem !important;
+  background: #f7fafc;
+  border-top: 1px solid #e9ecef;
+  z-index: 1030;
+  margin: 0 !important;
+}
+
+.footer .row {
+  margin: 0;
+  align-items: center;
+  height: 100%;
+}
+
+.footer .copyright {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.footer .nav-footer {
+  margin: 0;
+  padding: 0;
+}
+
+.footer .nav-footer .nav-link {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* ==================== AJUSTEMENTS DROPDOWN NAVBAR ==================== */
+
+.navbar-top .dropdown-menu {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.navbar-top .dropdown-menu .dropdown-item {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 1199.98px) {
+  .sidenav {
+    transform: translateX(-250px);
+  }
+  
+  .sidenav.show {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .navbar-top {
+    left: 0;
+  }
+  
+  .footer {
+    left: 0;
+  }
+}
+
+/* Mobile: navbar plus petit */
+@media (max-width: 767.98px) {
+  .navbar-top {
+    height: 45px !important;
+    padding: 0.25rem 1rem !important;
+  }
+  
+  .content-wrapper {
+    margin-top: 45px;
+    min-height: calc(100vh - 45px - 35px);
+    padding-bottom: 35px;
+  }
+  
+  .footer {
+    height: 35px !important;
+    padding: 0.25rem 1rem !important;
+  }
+  
+  .header.bg-primary {
+    margin-top: -45px;
+    padding-top: 45px;
+  }
+}
+
+/* ==================== SCROLLBAR PERSONNALISÉE ==================== */
+
+.content-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ==================== CORRECTIONS ARGON ==================== */
+
+/* Retirer les marges par défaut d'Argon qui causent des problèmes */
+.container-fluid.mt--6 {
+  margin-top: -3rem !important;
+}
+
+.container-fluid.mt--7 {
+  margin-top: -3.5rem !important;
+}
+
+/* Cards dans le content ne dépassent pas */
+.content-wrapper .card {
+  margin-bottom: 1.5rem;
+}
+
+/* Dernier élément du content sans marge bottom */
+.content-wrapper > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ==================== DARK MODE ==================== */
+
+body.dark-mode {
+  background-color: #1a1d2e;
+  color: #e4e6eb;
+}
+
+/* Sidebar en mode sombre */
+body.dark-mode .sidenav {
+  background-color: #252836;
+  border-right: 1px solid #3a3d50;
+}
+
+body.dark-mode .sidenav-header {
+  background-color: #252836;
+  border-bottom-color: #3a3d50;
+}
+
+body.dark-mode .sidenav-footer {
+  background-color: #1f2233;
+  border-top-color: #3a3d50;
+}
+
+body.dark-mode .sidenav .nav-link {
+  color: #b5b7c0;
+}
+
+body.dark-mode .sidenav .nav-link:hover {
+  background-color: #2e3142;
+  color: #fff;
+}
+
+body.dark-mode .sidenav .nav-link.active {
+  background-color: #5e72e4;
+  color: #fff;
+}
+
+/* Navbar en mode sombre */
+body.dark-mode .navbar-top {
+  background-color: #252836 !important;
+  border-bottom: 1px solid #3a3d50;
+}
+
+body.dark-mode .navbar-search .form-control {
+  background-color: #1f2233;
+  border-color: #3a3d50;
+  color: #e4e6eb;
+}
+
+body.dark-mode .navbar-search .input-group-text {
+  background-color: #1f2233;
+  border-color: #3a3d50;
+  color: #b5b7c0;
+}
+
+/* Footer en mode sombre */
+body.dark-mode .footer {
+  background-color: #252836;
+  border-top-color: #3a3d50;
+}
+
+body.dark-mode .footer .copyright {
+  color: #b5b7c0;
+}
+
+body.dark-mode .footer .nav-link {
+  color: #b5b7c0;
+}
+
+/* Cards en mode sombre */
+body.dark-mode .card {
+  background-color: #252836;
+  border-color: #3a3d50;
+  color: #e4e6eb;
+}
+
+body.dark-mode .card-header {
+  background-color: #1f2233;
+  border-bottom-color: #3a3d50;
+  color: #e4e6eb;
+}
+
+body.dark-mode .card.card-stats {
+  background-color: #252836;
+}
+
+/* Tables en mode sombre */
+body.dark-mode .table {
+  color: #e4e6eb;
+}
+
+body.dark-mode .table thead th {
+  background-color: #1f2233;
+  color: #b5b7c0;
+  border-color: #3a3d50;
+}
+
+body.dark-mode .table tbody td {
+  border-color: #3a3d50;
+}
+
+body.dark-mode .table tbody tr:hover {
+  background-color: #2e3142;
+}
+
+/* Header avec background en mode sombre */
+body.dark-mode .header.bg-primary {
+  background: linear-gradient(87deg, #2e3142 0, #3a3d50 100%) !important;
+}
+
+/* Textes en mode sombre */
+body.dark-mode .text-muted {
+  color: #b5b7c0 !important;
+}
+
+body.dark-mode .text-dark {
+  color: #e4e6eb !important;
+}
+
+/* Badges en mode sombre */
+body.dark-mode .badge-secondary {
+  background-color: #3a3d50;
+  color: #e4e6eb;
+}
+
+/* Dropdowns en mode sombre */
+body.dark-mode .dropdown-menu {
+  background-color: #252836;
+  border-color: #3a3d50;
+}
+
+body.dark-mode .dropdown-item {
+  color: #e4e6eb;
+}
+
+body.dark-mode .dropdown-item:hover {
+  background-color: #2e3142;
+  color: #fff;
+}
+
+body.dark-mode .dropdown-divider {
+  border-color: #3a3d50;
+}
+
+/* Formulaires en mode sombre */
+body.dark-mode .form-control {
+  background-color: #1f2233;
+  border-color: #3a3d50;
+  color: #e4e6eb;
+}
+
+body.dark-mode .form-control:focus {
+  background-color: #252836;
+  border-color: #5e72e4;
+  color: #e4e6eb;
+}
+
+/* Bouton de changement de thème */
+#theme-toggle {
+  cursor: pointer;
+}
+
+#theme-toggle:hover {
+  opacity: 0.8;
+}
+

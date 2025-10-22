@@ -1,85 +1,160 @@
 {% extends "base.html" %}
 
-{% block title %}Point de Vente - Pharmacie{% endblock %}
+{% block title %}Point de Vente - MARCO PHARMA{% endblock %}
 
 {% block content %}
-<h2 class="mb-4"><i class="bi bi-cart-check"></i> Point de Vente (POS)</h2>
+<div class="mb-4">
+    <h2><i class="fas fa-cash-register"></i> Point de Vente (POS)</h2>
+</div>
 
-<div class="row">
-    <div class="col-md-8">
+<div class="row g-3">
+    <!-- Zone de gauche : Recherche et Panier -->
+    <div class="col-lg-8">
+        <!-- Recherche de produit -->
         <div class="card mb-3">
             <div class="card-header bg-white">
-                <h5 class="mb-0">Rechercher un produit</h5>
+                <h5 class="mb-0"><i class="fas fa-search"></i> Rechercher un produit</h5>
             </div>
             <div class="card-body">
-                <input type="text" id="product-search" class="form-control" placeholder="Rechercher par nom ou code-barres...">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                    <input type="text" id="product-search" class="form-control form-control-lg" placeholder="Nom du produit ou code-barres..." autofocus>
+                </div>
                 <div id="search-results" class="mt-2"></div>
             </div>
         </div>
         
+        <!-- Panier -->
         <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Panier</h5>
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Panier (<span id="cart-count">0</span> articles)</h5>
+                <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">
+                    <i class="fas fa-trash"></i> Vider
+                </button>
             </div>
             <div class="card-body">
-                <table class="table" id="cart-table">
-                    <thead>
-                        <tr>
-                            <th>Produit</th>
-                            <th>Prix</th>
-                            <th>Qté</th>
-                            <th>Total</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="cart-items"></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produit</th>
+                                <th class="text-end">Prix Unit.</th>
+                                <th class="text-center" style="width: 120px;">Qté</th>
+                                <th class="text-end">Total</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-items">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-5">
+                                    <i class="fas fa-shopping-cart fa-3x mb-3 d-block"></i>
+                                    Le panier est vide
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card">
+    <!-- Zone de droite : Paiement -->
+    <div class="col-lg-4">
+        <div class="card sticky-top" style="top: 1rem;">
             <div class="card-header bg-white">
-                <h5 class="mb-0">Paiement</h5>
+                <h5 class="mb-0"><i class="fas fa-dollar-sign"></i> Paiement</h5>
             </div>
             <div class="card-body">
+                <!-- Client -->
                 <div class="mb-3">
-                    <label class="form-label">Client</label>
-                    <select class="form-select" id="customer-select">
+                    <label class="form-label"><i class="fas fa-user"></i> Client</label>
+                    <select class="form-control" id="customer-select">
                         <option value="">Client anonyme</option>
                         {% for customer in customers %}
-                        <option value="{{ customer.id }}">{{ customer.name }}</option>
+                        <option value="{{ customer.id }}" data-credit="{{ customer.credit_limit }}">{{ customer.name }}</option>
                         {% endfor %}
                     </select>
+                    <button type="button" class="btn btn-sm btn-link" data-toggle="modal" data-target="#addCustomerModal">
+                        <i class="fas fa-plus"></i> Nouveau client
+                    </button>
                 </div>
                 
-                <div class="mb-3">
-                    <label class="form-label">Total</label>
-                    <h3 id="total-amount">$0.00</h3>
+                <!-- Résumé des montants -->
+                <div class="bg-light p-3 rounded mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Sous-total:</span>
+                        <span class="price-dual">
+                            <strong id="subtotal-usd">$0.00</strong>
+                            <small class="text-muted d-block" id="subtotal-cdf">0 FC</small>
+                        </span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Remise:</span>
+                        <span class="text-danger">
+                            <strong id="discount-display">$0.00</strong>
+                        </span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">TOTAL:</span>
+                        <span class="price-dual">
+                            <strong class="fs-4 text-primary" id="total-usd">$0.00</strong>
+                            <small class="text-muted d-block" id="total-cdf">0 FC</small>
+                        </span>
+                    </div>
                 </div>
                 
+                <!-- Remise -->
                 <div class="mb-3">
-                    <label class="form-label">Remise</label>
-                    <input type="number" class="form-control" id="discount" value="0" step="0.01">
+                    <label class="form-label"><i class="fas fa-percent"></i> Remise ($)</label>
+                    <input type="number" class="form-control" id="discount" value="0" step="0.01" min="0">
                 </div>
                 
+                <!-- Méthode de paiement -->
                 <div class="mb-3">
-                    <label class="form-label">Montant payé</label>
-                    <input type="number" class="form-control" id="paid-amount" step="0.01">
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Méthode de paiement</label>
-                    <select class="form-select" id="payment-method">
-                        <option value="cash">Espèces</option>
-                        <option value="card">Carte</option>
-                        <option value="mobile">Mobile Money</option>
+                    <label class="form-label"><i class="fas fa-credit-card"></i> Méthode de paiement</label>
+                    <select class="form-control" id="payment-method">
+                        <option value="cash">💵 Espèces</option>
+                        <option value="card">💳 Carte bancaire</option>
+                        <option value="mobile_money">📱 Mobile Money</option>
+                        <option value="bank_transfer">🏦 Virement</option>
+                        <option value="credit">🔖 Crédit</option>
                     </select>
                 </div>
                 
-                <button class="btn btn-primary w-100" id="complete-sale">
-                    <i class="bi bi-check-circle"></i> Terminer la vente
+                <!-- Montant payé -->
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-money-bill"></i> Montant payé ($)</label>
+                    <input type="number" class="form-control" id="paid-amount" step="0.01" min="0">
+                </div>
+                
+                <!-- Monnaie à rendre -->
+                <div class="mb-3" id="change-section" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong><i class="fas fa-exchange-alt"></i> Monnaie à rendre:</strong>
+                        <div class="price-dual mt-1">
+                            <strong class="fs-5" id="change-usd">$0.00</strong>
+                            <small class="text-muted d-block" id="change-cdf">0 FC</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-sticky-note"></i> Notes (optionnel)</label>
+                    <textarea class="form-control" id="notes" rows="2"></textarea>
+                </div>
+                
+                <!-- Bouton final -->
+                <button class="btn btn-primary btn-lg w-100" id="complete-sale" disabled>
+                    <i class="fas fa-check-circle"></i> Finaliser la vente
+                </button>
+                
+                <button class="btn btn-outline-secondary w-100 mt-2" onclick="clearCart()">
+                    <i class="fas fa-redo"></i> Réinitialiser
                 </button>
             </div>
         </div>
@@ -87,113 +162,370 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block javascripts %}
 <script>
-let cart = [];
-
-$('#product-search').on('input', function() {
-    const query = $(this).val();
-    if (query.length > 1) {
-        $.get('/pos/search-product?q=' + query, function(products) {
-            let html = '<div class="list-group">';
-            products.forEach(p => {
-                html += `<a href="#" class="list-group-item list-group-item-action add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
-                    ${p.name} - $${p.price} (Stock: ${p.stock})
-                </a>`;
-            });
-            html += '</div>';
-            $('#search-results').html(html);
-        });
-    } else {
-        $('#search-results').html('');
-    }
-});
-
-$(document).on('click', '.add-to-cart', function(e) {
-    e.preventDefault();
-    const product = {
-        id: $(this).data('id'),
-        name: $(this).data('name'),
-        price: parseFloat($(this).data('price')),
-        quantity: 1
-    };
+$(document).ready(function() {
+    console.log('POS initialisé');
     
-    const existing = cart.find(item => item.id === product.id);
-    if (existing) {
-        existing.quantity++;
-    } else {
-        cart.push(product);
-    }
-    
-    updateCart();
-    $('#search-results').html('');
-    $('#product-search').val('');
-});
+    const TAUX_USD_CDF = 2800; // Taux de change
+    let cart = [];
 
-function updateCart() {
-    let html = '';
-    let total = 0;
-    
-    cart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
+    // Recherche de produit avec debounce
+    let searchTimeout;
+    $('#product-search').on('input', function() {
+        console.log('Recherche déclenchée:', $(this).val());
+        clearTimeout(searchTimeout);
+        const query = $(this).val().trim();
         
-        html += `<tr>
-            <td>${item.name}</td>
-            <td>$${item.price.toFixed(2)}</td>
-            <td><input type="number" class="form-control form-control-sm" value="${item.quantity}" min="1" data-index="${index}" style="width:80px"></td>
-            <td>$${itemTotal.toFixed(2)}</td>
-            <td><button class="btn btn-sm btn-danger remove-item" data-index="${index}"><i class="bi bi-trash"></i></button></td>
-        </tr>`;
+        if (query.length > 1) {
+            searchTimeout = setTimeout(function() {
+                $.ajax({
+                    url: '/pos/search-product',
+                    method: 'GET',
+                    data: { q: query },
+                    success: function(products) {
+                        console.log('Produits trouvés:', products.length);
+                        
+                        if (products.length === 0) {
+                            $('#search-results').html('<div class="alert alert-warning">Aucun produit trouvé</div>');
+                            return;
+                        }
+                        
+                        let html = '<div class="list-group shadow-sm">';
+                        products.forEach(p => {
+                            const cdf = (p.price * TAUX_USD_CDF).toFixed(0);
+                            html += `<a href="#" class="list-group-item list-group-item-action add-to-cart" 
+                                data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-stock="${p.stock}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${p.name}</strong>
+                                        <small class="text-muted d-block">Stock: ${p.stock} unités</small>
+                                    </div>
+                                    <div class="text-end price-dual">
+                                        <strong>$${parseFloat(p.price).toFixed(2)}</strong>
+                                        <small class="text-muted d-block">${parseInt(cdf).toLocaleString()} FC</small>
+                                    </div>
+                                </div>
+                            </a>`;
+                        });
+                        html += '</div>';
+                        $('#search-results').html(html);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erreur recherche:', error);
+                        $('#search-results').html('<div class="alert alert-danger">Erreur lors de la recherche</div>');
+                    }
+                });
+            }, 300); // Debounce de 300ms
+        } else {
+            $('#search-results').html('');
+        }
+    });
+
+    // Ajouter au panier
+    $(document).on('click', '.add-to-cart', function(e) {
+        e.preventDefault();
+        const product = {
+            id: $(this).data('id'),
+            name: $(this).data('name'),
+            price: parseFloat($(this).data('price')),
+            stock: parseInt($(this).data('stock')),
+            quantity: 1
+        };
+        
+        const existing = cart.find(item => item.id === product.id);
+        if (existing) {
+            if (existing.quantity < product.stock) {
+                existing.quantity++;
+            } else {
+                alert('Stock insuffisant!');
+                return;
+            }
+        } else {
+            cart.push(product);
+        }
+        
+        updateCart();
+        $('#search-results').html('');
+        $('#product-search').val('').focus();
+    });
+
+    // Mettre à jour le panier
+    function updateCart() {
+        if (cart.length === 0) {
+        $('#cart-items').html(`<tr>
+            <td colspan="5" class="text-center text-muted py-5">
+                <i class="fas fa-shopping-cart fa-3x mb-3 d-block"></i>
+                Le panier est vide
+            </td>
+        </tr>`);
+            $('#cart-count').text('0');
+            $('#complete-sale').prop('disabled', true);
+        } else {
+            let html = '';
+            let subtotal = 0;
+            
+            cart.forEach((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                const cdf = (item.price * TAUX_USD_CDF).toFixed(0);
+                const totalCdf = (itemTotal * TAUX_USD_CDF).toFixed(0);
+            
+                html += `<tr>
+                    <td>
+                        <strong>${item.name}</strong>
+                        <small class="text-muted d-block">Stock: ${item.stock}</small>
+                    </td>
+                    <td class="text-end price-dual">
+                        $${item.price.toFixed(2)}
+                        <small class="text-muted d-block">${parseInt(cdf).toLocaleString()} FC</small>
+                    </td>
+                    <td class="text-center">
+                        <input type="number" class="form-control form-control-sm text-center quantity-input" 
+                            value="${item.quantity}" min="1" max="${item.stock}" data-index="${index}">
+                    </td>
+                    <td class="text-end price-dual">
+                        <strong>$${itemTotal.toFixed(2)}</strong>
+                        <small class="text-muted d-block">${parseInt(totalCdf).toLocaleString()} FC</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger remove-item" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            $('#cart-items').html(html);
+            $('#cart-count').text(cart.length);
+            $('#complete-sale').prop('disabled', false);
+        }
+        
+        calculateTotals();
+    }
+
+    // Calculer les totaux
+    function calculateTotals() {
+        let subtotal = 0;
+        cart.forEach(item => {
+            subtotal += item.price * item.quantity;
+        });
+        
+        const discount = parseFloat($('#discount').val()) || 0;
+        const total = subtotal - discount;
+        const paidAmount = parseFloat($('#paid-amount').val()) || 0;
+        const change = paidAmount - total;
+        
+        // Mise à jour USD
+        $('#subtotal-usd').text('$' + subtotal.toFixed(2));
+        $('#discount-display').text('-$' + discount.toFixed(2));
+        $('#total-usd').text('$' + total.toFixed(2));
+        
+        // Mise à jour CDF
+        $('#subtotal-cdf').text(Math.round(subtotal * TAUX_USD_CDF).toLocaleString() + ' FC');
+        $('#total-cdf').text(Math.round(total * TAUX_USD_CDF).toLocaleString() + ' FC');
+        
+        // Monnaie à rendre
+        if (paidAmount > total && total > 0) {
+            $('#change-section').show();
+            $('#change-usd').text('$' + change.toFixed(2));
+            $('#change-cdf').text(Math.round(change * TAUX_USD_CDF).toLocaleString() + ' FC');
+        } else {
+            $('#change-section').hide();
+        }
+    }
+
+    // Événements
+    $(document).on('change', '.quantity-input', function() {
+        const index = $(this).data('index');
+        const newQty = parseInt($(this).val());
+        
+        if (newQty > cart[index].stock) {
+            alert('Quantité supérieure au stock disponible!');
+            $(this).val(cart[index].quantity);
+            return;
+        }
+        
+        cart[index].quantity = newQty;
+        updateCart();
+    });
+
+    $(document).on('click', '.remove-item', function() {
+        const index = $(this).data('index');
+        cart.splice(index, 1);
+        updateCart();
+    });
+
+    $('#discount, #paid-amount').on('input', calculateTotals);
+
+    // Vider le panier
+    function clearCart() {
+        if (cart.length > 0) {
+            if (confirm('Êtes-vous sûr de vouloir vider le panier?')) {
+                cart = [];
+                updateCart();
+                $('#discount').val(0);
+                $('#paid-amount').val('');
+                $('#customer-select').val('');
+            }
+        }
+    }
+
+    // Finaliser la vente
+    $('#complete-sale').click(function() {
+        if (cart.length === 0) {
+            alert('Le panier est vide!');
+            return;
+        }
+        
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const discount = parseFloat($('#discount').val()) || 0;
+        const total = subtotal - discount;
+        const paidAmount = parseFloat($('#paid-amount').val()) || 0;
+        
+        if (paidAmount < total) {
+            if (!confirm('Le montant payé est insuffisant. Voulez-vous créer une vente à crédit?')) {
+                return;
+            }
+        }
+        
+        const data = {
+            customer_id: $('#customer-select').val() || null,
+            items: cart.map(item => ({
+                product_id: item.id,
+                quantity: item.quantity,
+                price: item.price
+            })),
+            discount: discount,
+            paid_amount: paidAmount,
+            payment_method: $('#payment-method').val(),
+            payment_type: paidAmount < total ? 'credit' : 'cash',
+            notes: $('#notes').val()
+        };
+        
+        // Afficher un loader
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Traitement...');
+        
+        $.ajax({
+            url: '/pos/create-sale',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                if (response.is_temp) {
+                    alert('✓ Vente enregistrée !\n\nRéférence: ' + response.reference + '\n\nEn attente de validation par le caissier.');
+                    // Réinitialiser et rester sur la page
+                    cart = [];
+                    updateCart();
+                    $('#discount').val(0);
+                    $('#paid-amount').val('');
+                    $('#customer-select').val('');
+                    $('#notes').val('');
+                    $('#product-search').val('').focus();
+                    $('#complete-sale').prop('disabled', false).html('<i class="fas fa-check-circle"></i> Finaliser la vente');
+                } else {
+                    alert('✓ Vente créée avec succès!');
+                    window.location.href = '/pos/invoice/' + response.sale_id;
+                }
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                $('#complete-sale').prop('disabled', false).html('<i class="fas fa-check-circle"></i> Finaliser la vente');
+            }
+        });
+    });
+
+    // Raccourcis clavier
+    $(document).keydown(function(e) {
+        // F9 pour finaliser
+        if (e.keyCode === 120 && cart.length > 0) {
+            e.preventDefault();
+            $('#complete-sale').click();
+        }
+        
+        // ESC pour vider
+        if (e.keyCode === 27 && cart.length > 0) {
+            e.preventDefault();
+            clearCart();
+        }
     });
     
-    $('#cart-items').html(html);
-    $('#total-amount').text('$' + total.toFixed(2));
-}
-
-$(document).on('change', '#cart-items input[type="number"]', function() {
-    const index = $(this).data('index');
-    cart[index].quantity = parseInt($(this).val());
-    updateCart();
-});
-
-$(document).on('click', '.remove-item', function() {
-    const index = $(this).data('index');
-    cart.splice(index, 1);
-    updateCart();
-});
-
-$('#complete-sale').click(function() {
-    if (cart.length === 0) {
-        alert('Le panier est vide!');
-        return;
-    }
-    
-    const data = {
-        customer_id: $('#customer-select').val(),
-        items: cart.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity,
-            price: item.price
-        })),
-        discount: parseFloat($('#discount').val()) || 0,
-        paid_amount: parseFloat($('#paid-amount').val()) || 0,
-        payment_method: $('#payment-method').val()
-    };
-    
-    $.ajax({
-        url: '/pos/create-sale',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        success: function(response) {
-            alert('Vente créée avec succès! Facture: ' + response.invoice_number);
-            window.location.href = '/pos/invoice/' + response.sale_id;
-        },
-        error: function(xhr) {
-            alert('Erreur: ' + xhr.responseJSON.message);
+    // Modal Ajouter Client Rapide
+    $('#saveQuickCustomer').click(function() {
+        const btn = $(this);
+        const name = $('#quick-customer-name').val();
+        const phone = $('#quick-customer-phone').val();
+        const email = $('#quick-customer-email').val();
+        
+        if (!name) {
+            alert('Le nom est requis');
+            return;
         }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enregistrement...');
+        
+        $.ajax({
+            url: '/customers/quick-add',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: name, phone: phone, email: email }),
+            success: function(response) {
+                // Ajouter le client au select
+                $('#customer-select').append(
+                    `<option value="${response.customer.id}" selected>${response.customer.name}</option>`
+                );
+                
+                // Fermer le modal et réinitialiser
+                $('#addCustomerModal').modal('hide');
+                $('#quick-customer-name').val('');
+                $('#quick-customer-phone').val('');
+                $('#quick-customer-email').val('');
+                
+                alert('✓ Client ajouté avec succès!');
+                btn.prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer');
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                btn.prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer');
+            }
+        });
     });
 });
 </script>
+
+<!-- Modal Ajouter Client Rapide -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-user-plus"></i> Nouveau Client Rapide
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nom <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="quick-customer-name" placeholder="Nom du client" required>
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input type="tel" class="form-control" id="quick-customer-phone" placeholder="+243...">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="quick-customer-email" placeholder="email@exemple.com">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="saveQuickCustomer">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

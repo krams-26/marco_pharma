@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier le Fournisseur{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil"></i> Modifier le Fournisseur #{{ supplier.id }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('suppliers.edit', id=supplier.id) }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ supplier.name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="code" class="form-label">Code</label>
+                                    <input type="text" class="form-control" id="code" name="code" value="{{ supplier.code or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="contact_person" class="form-label">Personne de contact</label>
+                                    <input type="text" class="form-control" id="contact_person" name="contact_person" value="{{ supplier.contact_person or '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ supplier.email or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Téléphone 1</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" value="{{ supplier.phone or '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone2" class="form-label">Téléphone 2</label>
+                                    <input type="tel" class="form-control" id="phone2" name="phone2" value="{{ supplier.phone2 or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="address" name="address" rows="2">{{ supplier.address or '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="city" class="form-label">Ville</label>
+                                    <input type="text" class="form-control" id="city" name="city" value="{{ supplier.city or '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="country" class="form-label">Pays</label>
+                                    <input type="text" class="form-control" id="country" name="country" value="{{ supplier.country or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="website" class="form-label">Site web</label>
+                                    <input type="url" class="form-control" id="website" name="website" value="{{ supplier.website or '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tax_id" class="form-label">Numéro fiscal</label>
+                                    <input type="text" class="form-control" id="tax_id" name="tax_id" value="{{ supplier.tax_id or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payment_terms" class="form-label">Conditions de paiement</label>
+                                    <input type="text" class="form-control" id="payment_terms" name="payment_terms" value="{{ supplier.payment_terms or '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="credit_limit" class="form-label">Limite de crédit ($)</label>
+                                    <input type="number" step="0.01" class="form-control" id="credit_limit" name="credit_limit" value="{{ supplier.credit_limit }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Statut</label>
+                                    <select class="form-control" id="status" name="status">
+                                        <option value="active" {% if supplier.status == 'active' %}selected{% endif %}>Actif</option>
+                                        <option value="inactive" {% if supplier.status == 'inactive' %}selected{% endif %}>Inactif</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ supplier.notes or '' }}</textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('suppliers.show', id=supplier.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-circle"></i> Enregistrer les Modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

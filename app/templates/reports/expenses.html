@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapport des Dépenses{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Rapport des Dépenses</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Rapports</a></li>
+              <li class="breadcrumb-item active">Dépenses</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('reports.index') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-bold-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <!-- Statistiques -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Dépenses</h5>
+              <span class="h2 font-weight-bold mb-0">{{ "%.2f"|format(total_expenses) }}$</span>
+              <p class="mt-1 mb-0 text-sm"><span class="text-nowrap">{{ "%.0f"|format(total_expenses|usd_to_cdf) }} FC</span></p>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                <i class="ni ni-money-coins"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des dépenses -->
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Liste des Dépenses ({{ expenses|length }})</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card-body border-bottom">
+          <form method="GET" action="{{ url_for('reports.expenses') }}" class="row">
+            {% if current_user.role == 'admin' and pharmacies %}
+            <div class="col-lg-3 col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="ni ni-shop"></i> Pharmacie</label>
+                <select name="pharmacy_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes</option>
+                  {% for pharmacy in pharmacies %}
+                  <option value="{{ pharmacy.id }}" {% if pharmacy_filter|string == pharmacy.id|string %}selected{% endif %}>
+                    {{ pharmacy.name }}{% if pharmacy.type == 'depot' %} (Dépôt){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}5{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="fas fa-calendar"></i> Date début</label>
+                <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}" required>
+              </div>
+            </div>
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}5{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="fas fa-calendar"></i> Date fin</label>
+                <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}" required>
+              </div>
+            </div>
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}2{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                  <i class="fas fa-search"></i> Filtrer
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tableau -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Forme</th>
+                <th class="text-right">Montant</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for expense in expenses %}
+              <tr>
+                <td>{{ expense.expense_date.strftime('%d/%m/%Y') if expense.expense_date else '-' }}</td>
+                <td class="font-weight-bold">{{ expense.description }}</td>
+                <td><span class="badge badge-secondary">{{ expense.forme or '-' }}</span></td>
+                <td class="text-right">
+                  <span class="font-weight-bold">{{ "%.2f"|format(expense.amount) }}$</span>
+                  <br><small class="text-muted">{{ "%.0f"|format(expense.amount|usd_to_cdf) }} FC</small>
+                </td>
+                <td>{{ expense.notes or '-' }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">Aucune dépense pour la période sélectionnée</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

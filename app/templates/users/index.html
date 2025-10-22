@@ -1,5 +1,144 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Utilisateurs{% endblock %}
+
 {% block content %}
-<h2>Users Module</h2>
-<p>Page en cours de développement...</p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Utilisateurs</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Utilisateurs</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('users.add') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-fat-add"></i> Nouvel Utilisateur
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Liste des Utilisateurs</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card-body border-bottom">
+          <form method="GET" class="row">
+            <div class="col-md-10">
+              <div class="form-group mb-0">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher par nom, email..." value="{{ search }}">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary btn-sm btn-block">
+                <i class="fas fa-search"></i> Rechercher
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Utilisateur</th>
+                <th>Nom Complet</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users.items %}
+              <tr>
+                <td><span class="font-weight-bold">{{ user.username }}</span></td>
+                <td>{{ user.full_name or '-' }}</td>
+                <td><small>{{ user.email }}</small></td>
+                <td>
+                  {% if user.role == 'admin' %}
+                    <span class="badge badge-danger">Admin</span>
+                  {% elif user.role == 'gestionnaire' %}
+                    <span class="badge badge-primary">Gestionnaire</span>
+                  {% elif user.role == 'pharmacien' %}
+                    <span class="badge badge-info">Pharmacien</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ user.role|title }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if user.is_active %}
+                    <span class="badge badge-success">Actif</span>
+                  {% else %}
+                    <span class="badge badge-warning">Inactif</span>
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-icon btn-primary">
+                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucun utilisateur trouvé
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if users.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not users.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ users.prev_num }}&search={{ search or '' }}"><i class="fas fa-angle-left"></i></a>
+              </li>
+              {% for page_num in range(1, users.pages + 1) %}
+                {% if page_num == users.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == users.pages or (page_num >= users.page - 2 and page_num <= users.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}&search={{ search or '' }}">{{ page_num }}</a></li>
+                {% elif page_num == users.page - 3 or page_num == users.page + 3 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not users.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ users.next_num }}&search={{ search or '' }}"><i class="fas fa-angle-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

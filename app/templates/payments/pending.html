@@ -1,27 +1,98 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Paiements en Attente{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Paiements en attente</h2>
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th>Facture</th><th>Client</th><th>Total</th><th>Payé</th><th>Solde dû</th><th>Actions</th></tr></thead>
-                <tbody>
-                    {% for sale in sales %}
-                    <tr>
-                        <td><a href="{{ url_for('sales.view', id=sale.id) }}">{{ sale.invoice_number }}</a></td>
-                        <td>{{ sale.customer.name if sale.customer else 'Client anonyme' }}</td>
-                        <td>${{ "%.2f"|format(sale.total_amount) }}</td>
-                        <td>${{ "%.2f"|format(sale.paid_amount) }}</td>
-                        <td>${{ "%.2f"|format(sale.balance_due) }}</td>
-                        <td><a href="{{ url_for('payments.record', sale_id=sale.id) }}" class="btn btn-sm btn-primary">Enregistrer paiement</a></td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="6" class="text-center text-muted">Aucun paiement en attente</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Paiements en Attente</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('payments.index') }}">Paiements</a></li>
+              <li class="breadcrumb-item active">En Attente</li>
+            </ol>
+          </nav>
         </div>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Factures Impayées ou Partiellement Payées</h3>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Facture</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Total</th>
+                <th>Payé</th>
+                <th>Solde Dû</th>
+                <th>Statut</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sale in sales %}
+              <tr>
+                <td><span class="badge badge-pill badge-primary">{{ sale.invoice_number }}</span></td>
+                <td><small>{{ sale.sale_date.strftime('%d/%m/%Y') }}</small></td>
+                <td>{{ sale.customer.name if sale.customer else 'Anonyme' }}</td>
+                <td>
+                  <span class="font-weight-bold">${{ "%.2f"|format(sale.total_amount) }}</span><br>
+                  <small class="text-muted">{{ (sale.total_amount|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  <span class="text-success">${{ "%.2f"|format(sale.paid_amount) }}</span><br>
+                  <small class="text-muted">{{ (sale.paid_amount|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  <span class="text-danger font-weight-bold">${{ "%.2f"|format(sale.balance_due) }}</span><br>
+                  <small class="text-muted"><strong>{{ (sale.balance_due|usd_to_cdf)|format_number }} FC</strong></small>
+                </td>
+                <td>
+                  {% if sale.payment_status == 'partial' %}
+                    <span class="badge badge-warning">Partiel</span>
+                  {% else %}
+                    <span class="badge badge-danger">Non Payé</span>
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  <a href="{{ url_for('payments.record', sale_id=sale.id) }}" class="btn btn-sm btn-success">
+                    <i class="ni ni-money-coins"></i> Payer
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                  <i class="ni ni-check-bold" style="font-size: 3rem; color: #2dce89;"></i><br>
+                  Aucune facture en attente - Tout est payé!
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

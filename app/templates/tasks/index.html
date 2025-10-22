@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des Tâches{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-list-task"></i> Gestion des Tâches</h2>
+        <a href="{{ url_for('tasks.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nouvelle Tâche
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h6 class="text-muted">Total</h6>
+                    <h3 class="text-primary">{{ stats.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h6 class="text-muted">En attente</h6>
+                    <h3 class="text-warning">{{ stats.pending }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h6 class="text-muted">En cours</h6>
+                    <h3 class="text-info">{{ stats.in_progress }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h6 class="text-muted">Complétées</h6>
+                    <h3 class="text-success">{{ stats.completed }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h6 class="text-muted">En retard</h6>
+                    <h3 class="text-danger">{{ stats.overdue }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-light">
+            <form method="get" class="row g-2">
+                <div class="col-md-3">
+                    <select name="status" class="form-control form-select-sm" onchange="this.form.submit()">
+                        <option value="all">Tous les statuts</option>
+                        <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>En attente</option>
+                        <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>En cours</option>
+                        <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Complétée</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="priority" class="form-control form-select-sm" onchange="this.form.submit()">
+                        <option value="all">Toutes les priorités</option>
+                        <option value="low" {% if request.args.get('priority') == 'low' %}selected{% endif %}>Basse</option>
+                        <option value="medium" {% if request.args.get('priority') == 'medium' %}selected{% endif %}>Moyenne</option>
+                        <option value="high" {% if request.args.get('priority') == 'high' %}selected{% endif %}>Haute</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="user" class="form-control form-select-sm" onchange="this.form.submit()">
+                        <option value="all">Toutes les tâches</option>
+                        <option value="my_tasks" {% if request.args.get('user') == 'my_tasks' %}selected{% endif %}>Mes tâches</option>
+                        <option value="created_by_me" {% if request.args.get('user') == 'created_by_me' %}selected{% endif %}>Créées par moi</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Titre</th>
+                            <th>Assignée à</th>
+                            <th>Priorité</th>
+                            <th>Statut</th>
+                            <th>Date limite</th>
+                            <th>Créée le</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td>{{ task.id }}</td>
+                            <td>
+                                <strong>{{ task.title }}</strong>
+                                {% if task.is_overdue %}
+                                <span class="badge bg-danger ms-1">En retard</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if task.assignee %}
+                                <i class="bi bi-person"></i> {{ task.assignee.full_name }}
+                                {% else %}
+                                <span class="text-muted">Non assignée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if task.priority == 'high' %}
+                                <span class="badge bg-danger">Haute</span>
+                                {% elif task.priority == 'medium' %}
+                                <span class="badge bg-warning">Moyenne</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Basse</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if task.status == 'completed' %}
+                                <span class="badge bg-success">Complétée</span>
+                                {% elif task.status == 'in_progress' %}
+                                <span class="badge bg-info">En cours</span>
+                                {% else %}
+                                <span class="badge bg-warning">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if task.due_date %}
+                                {{ task.due_date.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ task.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('tasks.show', id=task.id) }}" class="btn btn-sm btn-info" title="Détails">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('tasks.edit', id=task.id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">Aucune tâche trouvée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

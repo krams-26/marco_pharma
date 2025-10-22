@@ -4,6 +4,8 @@ from flask_login import login_required, current_user
 from app.models import db, CashTransaction, Sale, Payment, Audit
 from datetime import datetime
 from sqlalchemy import func
+from app.pharmacy_utils import filter_by_pharmacy, get_accessible_pharmacies, is_admin
+from app.export_utils import export_to_csv, export_to_excel
 
 cashier_bp = Blueprint('cashier', __name__, url_prefix='/cashier')
 
@@ -89,7 +91,7 @@ def history():
         query = query.filter(CashTransaction.created_at <= datetime.strptime(date_to, '%Y-%m-%d'))
     
     transactions = query.order_by(CashTransaction.created_at.desc()).paginate(
-        page=page, per_page=20, error_out=False
+        page=page, per_page=6, error_out=False
     )
     
     return render_template('cashier/history.html', transactions=transactions)

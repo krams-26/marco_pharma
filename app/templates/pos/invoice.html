@@ -1,70 +1,184 @@
 {% extends "base.html" %}
 
+{% block title %}Facture {{ sale.invoice_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; background: white; }
+    .main-content { margin-left: 0 !important; padding: 15px !important; }
+    .card { box-shadow: none !important; border: none !important; }
+    .navbar-custom, .sidebar { display: none !important; }
+}
+.invoice-header {
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+.invoice-footer {
+    border-top: 2px solid #eee;
+    margin-top: 30px;
+    padding-top: 15px;
+}
+.price-dual {
+    font-weight: 600;
+}
+.price-dual small {
+    display: block;
+    font-weight: 400;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <div class="card">
-        <div class="card-body">
-            <div class="text-center mb-4">
-                <h2>FACTURE</h2>
-                <p class="text-muted">{{ sale.invoice_number }}</p>
-            </div>
-            
-            <div class="row mb-4">
-                <div class="col-6">
-                    <strong>Client:</strong><br>
-                    {{ sale.customer.name if sale.customer else 'Client anonyme' }}
+<div class="card">
+    <div class="card-body">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="row">
+                <div class="col-md-6">
+                    {% if sale.pharmacy %}
+                    <h2 class="mb-1">{{ sale.pharmacy.name }}</h2>
+                    <p class="mb-0 text-muted">{{ sale.pharmacy.address or 'Adresse non renseignée' }}</p>
+                    <p class="mb-0 text-muted">Tél: {{ sale.pharmacy.phone or 'N/A' }}</p>
+                    <p class="mb-0 text-muted">Email: {{ sale.pharmacy.email or 'N/A' }}</p>
+                    {% else %}
+                    <h2 class="mb-1">PHARMACIE MARCO-PHARMA</h2>
+                    <p class="mb-0 text-muted">Adresse de la pharmacie</p>
+                    <p class="mb-0 text-muted">Tél: N/A</p>
+                    <p class="mb-0 text-muted">Email: N/A</p>
+                    {% endif %}
                 </div>
-                <div class="col-6 text-end">
-                    <strong>Date:</strong><br>
-                    {{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}
+                <div class="col-md-6 text-end">
+                    <h3 class="text-primary">FACTURE</h3>
+                    <p class="mb-1"><strong>N°:</strong> {{ sale.invoice_number }}</p>
+                    <p class="mb-1"><strong>Date:</strong> {{ sale.sale_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p class="mb-0"><strong>Vendeur:</strong> {{ sale.seller.full_name if sale.seller else 'N/A' }}</p>
                 </div>
             </div>
-            
-            <table class="table">
-                <thead>
+        </div>
+
+        <!-- Client Info -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5 class="mb-2">Client</h5>
+                <p class="mb-1"><strong>Nom:</strong> {{ sale.customer.name if sale.customer else 'Client Anonyme' }}</p>
+                {% if sale.customer %}
+                <p class="mb-1"><strong>Tél:</strong> {{ sale.customer.phone or 'N/A' }}</p>
+                <p class="mb-0"><strong>Email:</strong> {{ sale.customer.email or 'N/A' }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="badge bg-{{ 'success' if sale.payment_status == 'paid' else 'warning' if sale.payment_status == 'partial' else 'danger' }} fs-6">
+                    {% if sale.payment_status == 'paid' %}
+                        <i class="bi bi-check-circle"></i> PAYÉ
+                    {% elif sale.payment_status == 'partial' %}
+                        <i class="bi bi-clock"></i> PAIEMENT PARTIEL
+                    {% else %}
+                        <i class="bi bi-x-circle"></i> EN ATTENTE
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered">
+                <thead class="table-light">
                     <tr>
+                        <th>#</th>
                         <th>Produit</th>
-                        <th>Prix unitaire</th>
-                        <th>Quantité</th>
-                        <th>Total</th>
+                        <th class="text-center">Qté</th>
+                        <th class="text-end">Prix Unit.</th>
+                        <th class="text-end">Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in sale.items %}
                     <tr>
-                        <td>{{ item.product.name }}</td>
-                        <td>${{ "%.2f"|format(item.unit_price) }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>${{ "%.2f"|format(item.total) }}</td>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ item.product.name if item.product else item.product_name }}</td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-end price-dual">
+                            ${{ "%.2f"|format(item.unit_price) }}
+                            <small class="text-muted">{{ (item.unit_price|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                        <td class="text-end price-dual">
+                            ${{ "%.2f"|format(item.total) }}
+                            <small class="text-muted">{{ (item.total|usd_to_cdf)|format_number }} FC</small>
+                        </td>
                     </tr>
                     {% endfor %}
-                    <tr>
-                        <td colspan="3" class="text-end"><strong>Remise:</strong></td>
-                        <td>${{ "%.2f"|format(sale.discount) }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                        <td><strong>${{ "%.2f"|format(sale.total_amount) }}</strong></td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="text-end"><strong>Payé:</strong></td>
-                        <td>${{ "%.2f"|format(sale.paid_amount) }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="text-end"><strong>Solde dû:</strong></td>
-                        <td>${{ "%.2f"|format(sale.balance_due) }}</td>
-                    </tr>
                 </tbody>
+                <tfoot>
+                    <tr class="table-light">
+                        <td colspan="4" class="text-end"><strong>Sous-total:</strong></td>
+                        <td class="text-end price-dual">
+                            ${{ "%.2f"|format(sale.total_amount + sale.discount) }}
+                            <small class="text-muted">{{ ((sale.total_amount + sale.discount)|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                    </tr>
+                    {% if sale.discount > 0 %}
+                    <tr class="table-light">
+                        <td colspan="4" class="text-end"><strong>Remise:</strong></td>
+                        <td class="text-end price-dual text-danger">
+                            -${{ "%.2f"|format(sale.discount) }}
+                            <small class="text-muted">-{{ (sale.discount|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <tr class="table-success">
+                        <td colspan="4" class="text-end"><strong>TOTAL À PAYER:</strong></td>
+                        <td class="text-end price-dual">
+                            <strong class="fs-5">${{ "%.2f"|format(sale.total_amount) }}</strong>
+                            <small class="text-muted d-block"><strong>{{ (sale.total_amount|usd_to_cdf)|format_number }} FC</strong></small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="text-end">Montant payé:</td>
+                        <td class="text-end price-dual text-success">
+                            ${{ "%.2f"|format(sale.paid_amount) }}
+                            <small class="text-muted">{{ (sale.paid_amount|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                    </tr>
+                    <tr class="table-warning">
+                        <td colspan="4" class="text-end"><strong>Solde dû:</strong></td>
+                        <td class="text-end price-dual {{ 'text-success' if sale.balance_due <= 0 else 'text-danger' }}">
+                            <strong>${{ "%.2f"|format(sale.balance_due) }}</strong>
+                            <small class="text-muted d-block">{{ (sale.balance_due|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
-            
-            <div class="text-center mt-4">
-                <button onclick="window.print()" class="btn btn-primary">
-                    <i class="bi bi-printer"></i> Imprimer
-                </button>
-                <a href="{{ url_for('pos.index') }}" class="btn btn-secondary">
-                    Nouvelle vente
-                </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="mb-1 text-muted"><small>Taux de change: 1 USD = {{ 2800 }} FC</small></p>
+                    <p class="mb-0 text-muted"><small>Merci pour votre confiance!</small></p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0"><small>Signature:</small></p>
+                    <div style="border-top: 1px solid #000; width: 150px; margin-left: auto; margin-top: 40px;"></div>
+                </div>
             </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="text-center mt-4 no-print">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Imprimer
+            </button>
+            <a href="{{ url_for('pos.index') }}" class="btn btn-secondary">
+                <i class="bi bi-plus-circle"></i> Nouvelle vente
+            </a>
+            <a href="{{ url_for('sales.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-list"></i> Liste des ventes
+            </a>
         </div>
     </div>
 </div>

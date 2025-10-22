@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Fournisseurs{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-truck"></i> Gestion des Fournisseurs</h2>
+        <a href="{{ url_for('suppliers.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nouveau Fournisseur
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h6 class="text-muted">Total</h6>
+                    <h3 class="text-primary">{{ stats.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h6 class="text-muted">Actifs</h6>
+                    <h3 class="text-success">{{ stats.active }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h6 class="text-muted">Inactifs</h6>
+                    <h3 class="text-danger">{{ stats.inactive }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-light">
+            <form method="get" class="row g-2">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control form-control-sm" 
+                           placeholder="Rechercher..." value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-control form-select-sm" onchange="this.form.submit()">
+                        <option value="all">Tous les statuts</option>
+                        <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Actifs</option>
+                        <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactifs</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Code</th>
+                            <th>Nom</th>
+                            <th>Contact</th>
+                            <th>Téléphone</th>
+                            <th>Email</th>
+                            <th>Produits</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers.items %}
+                        <tr>
+                            <td>{{ supplier.id }}</td>
+                            <td><strong>{{ supplier.code or '-' }}</strong></td>
+                            <td>{{ supplier.name }}</td>
+                            <td>{{ supplier.contact_person or '-' }}</td>
+                            <td>{{ supplier.phone or '-' }}</td>
+                            <td>{{ supplier.email or '-' }}</td>
+                            <td>
+                                <span class="badge bg-primary">{{ supplier.total_products }}</span>
+                            </td>
+                            <td>
+                                {% if supplier.status == 'active' %}
+                                <span class="badge bg-success">Actif</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('suppliers.show', id=supplier.id) }}" class="btn btn-sm btn-info" title="Détails">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('suppliers.edit', id=supplier.id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">Aucun fournisseur trouvé</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% if suppliers.pages > 1 %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination pagination-sm mb-0 justify-content-center">
+                    {% if suppliers.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('suppliers.index', page=suppliers.prev_num, search=request.args.get('search', ''), status=request.args.get('status', 'all')) }}">Précédent</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in suppliers.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num != suppliers.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('suppliers.index', page=page_num, search=request.args.get('search', ''), status=request.args.get('status', 'all')) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if suppliers.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('suppliers.index', page=suppliers.next_num, search=request.args.get('search', ''), status=request.args.get('status', 'all')) }}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

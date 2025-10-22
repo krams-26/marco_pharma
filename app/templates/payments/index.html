@@ -1,5 +1,161 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Paiements{% endblock %}
+
 {% block content %}
-<h2>Payments Module</h2>
-<p>Page en cours de développement...</p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Paiements</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Paiements</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('payments.pending') }}" class="btn btn-sm btn-warning">
+            <i class="ni ni-time-alarm"></i> En Attente
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Historique des Paiements</h3>
+            </div>
+            <div class="col text-right">
+              <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown">
+                  <i class="ni ni-cloud-download-95"></i> Exporter
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                  <a class="dropdown-item" href="{{ url_for('payments.export', format='csv') }}?pharmacy_id={{ pharmacy_filter }}"><i class="fas fa-file-csv"></i> CSV</a>
+                  <a class="dropdown-item" href="{{ url_for('payments.export', format='excel') }}?pharmacy_id={{ pharmacy_filter }}"><i class="fas fa-file-excel"></i> Excel</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        {% if current_user.role == 'admin' and pharmacies %}
+        <div class="card-body border-bottom">
+          <form method="GET">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group mb-0">
+                  <label class="form-control-label"><i class="ni ni-shop"></i> Pharmacie</label>
+                  <select name="pharmacy_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes</option>
+                    {% for pharmacy in pharmacies %}
+                    <option value="{{ pharmacy.id }}" {% if pharmacy_filter|string == pharmacy.id|string %}selected{% endif %}>
+                      {{ pharmacy.name }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        {% endif %}
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Date</th>
+                <th>Facture</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Méthode</th>
+                <th>Référence</th>
+                {% if current_user.role == 'admin' %}
+                <th>Pharmacie</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for payment in payments.items %}
+              <tr>
+                <td><small>{{ payment.payment_date.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                <td><span class="badge badge-pill badge-primary">{{ payment.sale.invoice_number }}</span></td>
+                <td>{{ payment.customer.name if payment.customer else 'Anonyme' }}</td>
+                <td>
+                  <span class="text-success font-weight-bold">${{ "%.2f"|format(payment.amount) }}</span><br>
+                  <small class="text-muted">{{ (payment.amount|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  {% if payment.payment_method == 'cash' %}
+                    <span class="badge badge-success">Espèces</span>
+                  {% elif payment.payment_method == 'mobile' %}
+                    <span class="badge badge-info">Mobile Money</span>
+                  {% elif payment.payment_method == 'card' %}
+                    <span class="badge badge-primary">Carte</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ payment.payment_method }}</span>
+                  {% endif %}
+                </td>
+                <td><small>{{ payment.reference or '-' }}</small></td>
+                {% if current_user.role == 'admin' %}
+                <td><span class="badge badge-primary">{{ payment.sale.pharmacy.name if payment.sale.pharmacy else 'N/A' }}</span></td>
+                {% endif %}
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="{% if current_user.role == 'admin' %}7{% else %}6{% endif %}" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucun paiement trouvé
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if payments.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not payments.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ payments.prev_num }}&pharmacy_id={{ pharmacy_filter }}"><i class="fas fa-angle-left"></i></a>
+              </li>
+              {% for page_num in range(1, payments.pages + 1) %}
+                {% if page_num == payments.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == payments.pages or (page_num >= payments.page - 2 and page_num <= payments.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}&pharmacy_id={{ pharmacy_filter }}">{{ page_num }}</a></li>
+                {% elif page_num == payments.page - 3 or page_num == payments.page + 3 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not payments.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ payments.next_num }}&pharmacy_id={{ pharmacy_filter }}"><i class="fas fa-angle-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

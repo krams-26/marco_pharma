@@ -1,56 +1,152 @@
 {% extends "base.html" %}
+
+{% block title %}Taux de Change - MARCO PHARMA{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Taux de change</h2>
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-white"><h5 class="mb-0">Ajouter un taux</h5></div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label class="form-label">De (devise) *</label>
-                        <input type="text" class="form-control" name="from_currency" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Vers (devise) *</label>
-                        <input type="text" class="form-control" name="to_currency" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Taux *</label>
-                        <input type="number" class="form-control" name="rate" step="0.0001" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                </form>
-            </div>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-exchange-alt"></i> Gestion des Taux de Change</h2>
+    <a href="{{ url_for('settings.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Retour
+    </a>
+</div>
+
+<!-- Taux principal USD → CDF -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-dollar-sign"></i> Taux Principal: USD → CDF</h5>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-white"><h5 class="mb-0">Taux configurés</h5></div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead><tr><th>De</th><th>Vers</th><th>Taux</th><th>Actions</th></tr></thead>
-                        <tbody>
-                            {% for rate in rates %}
-                            <tr>
-                                <td>{{ rate.from_currency }}</td>
-                                <td>{{ rate.to_currency }}</td>
-                                <td>{{ rate.rate }}</td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('settings.delete_rate', id=rate.id) }}" style="display:inline;">
-                                        <button class="btn btn-sm btn-danger">Supprimer</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="4" class="text-center text-muted">Aucun taux configuré</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+    <div class="card-body">
+        <form method="POST">
+            <div class="row align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">De</label>
+                    <input type="text" class="form-control" name="from_currency" value="USD" readonly>
                 </div>
+                <div class="col-md-1 text-center">
+                    <i class="fas fa-arrow-right fa-2x text-primary"></i>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Vers</label>
+                    <input type="text" class="form-control" name="to_currency" value="CDF" readonly>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Taux de change *</label>
+                    <input type="number" class="form-control form-control-lg" name="rate" step="0.01" required 
+                           value="{{ (current_rate.rate if current_rate else (rates[0].rate if rates|length>0 else 2800)) }}" id="main-rate">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-save"></i> Mettre à jour
+                    </button>
+                </div>
+            </div>
+            
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Aperçu:</strong> 1 USD = <span id="rate-preview">{{ (current_rate.rate if current_rate else (rates[0].rate if rates|length>0 else 2800)) }}</span> FC
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Calculatrice de conversion -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-calculator"></i> Calculatrice de Conversion</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-5">
+                <label class="form-label">Montant en USD</label>
+                <input type="number" class="form-control form-control-lg" id="usd-input" step="0.01" placeholder="0.00">
+            </div>
+            <div class="col-md-2 text-center align-self-end mb-3">
+                <i class="fas fa-exchange-alt fa-2x text-success"></i>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Équivalent en CDF</label>
+                <input type="text" class="form-control form-control-lg" id="cdf-output" readonly placeholder="0">
             </div>
         </div>
     </div>
 </div>
+
+<!-- Historique des taux -->
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Historique des Taux</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>De</th>
+                        <th>Vers</th>
+                        <th>Taux</th>
+                        <th>Date de modification</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rate in rates %}
+                    <tr>
+                        <td><span class="badge bg-primary">{{ rate.from_currency }}</span></td>
+                        <td><span class="badge bg-success">{{ rate.to_currency }}</span></td>
+                        <td><strong>{{ rate.rate }}</strong></td>
+                        <td>{{ rate.updated_at.strftime('%d/%m/%Y %H:%M') if rate.updated_at else rate.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            {% if active_rate_id and rate.id == active_rate_id %}
+                                <span class="badge bg-success"><i class="fas fa-check-circle"></i> Actif</span>
+                            {% else %}
+                                <span class="badge bg-secondary"><i class="fas fa-pause-circle"></i> Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not active_rate_id or rate.id != active_rate_id %}
+                            <form method="POST" action="{{ url_for('settings.activate_rate', id=rate.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success" title="Activer ce taux">
+                                    <i class="fas fa-check-circle"></i> Activer
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="badge badge-success">Taux actif</span>
+                            {% endif %}
+                            
+                            {% if not active_rate_id or rate.id != active_rate_id %}
+                            <form method="POST" action="{{ url_for('settings.delete_rate', id=rate.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Aucun taux de change configuré</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mise à jour de l'aperçu du taux
+document.getElementById('main-rate').addEventListener('input', function() {
+    document.getElementById('rate-preview').textContent = parseFloat(this.value).toFixed(2);
+});
+
+// Calculatrice de conversion
+document.getElementById('usd-input').addEventListener('input', function() {
+    const usd = parseFloat(this.value) || 0;
+    const rate = parseFloat(document.getElementById('main-rate').value) || 2800;
+    const cdf = Math.round(usd * rate);
+    
+    document.getElementById('cdf-output').value = cdf.toLocaleString() + ' FC';
+});
+</script>
 {% endblock %}

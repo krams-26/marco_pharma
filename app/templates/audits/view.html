@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}Détails Audit #{{ audit.id }}{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-gradient-info pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-8">
+          <h6 class="h2 text-white d-inline-block mb-0">
+            <i class="fas fa-file-alt"></i> Audit #{{ audit.id }} - {{ audit.action }}
+          </h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('audits.index') }}">Audits</a></li>
+              <li class="breadcrumb-item active">#{{ audit.id }}</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-4 text-right">
+          <a href="{{ url_for('audits.index') }}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <!-- Informations principales -->
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Détails de l'Audit</h3>
+            </div>
+            <div class="col text-right">
+              {% if audit.result == 'success' %}
+                <span class="badge badge-lg badge-success"><i class="fas fa-check"></i> Succès</span>
+              {% elif audit.result == 'failed' %}
+                <span class="badge badge-lg badge-danger"><i class="fas fa-times"></i> Échec</span>
+              {% elif audit.result == 'denied' %}
+                <span class="badge badge-lg badge-warning"><i class="fas fa-ban"></i> Refusé</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h4 class="mb-3"><i class="fas fa-info-circle text-primary"></i> Informations Générales</h4>
+              <table class="table table-sm">
+                <tr>
+                  <th width="40%">ID:</th>
+                  <td><span class="badge badge-primary">#{{ audit.id }}</span></td>
+                </tr>
+                <tr>
+                  <th>Date/Heure:</th>
+                  <td><strong>{{ audit.created_at.strftime('%d/%m/%Y à %H:%M:%S') }}</strong></td>
+                </tr>
+                <tr>
+                  <th>Utilisateur:</th>
+                  <td>
+                    {% if audit.user %}
+                      <strong>{{ audit.user.username }}</strong><br>
+                      <small class="text-muted">{{ audit.user.email }}</small><br>
+                      <span class="badge badge-info">{{ audit.user.role }}</span>
+                    {% else %}
+                      <span class="text-muted">Système</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Action:</th>
+                  <td><span class="badge badge-primary badge-lg">{{ audit.action }}</span></td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h4 class="mb-3"><i class="fas fa-cogs text-success"></i> Détails Techniques</h4>
+              <table class="table table-sm">
+                <tr>
+                  <th width="40%">Module:</th>
+                  <td>
+                    {% if audit.module %}
+                      <span class="badge badge-info">{{ audit.module }}</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Type:</th>
+                  <td>
+                    {% if audit.action_type == 'create' %}
+                      <span class="badge badge-success"><i class="fas fa-plus"></i> Création</span>
+                    {% elif audit.action_type == 'update' %}
+                      <span class="badge badge-warning"><i class="fas fa-edit"></i> Modification</span>
+                    {% elif audit.action_type == 'delete' %}
+                      <span class="badge badge-danger"><i class="fas fa-trash"></i> Suppression</span>
+                    {% elif audit.action_type == 'view' %}
+                      <span class="badge badge-info"><i class="fas fa-eye"></i> Consultation</span>
+                    {% elif audit.action_type == 'export' %}
+                      <span class="badge badge-secondary"><i class="fas fa-download"></i> Export</span>
+                    {% elif audit.action_type %}
+                      <span class="badge badge-light">{{ audit.action_type }}</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Entité:</th>
+                  <td>
+                    {% if audit.entity_type and audit.entity_id %}
+                      <strong>{{ audit.entity_type }}</strong> #{{ audit.entity_id }}
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Résultat:</th>
+                  <td>
+                    {% if audit.result == 'success' %}
+                      <span class="badge badge-success"><i class="fas fa-check-circle"></i> Succès</span>
+                    {% elif audit.result == 'failed' %}
+                      <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Échec</span>
+                    {% elif audit.result == 'denied' %}
+                      <span class="badge badge-warning"><i class="fas fa-ban"></i> Accès Refusé</span>
+                    {% else %}
+                      <span class="text-muted">{{ audit.result }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="row">
+            <div class="col-md-6">
+              <h4 class="mb-3"><i class="fas fa-network-wired text-info"></i> Informations Réseau</h4>
+              <table class="table table-sm">
+                <tr>
+                  <th width="40%">Adresse IP:</th>
+                  <td><span class="badge badge-secondary">{{ audit.ip_address or 'Non disponible' }}</span></td>
+                </tr>
+                <tr>
+                  <th>Navigateur:</th>
+                  <td><small>{{ audit.user_agent or 'Non disponible' }}</small></td>
+                </tr>
+                <tr>
+                  <th>Session ID:</th>
+                  <td><small class="text-muted">{{ audit.session_id or 'Non disponible' }}</small></td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h4 class="mb-3"><i class="fas fa-comment-dots text-warning"></i> Détails</h4>
+              <div class="alert alert-secondary">
+                {{ audit.details or 'Aucun détail disponible' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Changements before/after -->
+          {% if changes %}
+          <hr>
+          <h4 class="mb-3"><i class="fas fa-exchange-alt text-danger"></i> Comparaison Avant/Après</h4>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="thead-light">
+                <tr>
+                  <th>Champ</th>
+                  <th>Avant</th>
+                  <th>Après</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for field, values in changes.items() %}
+                <tr>
+                  <td><strong>{{ field }}</strong></td>
+                  <td>
+                    {% if values.old %}
+                      <span class="badge badge-danger">{{ values.old }}</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if values.new %}
+                      <span class="badge badge-success">{{ values.new }}</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Audits liés -->
+      {% if related_audits %}
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-link text-primary"></i> Audits Liés (même entité, ±1h)</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Date/Heure</th>
+                <th>Utilisateur</th>
+                <th>Action</th>
+                <th>Type</th>
+                <th>Résultat</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for related in related_audits %}
+              <tr>
+                <td><small>{{ related.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</small></td>
+                <td><strong>{{ related.user.username if related.user else 'Système' }}</strong></td>
+                <td><span class="badge badge-primary">{{ related.action }}</span></td>
+                <td>
+                  {% if related.action_type %}
+                    <span class="badge badge-light">{{ related.action_type }}</span>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if related.result == 'success' %}
+                    <span class="badge badge-success"><i class="fas fa-check"></i></span>
+                  {% elif related.result == 'failed' %}
+                    <span class="badge badge-danger"><i class="fas fa-times"></i></span>
+                  {% elif related.result == 'denied' %}
+                    <span class="badge badge-warning"><i class="fas fa-ban"></i></span>
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  <a href="{{ url_for('audits.view', id=related.id) }}" class="btn btn-sm btn-icon-only text-primary">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-xl-4">
+      <!-- Statut -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Statut</h3>
+        </div>
+        <div class="card-body text-center">
+          {% if audit.is_suspicious %}
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+              <h4>Activité Suspecte</h4>
+              <p class="mb-0">Cette activité a été marquée comme suspecte</p>
+            </div>
+          {% else %}
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle fa-3x mb-3"></i>
+              <h4>Activité Normale</h4>
+              <p class="mb-0">Aucun problème détecté</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Actions</h3>
+        </div>
+        <div class="card-body">
+          <a href="{{ url_for('audits.index') }}" class="btn btn-block btn-secondary mb-2">
+            <i class="fas fa-list"></i> Retour à la Liste
+          </a>
+          {% if audit.entity_type and audit.entity_id %}
+          <a href="{{ url_for('audits.index', module=audit.module, entity_id=audit.entity_id) }}" class="btn btn-block btn-info">
+            <i class="fas fa-search"></i> Audits de cette Entité
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Informations système -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Métadonnées</h3>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm">
+            <tr>
+              <th>ID Audit:</th>
+              <td>#{{ audit.id }}</td>
+            </tr>
+            <tr>
+              <th>Créé le:</th>
+              <td><small>{{ audit.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</small></td>
+            </tr>
+            {% if audit.has_changes %}
+            <tr>
+              <th>Changements:</th>
+              <td><span class="badge badge-success">Oui</span></td>
+            </tr>
+            {% endif %}
+            {% if audit.is_suspicious %}
+            <tr>
+              <th>Suspect:</th>
+              <td><span class="badge badge-warning">Oui</span></td>
+            </tr>
+            {% endif %}
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

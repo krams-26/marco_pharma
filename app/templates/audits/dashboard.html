@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Audit{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-gradient-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6">
+          <h6 class="h2 text-white d-inline-block mb-0">
+            <i class="fas fa-chart-line"></i> Dashboard d'Activité
+          </h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('audits.index') }}">Audits</a></li>
+              <li class="breadcrumb-item active">Dashboard</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 text-right">
+          <div class="btn-group" role="group">
+            <a href="{{ url_for('audits.dashboard', days=7) }}" class="btn btn-sm btn-neutral {% if days == 7 %}active{% endif %}">7j</a>
+            <a href="{{ url_for('audits.dashboard', days=30) }}" class="btn btn-sm btn-neutral {% if days == 30 %}active{% endif %}">30j</a>
+            <a href="{{ url_for('audits.dashboard', days=60) }}" class="btn btn-sm btn-neutral {% if days == 60 %}active{% endif %}">60j</a>
+            <a href="{{ url_for('audits.dashboard', days=90) }}" class="btn btn-sm btn-neutral {% if days == 90 %}active{% endif %}">90j</a>
+          </div>
+          <a href="{{ url_for('audits.index') }}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-list"></i> Liste
+          </a>
+        </div>
+      </div>
+
+      <!-- Statistiques cards -->
+      <div class="row">
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Total Activités</h5>
+                  <span class="h2 font-weight-bold mb-0">{{ total_audits | format_number }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                    <i class="fas fa-clipboard-list"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Succès</h5>
+                  <span class="h2 font-weight-bold mb-0 text-success">
+                    {% set success = by_result|selectattr('0', 'equalto', 'success')|list %}
+                    {{ (success[0][1] if success else 0) | format_number }}
+                  </span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Échecs</h5>
+                  <span class="h2 font-weight-bold mb-0 text-danger">
+                    {% set failed = by_result|selectattr('0', 'equalto', 'failed')|list %}
+                    {{ (failed[0][1] if failed else 0) | format_number }}
+                  </span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                    <i class="fas fa-times-circle"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Activités Suspectes</h5>
+                  <span class="h2 font-weight-bold mb-0 text-warning">{{ suspicious_count | format_number }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <!-- Graphiques -->
+  <div class="row">
+    <!-- Activité quotidienne -->
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-chart-line text-primary"></i> Activité Quotidienne</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="daily-activity-chart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Par type d'action -->
+    <div class="col-xl-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-chart-pie text-info"></i> Par Type</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="action-type-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <!-- Par module -->
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-chart-bar text-success"></i> Par Module (Top 10)</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="module-chart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top utilisateurs -->
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-users text-warning"></i> Utilisateurs les Plus Actifs</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="users-chart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activités suspectes récentes -->
+  {% if recent_suspicious %}
+  <div class="row mt-4">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row">
+            <div class="col">
+              <h3 class="mb-0"><i class="fas fa-exclamation-triangle text-danger"></i> Activités Suspectes Récentes</h3>
+            </div>
+            <div class="col text-right">
+              <a href="{{ url_for('audits.alerts') }}" class="btn btn-sm btn-warning">
+                Voir Toutes les Alertes
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Date/Heure</th>
+                <th>Utilisateur</th>
+                <th>Action</th>
+                <th>Détails</th>
+                <th>Résultat</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for audit in recent_suspicious %}
+              <tr class="table-warning">
+                <td><small>{{ audit.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</small></td>
+                <td><strong>{{ audit.user.username if audit.user else 'Système' }}</strong></td>
+                <td><span class="badge badge-primary">{{ audit.action }}</span></td>
+                <td><small>{{ audit.details or '-' }}</small></td>
+                <td>
+                  {% if audit.result == 'failed' %}
+                    <span class="badge badge-danger"><i class="fas fa-times"></i> Échec</span>
+                  {% elif audit.result == 'denied' %}
+                    <span class="badge badge-warning"><i class="fas fa-ban"></i> Refusé</span>
+                  {% endif %}
+                </td>
+                <td><span class="badge badge-secondary">{{ audit.ip_address or '-' }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Activité quotidienne
+const dailyActivityCtx = document.getElementById('daily-activity-chart').getContext('2d');
+new Chart(dailyActivityCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for activity in daily_activity %}
+            '{{ activity[0].strftime("%d/%m") }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Activités',
+            data: [
+                {% for activity in daily_activity %}
+                {{ activity[1] }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: '#5e72e4',
+            backgroundColor: 'rgba(94, 114, 228, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// Par type d'action
+const actionTypeCtx = document.getElementById('action-type-chart').getContext('2d');
+new Chart(actionTypeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for type in by_action_type %}
+            '{{ type[0].capitalize() }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for type in by_action_type %}
+                {{ type[1] }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#5e72e4', '#2dce89', '#f5365c', '#fb6340', '#11cdef', '#f4f5f7'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+
+// Par module
+const moduleCtx = document.getElementById('module-chart').getContext('2d');
+new Chart(moduleCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for mod in by_module %}
+            '{{ mod[0].capitalize() }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Activités',
+            data: [
+                {% for mod in by_module %}
+                {{ mod[1] }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: '#2dce89'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// Top utilisateurs
+const usersCtx = document.getElementById('users-chart').getContext('2d');
+new Chart(usersCtx, {
+    type: 'horizontalBar',
+    data: {
+        labels: [
+            {% for user in top_users %}
+            '{{ user[0] }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Activités',
+            data: [
+                {% for user in top_users %}
+                {{ user[1] }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: '#fb6340'
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: { beginAtZero: true }
+        }
+    }
+});
+</script>
+
+{% endblock %}
+

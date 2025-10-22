@@ -1,29 +1,288 @@
 {% extends "base.html" %}
+
+{% block title %}Paiements Salaires - MARCO PHARMA{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Paiements de salaires</h2>
-    <a href="{{ url_for('hr.pay_salary') }}" class="btn btn-primary">Nouveau paiement</a>
+    <h2><i class="fas fa-money-check-alt"></i> Paiements de Salaires</h2>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#paySalaryModal">
+        <i class="fas fa-plus-circle"></i> Payer un salaire
+    </button>
 </div>
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total Payé ce Mois</h6>
+                <div class="price-dual">
+                    <h3 class="mb-0 text-info">${{ "%.2f"|format(month_total|default(0)) }}</h3>
+                    <small class="text-muted">{{ (month_total|default(0)|usd_to_cdf)|format_number }} FC</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Paiements ce Mois</h6>
+                <h3 class="mb-0 text-success">{{ month_count|default(0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Masse Salariale Mensuelle</h6>
+                <div class="price-dual">
+                    <h3 class="mb-0 text-warning">${{ "%.2f"|format(payroll_total|default(0)) }}</h3>
+                    <small class="text-muted">{{ (payroll_total|default(0)|usd_to_cdf)|format_number }} FC</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des paiements -->
 <div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Historique des Paiements</h5>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th>Employé</th><th>Montant</th><th>Période</th><th>Date</th><th>Méthode</th></tr></thead>
-                <tbody>
-                    {% for payment in payments.items %}
+            <table class="table table-hover">
+                <thead>
                     <tr>
-                        <td>{{ payment.employee.user.full_name if payment.employee.user else '-' }}</td>
-                        <td>${{ "%.2f"|format(payment.amount) }}</td>
-                        <td>{{ payment.period or '-' }}</td>
+                        <th>Date Paiement</th>
+                        <th>Employé</th>
+                        <th>Période</th>
+                        <th>Montant</th>
+                        <th>Méthode</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments.items if payments %}
+                    <tr>
                         <td>{{ payment.payment_date.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ payment.payment_method or '-' }}</td>
+                        <td>
+                            <strong>{{ payment.employee.first_name }} {{ payment.employee.last_name }}</strong>
+                            <small class="text-muted d-block">{{ payment.employee.position or 'N/A' }}</small>
+                        </td>
+                        <td><span class="badge bg-secondary">{{ payment.period }}</span></td>
+                        <td class="price-dual">
+                            <strong class="text-success">${{ "%.2f"|format(payment.amount) }}</strong>
+                            <small class="text-muted">{{ (payment.amount|usd_to_cdf)|format_number }} FC</small>
+                        </td>
+                        <td>
+                            {% if payment.payment_method == 'cash' %}
+                                <span class="badge bg-success"><i class="fas fa-money-bill"></i> Espèces</span>
+                            {% elif payment.payment_method == 'bank' %}
+                                <span class="badge bg-primary"><i class="fas fa-university"></i> Virement</span>
+                            {% elif payment.payment_method == 'mobile' %}
+                                <span class="badge bg-warning"><i class="fas fa-mobile-alt"></i> Mobile Money</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ payment.payment_method }}</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ payment.notes or '-' }}</small></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" class="text-center text-muted">Aucun paiement</td></tr>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fas fa-money-check-alt fa-3x mb-3 d-block"></i>
+                            Aucun paiement de salaire enregistré
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        
+        {% if payments and payments.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if payments.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ payments.prev_num }}">Précédent</a></li>
+                {% endif %}
+                
+                {% for page_num in payments.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == payments.page %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if payments.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ payments.next_num }}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
+
+<!-- Modal Payer Salaire -->
+<div class="modal fade" id="paySalaryModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-money-check-alt"></i> Payer un Salaire
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Employé <span class="text-danger">*</span></label>
+                    <select class="form-control" id="salary-employee" required>
+                        <option value="">Sélectionner un employé</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" data-salary="{{ employee.salary }}">
+                            {{ employee.full_name }} - {{ employee.position }}
+                            {% if employee.salary > 0 %}(Salaire: ${{ "%.2f"|format(employee.salary) }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Montant <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" class="form-control" id="salary-amount" step="0.01" min="0" required>
+                    </div>
+                    <small class="form-text text-muted" id="salary-cdf-equivalent"></small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Période <span class="text-danger">*</span></label>
+                    <input type="month" class="form-control" id="salary-period" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Date de Paiement <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="salary-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Méthode de Paiement <span class="text-danger">*</span></label>
+                    <select class="form-control" id="salary-method" required>
+                        <option value="cash">💵 Espèces</option>
+                        <option value="bank">🏦 Virement Bancaire</option>
+                        <option value="mobile">📱 Mobile Money</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea class="form-control" id="salary-notes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="saveSalary">
+                    <i class="fas fa-save"></i> Enregistrer Paiement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    const today = new Date().toISOString().split('T')[0];
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    
+    $('#salary-date').val(today);
+    $('#salary-period').val(currentMonth);
+    
+    // Pré-remplir le montant avec le salaire de l'employé
+    $('#salary-employee').on('change', function() {
+        const salary = $(this).find(':selected').data('salary');
+        if (salary) {
+            $('#salary-amount').val(salary);
+            updateCDFEquivalent(salary);
+        }
+    });
+    
+    // Convertir en CDF
+    $('#salary-amount').on('input', function() {
+        updateCDFEquivalent($(this).val());
+    });
+    
+    function updateCDFEquivalent(usd) {
+        if (usd > 0) {
+            const cdf = usd * 2800; // Taux de change approximatif
+            $('#salary-cdf-equivalent').text(`≈ ${cdf.toLocaleString('fr-FR')} FC`);
+        } else {
+            $('#salary-cdf-equivalent').text('');
+        }
+    }
+    
+    $('#saveSalary').click(function() {
+        const btn = $(this);
+        const employeeId = $('#salary-employee').val();
+        const amount = parseFloat($('#salary-amount').val());
+        const period = $('#salary-period').val();
+        const paymentDate = $('#salary-date').val();
+        const method = $('#salary-method').val();
+        const notes = $('#salary-notes').val();
+        
+        if (!employeeId || !amount || amount <= 0 || !period || !paymentDate) {
+            alert('Veuillez remplir tous les champs requis');
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Traitement...');
+        
+        $.ajax({
+            url: '/hr/quick-pay-salary',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                employee_id: employeeId,
+                amount: amount,
+                period: period,
+                payment_date: paymentDate,
+                payment_method: method,
+                notes: notes
+            }),
+            success: function(response) {
+                $('#paySalaryModal').modal('hide');
+                alert('✓ ' + response.message);
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Erreur: ' + (xhr.responseJSON?.message || 'Une erreur est survenue'));
+                btn.prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer Paiement');
+            }
+        });
+    });
+    
+    // Réinitialiser le formulaire
+    $('#paySalaryModal').on('hidden.bs.modal', function() {
+        $('#salary-employee').val('');
+        $('#salary-amount').val('');
+        $('#salary-period').val(currentMonth);
+        $('#salary-date').val(today);
+        $('#salary-method').val('cash');
+        $('#salary-notes').val('');
+        $('#salary-cdf-equivalent').text('');
+        $('#saveSalary').prop('disabled', false).html('<i class="fas fa-save"></i> Enregistrer Paiement');
+    });
+});
+</script>
 {% endblock %}

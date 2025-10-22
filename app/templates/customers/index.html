@@ -1,5 +1,202 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Clients{% endblock %}
+
 {% block content %}
-<h2>Customers Module</h2>
-<p>Page en cours de développement...</p>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Clients</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Clients</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('customers.add') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-fat-add"></i> Nouveau Client
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Liste des Clients</h3>
+            </div>
+            <div class="col text-right">
+              <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown">
+                  <i class="ni ni-cloud-download-95"></i> Exporter
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                  <a class="dropdown-item" href="{{ url_for('customers.export', format='csv') }}?pharmacy_id={{ pharmacy_filter }}&search={{ search or '' }}">
+                    <i class="fas fa-file-csv"></i> CSV
+                  </a>
+                  <a class="dropdown-item" href="{{ url_for('customers.export', format='excel') }}?pharmacy_id={{ pharmacy_filter }}&search={{ search or '' }}">
+                    <i class="fas fa-file-excel"></i> Excel
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card-body border-bottom">
+          <form method="GET" class="row">
+            {% if current_user.role == 'admin' and pharmacies %}
+            <div class="col-lg-3 col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="ni ni-shop"></i> Pharmacie</label>
+                <select name="pharmacy_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes</option>
+                  {% for pharmacy in pharmacies %}
+                  <option value="{{ pharmacy.id }}" {% if pharmacy_filter|string == pharmacy.id|string %}selected{% endif %}>
+                    {{ pharmacy.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}4{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="fas fa-search"></i> Recherche</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Nom, email, téléphone..." value="{{ search }}">
+              </div>
+            </div>
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}4{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label"><i class="fas fa-filter"></i> Type</label>
+                <select name="type" class="form-control form-control-sm">
+                  <option value="">Tous</option>
+                  <option value="regular" {% if type_filter == 'regular' %}selected{% endif %}>Régulier</option>
+                  <option value="vip" {% if type_filter == 'vip' %}selected{% endif %}>VIP</option>
+                  <option value="wholesale" {% if type_filter == 'wholesale' %}selected{% endif %}>Grossiste</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-lg-{% if current_user.role == 'admin' and pharmacies %}3{% else %}4{% endif %} col-md-6">
+              <div class="form-group mb-3">
+                <label class="form-control-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                  <i class="fas fa-filter"></i> Filtrer
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Nom</th>
+                <th>Contact</th>
+                <th>Type</th>
+                <th>Limite Crédit</th>
+                {% if current_user.role == 'admin' %}
+                <th>Pharmacie</th>
+                {% endif %}
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for customer in customers.items %}
+              <tr>
+                <td>
+                  <span class="font-weight-bold">{{ customer.name }}</span>
+                </td>
+                <td>
+                  {% if customer.phone %}<i class="fas fa-phone"></i> {{ customer.phone }}<br>{% endif %}
+                  {% if customer.email %}<i class="fas fa-envelope"></i> {{ customer.email }}{% endif %}
+                </td>
+                <td>
+                  {% if customer.customer_type == 'vip' %}
+                    <span class="badge badge-warning">VIP</span>
+                  {% elif customer.customer_type == 'wholesale' %}
+                    <span class="badge badge-info">Grossiste</span>
+                  {% else %}
+                    <span class="badge badge-secondary">Régulier</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="text-success font-weight-bold">${{ "%.2f"|format(customer.credit_limit) }}</span>
+                </td>
+                {% if current_user.role == 'admin' %}
+                <td><span class="badge badge-primary">{{ customer.pharmacy.name if customer.pharmacy else 'N/A' }}</span></td>
+                {% endif %}
+                <td class="text-right">
+                  <a href="{{ url_for('customers.view', id=customer.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir">
+                    <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                  </a>
+                  <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="{% if current_user.role == 'admin' %}6{% else %}5{% endif %}" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucun client trouvé
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if customers.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not customers.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ customers.prev_num }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&type={{ type_filter }}">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% for page_num in range(1, customers.pages + 1) %}
+                {% if page_num == customers.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == customers.pages or (page_num >= customers.page - 2 and page_num <= customers.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&type={{ type_filter }}">{{ page_num }}</a></li>
+                {% elif page_num == customers.page - 3 or page_num == customers.page + 3 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not customers.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ customers.next_num }}&search={{ search or '' }}&pharmacy_id={{ pharmacy_filter }}&type={{ type_filter }}">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

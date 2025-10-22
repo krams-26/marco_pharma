@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Pharmacies{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Pharmacies</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Pharmacies</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('pharmacies.create') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-fat-add"></i> Nouvelle Pharmacie
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Pharmacies</h5>
+              <span class="h2 font-weight-bold mb-0">{{ stats.total }}</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
+                <i class="ni ni-shop"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Pharmacies Actives</h5>
+              <span class="h2 font-weight-bold mb-0">{{ stats.pharmacies }}</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                <i class="ni ni-building"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Dépôts</h5>
+              <span class="h2 font-weight-bold mb-0">{{ stats.depots }}</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                <i class="ni ni-archive-2"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Inactives</h5>
+              <span class="h2 font-weight-bold mb-0 text-warning">{{ stats.inactive }}</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                <i class="ni ni-circle-08"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste -->
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Liste des Pharmacies</h3>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Nom</th>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Responsable</th>
+                <th>Téléphone</th>
+                <th>Statut</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pharmacy in pharmacies.items %}
+              <tr>
+                <td><span class="font-weight-bold">{{ pharmacy.name }}</span></td>
+                <td><span class="badge badge-pill badge-secondary">{{ pharmacy.code }}</span></td>
+                <td>
+                  {% if pharmacy.type == 'depot' %}
+                    <span class="badge badge-info"><i class="ni ni-archive-2"></i> Dépôt</span>
+                  {% else %}
+                    <span class="badge badge-primary"><i class="ni ni-shop"></i> Pharmacie</span>
+                  {% endif %}
+                </td>
+                <td>{{ pharmacy.manager_name or '-' }}</td>
+                <td><small>{{ pharmacy.phone or '-' }}</small></td>
+                <td>
+                  {% if pharmacy.is_active %}
+                    <span class="badge badge-success">Actif</span>
+                  {% else %}
+                    <span class="badge badge-warning">Inactif</span>
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  <a href="{{ url_for('pharmacies.view', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-info">
+                    <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                  </a>
+                  <a href="{{ url_for('pharmacies.edit', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-primary">
+                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucune pharmacie trouvée
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pharmacies.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not pharmacies.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ pharmacies.prev_num }}"><i class="fas fa-angle-left"></i></a>
+              </li>
+              {% for page_num in range(1, pharmacies.pages + 1) %}
+                {% if page_num == pharmacies.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == pharmacies.pages or (page_num >= pharmacies.page - 2 and page_num <= pharmacies.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                {% elif page_num == pharmacies.page - 3 or page_num == pharmacies.page + 3 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not pharmacies.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ pharmacies.next_num }}"><i class="fas fa-angle-right"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

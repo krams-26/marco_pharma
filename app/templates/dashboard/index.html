@@ -1,184 +1,324 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Tableau de bord - Pharmacie{% endblock %}
+{% block title %}Tableau de bord{% endblock title %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-speedometer2"></i> Tableau de bord</h2>
-    <div class="text-muted">{{ "now" | format_datetime }}</div>
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Marco Pharma</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active" aria-current="page">Tableau de bord</li>
+            </ol>
+          </nav>
+          <div class="mt-2">
+            {% if scope == 'all' %}
+            <span class="badge badge-lg badge-success">
+              <i class="fas fa-globe"></i> Vue Système Complet
+            </span>
+            {% elif scope == 'pharmacy' %}
+            <span class="badge badge-lg badge-info">
+              <i class="fas fa-store"></i> Vue Pharmacie: {{ pharmacy_name }}
+            </span>
+            {% else %}
+            <span class="badge badge-lg badge-warning">
+              <i class="fas fa-user"></i> Mes Données Personnelles
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          {% if current_user.has_permission('manage_sales') %}
+          <a href="{{ url_for('pos.index') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-cart"></i> Nouvelle Vente
+          </a>
+          {% endif %}
+          {% if current_user.has_permission('manage_products') %}
+          <a href="{{ url_for('products.add') }}" class="btn btn-sm btn-neutral">
+            <i class="ni ni-bag-17"></i> Nouveau Produit
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Card stats -->
+      <div class="row">
+        <!-- Produits Actifs -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Produits Actifs</h5>
+                  <span class="h2 font-weight-bold mb-0">{{ total_products }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                    <i class="ni ni-basket"></i>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 mb-0 text-sm">
+                <span class="text-nowrap">Total du catalogue</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Faible -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Stock Faible</h5>
+                  <span class="h2 font-weight-bold mb-0 text-warning">{{ low_stock_products }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                    <i class="ni ni-box-2"></i>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 mb-0 text-sm">
+                <span class="text-warning mr-2"><i class="fas fa-exclamation-triangle"></i></span>
+                <span class="text-nowrap">Alertes actives</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Produits Expirés -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Produits Expirés</h5>
+                  <span class="h2 font-weight-bold mb-0 text-danger">{{ expired_products }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                    <i class="ni ni-calendar-grid-58"></i>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 mb-0 text-sm">
+                <span class="text-danger mr-2"><i class="fas fa-ban"></i></span>
+                <span class="text-nowrap">À retirer</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Clients -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Total Clients</h5>
+                  <span class="h2 font-weight-bold mb-0">{{ total_customers }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                    <i class="ni ni-circle-08"></i>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 mb-0 text-sm">
+                <span class="text-nowrap">Base de données</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenus -->
+      <div class="row mt-3">
+        <!-- Ventes Aujourd'hui -->
+        <div class="col-xl-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Ventes Aujourd'hui</h5>
+                  <span class="h2 font-weight-bold mb-0 text-success">
+                    ${{ "%.2f"|format(today_revenue) }}
+                  </span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (today_revenue|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                    <i class="ni ni-money-coins"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ventes du Mois -->
+        <div class="col-xl-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Ventes du Mois</h5>
+                  <span class="h2 font-weight-bold mb-0 text-success">
+                    ${{ "%.2f"|format(month_revenue) }}
+                  </span>
+                  <p class="mt-0 mb-0 text-xs text-muted">{{ (month_revenue|usd_to_cdf)|format_number }} FC</p>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                    <i class="ni ni-chart-bar-32"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paiements en Attente -->
+        <div class="col-xl-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-body">
+              <div class="row">
+                <div class="col">
+                  <h5 class="card-title text-uppercase text-muted mb-0">Factures Impayées</h5>
+                  <span class="h2 font-weight-bold mb-0 text-warning">{{ pending_payments }}</span>
+                </div>
+                <div class="col-auto">
+                  <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
+                    <i class="ni ni-credit-card"></i>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 mb-0 text-sm">
+                <span class="text-nowrap">À encaisser</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card border-primary">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Produits Actifs</h6>
-                        <h3 class="mb-0">{{ total_products }}</h3>
-                    </div>
-                    <i class="bi bi-capsule text-primary" style="font-size: 36px;"></i>
-                </div>
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <!-- Ventes Récentes -->
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Ventes Récentes</h3>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stat-card border-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Stock Faible</h6>
-                        <h3 class="mb-0 text-warning">{{ low_stock_products }}</h3>
-                    </div>
-                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 36px;"></i>
-                </div>
+            <div class="col text-right">
+              <a href="{{ url_for('sales.index') }}" class="btn btn-sm btn-primary">Voir tout</a>
             </div>
+          </div>
         </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Facture</th>
+                <th scope="col">Client</th>
+                <th scope="col">Montant</th>
+                <th scope="col">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sale in recent_sales %}
+              <tr>
+                <th scope="row">
+                  <a href="{{ url_for('sales.view', id=sale.id) }}">{{ sale.invoice_number }}</a>
+                </th>
+                <td>
+                  {{ sale.customer.name if sale.customer else 'Client anonyme' }}
+                </td>
+                <td>
+                  ${{ "%.2f"|format(sale.total_amount) }}<br>
+                  <small class="text-muted">{{ (sale.total_amount|usd_to_cdf)|format_number }} FC</small>
+                </td>
+                <td>
+                  {% if sale.payment_status == 'paid' %}
+                    <span class="badge badge-success">Payé</span>
+                  {% elif sale.payment_status == 'partial' %}
+                    <span class="badge badge-warning">Partiel</span>
+                  {% else %}
+                    <span class="badge badge-danger">En attente</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">Aucune vente récente</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card stat-card border-danger">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Produits Expirés</h6>
-                        <h3 class="mb-0 text-danger">{{ expired_products }}</h3>
-                    </div>
-                    <i class="bi bi-calendar-x text-danger" style="font-size: 36px;"></i>
-                </div>
+
+    <!-- Alertes Stock Faible -->
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Alertes Stock Faible</h3>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stat-card border-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Total Clients</h6>
-                        <h3 class="mb-0">{{ total_customers }}</h3>
-                    </div>
-                    <i class="bi bi-people text-info" style="font-size: 36px;"></i>
-                </div>
+            <div class="col text-right">
+              <a href="{{ url_for('products.alerts') }}" class="btn btn-sm btn-warning">Voir tout</a>
             </div>
+          </div>
         </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Produit</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Minimum</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in low_stock_items %}
+              <tr>
+                <th scope="row">
+                  {{ product.name }}
+                </th>
+                <td>
+                  <span class="badge badge-warning">{{ product.stock_quantity }}</span>
+                </td>
+                <td>
+                  {{ product.min_stock_level }}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">Aucune alerte</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card stat-card border-success">
-            <div class="card-body">
-                <h6 class="text-muted mb-1">Ventes Aujourd'hui</h6>
-                <h3 class="mb-0 text-success">${{ "%.2f"|format(today_revenue) }}</h3>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card stat-card border-success">
-            <div class="card-body">
-                <h6 class="text-muted mb-1">Ventes du Mois</h6>
-                <h3 class="mb-0 text-success">${{ "%.2f"|format(month_revenue) }}</h3>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card stat-card border-warning">
-            <div class="card-body">
-                <h6 class="text-muted mb-1">Paiements en Attente</h6>
-                <h3 class="mb-0 text-warning">{{ pending_payments }}</h3>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-receipt"></i> Ventes Récentes</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Facture</th>
-                                <th>Client</th>
-                                <th>Montant</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for sale in recent_sales %}
-                            <tr>
-                                <td><a href="{{ url_for('sales.view', id=sale.id) }}">{{ sale.invoice_number }}</a></td>
-                                <td>{{ sale.customer.name if sale.customer else 'Client anonyme' }}</td>
-                                <td>${{ "%.2f"|format(sale.total_amount) }}</td>
-                                <td>
-                                    {% if sale.payment_status == 'paid' %}
-                                        <span class="badge bg-success">Payé</span>
-                                    {% elif sale.payment_status == 'partial' %}
-                                        <span class="badge bg-warning">Partiel</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">En attente</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">Aucune vente récente</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Alertes Stock Faible</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Produit</th>
-                                <th>Stock</th>
-                                <th>Minimum</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for product in low_stock_items %}
-                            <tr>
-                                <td>{{ product.name }}</td>
-                                <td><span class="badge bg-warning">{{ product.stock_quantity }}</span></td>
-                                <td>{{ product.min_stock_level }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="3" class="text-center text-muted">Aucune alerte</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% if low_stock_items %}
-                <div class="text-end">
-                    <a href="{{ url_for('products.alerts') }}" class="btn btn-sm btn-outline-primary">
-                        Voir toutes les alertes <i class="bi bi-arrow-right"></i>
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+{% endblock content %}
