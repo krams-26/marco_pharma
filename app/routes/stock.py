@@ -34,6 +34,61 @@ def index():
     pharmacies = get_accessible_pharmacies() if is_admin() else []
     return render_template('stock/index.html', movements=movements, pharmacies=pharmacies, pharmacy_filter=pharmacy_filter)
 
+@stock_bp.route('/product-adjust/<int:product_id>', methods=['GET', 'POST'])
+@require_permission('manage_stock')
+def product_adjust(product_id):
+    """Ajuster le stock d'un produit spécifique"""
+    product = Product.query.get_or_404(product_id)
+    
+    if request.method == 'POST':
+        try:
+            adjustment_type = request.form.get('adjustment_type')
+            quantity = int(request.form.get('quantity', 0))
+            reason = request.form.get('reason', '')
+            notes = request.form.get('notes', '')
+            
+            if adjustment_type == 'increase':
+                product.stock_quantity += quantity
+                movement_type = 'in'
+            else:
+                product.stock_quantity = max(0, product.stock_quantity - quantity)
+                movement_type = 'out'
+            
+            # Créer le mouvement de stock
+            movement = StockMovement(
+                product_id=product.id,
+                movement_type=movement_type,
+                quantity=quantity,
+                reference=f'AJUST-{datetime.now().strftime("%Y%m%d%H%M%S")}',
+                notes=f'Ajustement: {reason}. {notes}',
+                created_by=current_user.id,
+                pharmacy_id=product.pharmacy_id
+            )
+            db.session.add(movement)
+            
+            # Audit
+            audit = Audit(
+                user_id=current_user.id,
+                action='adjust_stock',
+                entity_type='product',
+                entity_id=product.id,
+                details=f'Stock ajusté: {adjustment_type} {quantity} unités. Raison: {reason}',
+                ip_address=request.remote_addr
+            )
+            db.session.add(audit)
+            
+            db.session.commit()
+            flash(f'Stock ajusté avec succès!', 'success')
+            return redirect(url_for('stock.product_movements', product_id=product.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur: {str(e)}', 'danger')
+    
+    return render_template('stock/adjust.html', product=product)
+
+
+
 @stock_bp.route('/export/<format>')
 @require_permission('manage_stock')
 def export_movements(format):
@@ -66,9 +121,9 @@ def export_movements(format):
         return export_to_excel(data, 'mouvements_stock', headers, 'Stock')
 
 
-@stock_bp.route('/adjust', methods=['GET', 'POST'])
+@stock_bp.route('/manual-adjust', methods=['GET', 'POST'])
 @require_permission('manage_stock')
-def adjust():
+def manual_adjust():
     if request.method == 'POST':
         try:
             product_id = request.form.get('product_id')
@@ -80,14 +135,14 @@ def adjust():
             product = Product.query.get(product_id)
             if not product:
                 flash('Produit introuvable', 'danger')
-                return redirect(url_for('stock.adjust'))
+                return redirect(url_for('stock.manual_adjust'))
 
             if movement_type == 'in':
                 product.stock_quantity += quantity
             else:
                 if product.stock_quantity < quantity:
                     flash('Stock insuffisant', 'danger')
-                    return redirect(url_for('stock.adjust'))
+                    return redirect(url_for('stock.manual_adjust'))
                 product.stock_quantity -= quantity
 
             movement = StockMovement(product_id=product_id,
@@ -467,6 +522,21 @@ def batch_edit(id):
     suppliers = Supplier.query.filter_by(is_active=True).all()
     return render_template('stock/batch_edit.html', batch=batch, suppliers=suppliers)
 
+
+@stock_bp.route('/product/<int:product_id>/movements')
+@require_permission('manage_stock')
+def product_movements(product_id):
+    """Historique des mouvements d'un produit"""
+    product = Product.query.get_or_404(product_id)
+    
+    page = request.args.get('page', 1, type=int)
+    movements = StockMovement.query.filter_by(product_id=product_id)\
+        .order_by(StockMovement.created_at.desc())\
+        .paginate(page=page, per_page=20, error_out=False)
+    
+    return render_template('stock/product_movements.html', 
+                         product=product, 
+                         movements=movements)
 
 @stock_bp.route('/batches/<int:id>/movements')
 @require_permission('manage_stock')

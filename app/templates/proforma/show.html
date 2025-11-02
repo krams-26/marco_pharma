@@ -135,23 +135,8 @@
             <div class="total-section">
                 <div class="row">
                     <div class="col-md-6 offset-md-6">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Total HT:</span>
-                            <span class="price-dual">
-                                <strong>${{ "%.2f"|format(proforma.total_ht) }}</strong>
-                                <small class="text-muted d-block">{{ (proforma.total_ht|usd_to_cdf)|format_number }} FC</small>
-                            </span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>TVA (16%):</span>
-                            <span class="price-dual">
-                                <strong>${{ "%.2f"|format(proforma.total_tax) }}</strong>
-                                <small class="text-muted d-block">{{ (proforma.total_tax|usd_to_cdf)|format_number }} FC</small>
-                            </span>
-                        </div>
-                        <hr>
                         <div class="d-flex justify-content-between">
-                            <span class="fs-5 fw-bold">TOTAL TTC:</span>
+                            <span class="fs-5 fw-bold">Total:</span>
                             <span class="price-dual">
                                 <strong class="fs-4 text-primary">${{ "%.2f"|format(proforma.total_ttc) }}</strong>
                                 <small class="text-muted d-block"><strong>{{ (proforma.total_ttc|usd_to_cdf)|format_number }} FC</strong></small>

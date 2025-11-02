@@ -30,6 +30,11 @@
             <span class="badge badge-lg badge-warning">
               <i class="fas fa-user"></i> Mes Données Personnelles
             </span>
+            {% if pharmacy_name %}
+            <span class="badge badge-lg badge-info ml-2">
+              <i class="fas fa-store"></i> Pharmacie: {{ pharmacy_name }}
+            </span>
+            {% endif %}
             {% endif %}
           </div>
         </div>

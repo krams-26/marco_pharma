@@ -13,7 +13,7 @@
         <h5 class="mb-0"><i class="bi bi-person-badge"></i> Informations utilisateur</h5>
     </div>
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" id="edit-user-form">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Nom d'utilisateur *</label>
@@ -94,7 +94,7 @@
 </div>
 
 <!-- Modal Permissions -->
-{% set user_perms = user.get_permissions() %}
+{% set user_perms = prefill_permissions or user.get_permissions() %}
 <div class="modal fade" id="permissionsModal" tabindex="-1" role="dialog" aria-labelledby="permissionsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -158,6 +158,26 @@
 </div>
 
 <script>
+// Injecter les permissions cochées dans le formulaire principal au submit
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('edit-user-form');
+    if (!form) return;
+    form.addEventListener('submit', function() {
+        // Nettoyer d'anciens inputs cachés (si resoumission)
+        Array.from(form.querySelectorAll('input[type="hidden"][data-generated="perm"]')).forEach(el => el.remove());
+        // Pour chaque case perm cochée, ajouter un input hidden correspondant
+        document.querySelectorAll('.perm-checkbox').forEach(cb => {
+            if (cb.checked) {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = cb.name; // ex: perm_products_view
+                hidden.value = 'on';
+                hidden.setAttribute('data-generated', 'perm');
+                form.appendChild(hidden);
+            }
+        });
+    });
+});
 function toggleModulePermissions(moduleIndex) {
     const moduleCheckbox = document.getElementById(`module_${moduleIndex}`);
     const permissions = document.querySelectorAll(`.module-${moduleIndex - 1}`);

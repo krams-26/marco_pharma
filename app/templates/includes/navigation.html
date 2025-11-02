@@ -53,12 +53,17 @@
 
         <!-- Notifications -->
         <li class="nav-item dropdown">
-          <a class="nav-link" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <a class="nav-link" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="notificationIcon">
             <i class="ni ni-bell-55"></i>
+            <span class="badge badge-dot badge-danger" id="notificationBadge" style="display: none;"></span>
+            <span class="badge badge-primary badge-xs" id="notificationCount" style="display: none;">0</span>
           </a>
-          <div class="dropdown-menu dropdown-menu-xl dropdown-menu-right py-0 overflow-hidden">
+          <div class="dropdown-menu dropdown-menu-xl dropdown-menu-right py-0 overflow-hidden" id="notificationDropdown">
             <div class="px-3 py-3">
-              <h6 class="text-sm text-muted m-0">Vous avez <strong class="text-primary">0</strong> notifications.</h6>
+              <h6 class="text-sm text-muted m-0">Vous avez <strong class="text-primary" id="notificationCountText">0</strong> notification(s).</h6>
+            </div>
+            <div id="notificationList" style="max-height: 400px; overflow-y: auto;">
+              <!-- Les notifications seront chargées ici -->
             </div>
             <a href="{{ url_for('notifications.index') }}" class="dropdown-item text-center text-primary font-weight-bold py-3">Voir toutes</a>
           </div>
@@ -75,7 +80,11 @@
               </span>
               <div class="media-body ml-2 d-none d-lg-block">
                 <span class="mb-0 text-sm font-weight-bold">
-                  {{ current_user.username }}
+                  {% if current_user.full_name and current_user.full_name.strip() %}
+                    {{ current_user.full_name }}
+                  {% else %}
+                    {{ current_user.username }}
+                  {% endif %}
                 </span>
               </div>
             </div>
@@ -84,7 +93,7 @@
             <div class="dropdown-header noti-title">
               <h6 class="text-overflow m-0">Bienvenue!</h6>
             </div>
-            <a href="{{ url_for('settings.index') }}" class="dropdown-item">
+            <a href="{{ url_for('settings.index', tab='profile') }}" class="dropdown-item">
               <i class="ni ni-single-02"></i>
               <span>Mon profil</span>
             </a>

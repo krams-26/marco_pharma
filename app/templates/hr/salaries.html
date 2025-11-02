@@ -224,8 +224,9 @@ $(document).ready(function() {
     });
     
     function updateCDFEquivalent(usd) {
+        const rate = {{ exchange_rate }};
         if (usd > 0) {
-            const cdf = usd * 2800; // Taux de change approximatif
+            const cdf = usd * rate;
             $('#salary-cdf-equivalent').text(`≈ ${cdf.toLocaleString('fr-FR')} FC`);
         } else {
             $('#salary-cdf-equivalent').text('');

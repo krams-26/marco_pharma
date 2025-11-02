@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Gérer les Permissions{% endblock %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Gérer les Permissions</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('users.index') }}">Utilisateurs</a></li>
+              <li class="breadcrumb-item active">Permissions</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('users.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">
+            <i class="fas fa-shield-alt text-success"></i> Gérer les Permissions - {{ user.username }}
+          </h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {% for module, module_perms in permissions_by_module.items() %}
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h4 class="mb-0">{{ module }}</h4>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  {% for perm_code, perm_name in module_perms %}
+                  <div class="col-md-6 mb-3">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" 
+                             id="perm_{{ perm_code }}" 
+                             name="perm_{{ perm_code }}"
+                             {% if user.has_permission(perm_code) %}checked{% endif %}>
+                      <label class="custom-control-label" for="perm_{{ perm_code }}">
+                        {{ perm_name }}
+                      </label>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer les Permissions
+              </button>
+              <a href="{{ url_for('users.index') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

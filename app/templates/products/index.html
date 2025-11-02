@@ -26,6 +26,9 @@
           <a href="{{ url_for('products.import_products') }}" class="btn btn-sm btn-neutral">
             <i class="ni ni-cloud-upload-96"></i> Importer
           </a>
+          <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#addMultipleProductsModal">
+            <i class="fas fa-layer-group"></i> Ajout Multiple
+          </button>
           <a href="{{ url_for('products.add') }}" class="btn btn-sm btn-neutral">
             <i class="ni ni-fat-add"></i> Nouveau
           </a>
@@ -159,13 +162,88 @@
                 </td>
                 {% endif %}
                 <td class="text-right">
-                  <button onclick="showProductQuickView({{ product.id }})" class="btn btn-sm btn-icon btn-info" title="Voir détails">
-                    <span class="btn-inner--icon"><i class="ni ni-glasses-2"></i></span>
-                  </button>
-                  <a href="{{ url_for('products.edit', id=product.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
-                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
-                            </a>
-                        </td>
+                  <!-- Actions pour admin -->
+                  {% if current_user.role == 'admin' %}
+                  <div class="btn-group" role="group">
+                    <!-- Voir détails -->
+                    <button onclick="showProductQuickView({{ product.id }})" class="btn btn-sm btn-icon btn-info" title="Voir détails">
+                      <span class="btn-inner--icon"><i class="ni ni-glasses-2"></i></span>
+                    </button>
+                    
+                    <!-- Modifier -->
+                    <a href="{{ url_for('products.edit', id=product.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    
+                    <!-- Menu déroulant pour plus d'actions -->
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-sm btn-icon btn-secondary dropdown-toggle" data-toggle="dropdown" title="Plus d'actions">
+                        <span class="btn-inner--icon"><i class="fas fa-ellipsis-v"></i></span>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <!-- Gestion du stock -->
+                        <a class="dropdown-item" href="{{ url_for('stock.product_adjust', product_id=product.id) }}">
+                          <i class="fas fa-boxes text-warning"></i> Ajuster Stock
+                        </a>
+                        
+                        <!-- Historique des mouvements -->
+                        <a class="dropdown-item" href="{{ url_for('stock.product_movements', product_id=product.id) }}">
+                          <i class="fas fa-history text-info"></i> Historique Stock
+                        </a>
+                        
+                        <!-- Gestion des lots -->
+                        <a class="dropdown-item" href="{{ url_for('stock.batches') }}?product_id={{ product.id }}">
+                          <i class="fas fa-layer-group text-primary"></i> Gérer Lots
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Dupliquer -->
+                        <a class="dropdown-item" href="{{ url_for('products.duplicate', id=product.id) }}">
+                          <i class="fas fa-copy text-secondary"></i> Dupliquer
+                        </a>
+                        
+                        <!-- Exporter -->
+                        <a class="dropdown-item" href="{{ url_for('products.export_single', id=product.id) }}">
+                          <i class="fas fa-download text-success"></i> Exporter
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Désactiver/Activer -->
+                        {% if product.is_active %}
+                        <a class="dropdown-item text-warning" href="{{ url_for('products.toggle_status', id=product.id) }}" 
+                           onclick="return confirm('Désactiver ce produit ?')">
+                          <i class="fas fa-pause"></i> Désactiver
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item text-success" href="{{ url_for('products.toggle_status', id=product.id) }}">
+                          <i class="fas fa-play"></i> Activer
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Supprimer -->
+                        <a class="dropdown-item text-danger" href="{{ url_for('products.delete', id=product.id) }}" 
+                           onclick="return confirm('Supprimer définitivement ce produit ?')">
+                          <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <!-- Actions limitées pour non-admin -->
+                  <div class="btn-group" role="group">
+                    <button onclick="showProductQuickView({{ product.id }})" class="btn btn-sm btn-icon btn-info" title="Voir détails">
+                      <span class="btn-inner--icon"><i class="ni ni-glasses-2"></i></span>
+                    </button>
+                    {% if current_user.has_permission('manage_products') %}
+                    <a href="{{ url_for('products.edit', id=product.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                </td>
                     </tr>
                     {% else %}
                     <tr>
@@ -213,5 +291,192 @@
     </div>
     </div>
 </div>
+
+<script>
+// JavaScript pour la modale d'ajout multiple de produits
+let modalRowCounter = 0;
+
+function addProductModalRow(data = {}) {
+  modalRowCounter++;
+  const tbody = document.getElementById('productsModalTableBody');
+  const row = document.createElement('tr');
+  row.id = `product-modal-row-${modalRowCounter}`;
+  row.className = 'product-modal-row';
+  
+  row.innerHTML = `
+    <td>
+      <span class="badge badge-primary">${modalRowCounter}</span>
+    </td>
+    <td>
+      <input type="text" class="form-control form-control-sm product-modal-name" 
+             name="name" placeholder="Nom du produit" value="${data.name || ''}" required>
+    </td>
+    <td>
+      <input type="text" class="form-control form-control-sm" 
+             name="barcode" placeholder="Code-barres" value="${data.barcode || ''}">
+    </td>
+    <td>
+      <select class="form-control form-control-sm" name="category">
+        <option value="">-- Sélectionner --</option>
+        <option value="Comprimé" ${data.category === 'Comprimé' ? 'selected' : ''}>Comprimé</option>
+        <option value="Capsule" ${data.category === 'Capsule' ? 'selected' : ''}>Capsule</option>
+        <option value="Gélule" ${data.category === 'Gélule' ? 'selected' : ''}>Gélule</option>
+        <option value="Sirop" ${data.category === 'Sirop' ? 'selected' : ''}>Sirop</option>
+        <option value="Suspension" ${data.category === 'Suspension' ? 'selected' : ''}>Suspension</option>
+        <option value="Gouttes" ${data.category === 'Gouttes' ? 'selected' : ''}>Gouttes</option>
+        <option value="Pommade" ${data.category === 'Pommade' ? 'selected' : ''}>Pommade</option>
+        <option value="Crème" ${data.category === 'Crème' ? 'selected' : ''}>Crème</option>
+        <option value="Gel" ${data.category === 'Gel' ? 'selected' : ''}>Gel</option>
+        <option value="Injection" ${data.category === 'Injection' ? 'selected' : ''}>Injection</option>
+        <option value="Suppositoire" ${data.category === 'Suppositoire' ? 'selected' : ''}>Suppositoire</option>
+        <option value="Ampoule" ${data.category === 'Ampoule' ? 'selected' : ''}>Ampoule</option>
+        <option value="Sachet" ${data.category === 'Sachet' ? 'selected' : ''}>Sachet</option>
+        <option value="Autre" ${data.category === 'Autre' ? 'selected' : ''}>Autre</option>
+      </select>
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="purchase_price" step="0.01" placeholder="0.00" value="${data.purchase_price || ''}">
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="selling_price" step="0.01" placeholder="0.00" value="${data.selling_price || ''}" required>
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="wholesale_price" step="0.01" placeholder="0.00" value="${data.wholesale_price || ''}">
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="stock_quantity" placeholder="0" value="${data.stock_quantity || ''}">
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="min_stock_level" placeholder="10" value="${data.min_stock_level || '10'}">
+    </td>
+    <td>
+      <input type="text" class="form-control form-control-sm" 
+             name="manufacturer" placeholder="Fabricant" value="${data.manufacturer || ''}">
+    </td>
+    <td>
+      <button type="button" class="btn btn-sm btn-danger" onclick="removeProductModalRow(${modalRowCounter})" title="Supprimer">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  `;
+  
+  tbody.appendChild(row);
+  updateModalRowNumbers();
+}
+
+function removeProductModalRow(rowId) {
+  const row = document.getElementById(`product-modal-row-${rowId}`);
+  if (row) {
+    row.remove();
+    updateModalRowNumbers();
+  }
+}
+
+function duplicateLastModalRow() {
+  const rows = document.querySelectorAll('.product-modal-row');
+  if (rows.length === 0) {
+    addProductModalRow();
+    return;
+  }
+  
+  const lastRow = rows[rows.length - 1];
+  const data = {};
+  const inputs = lastRow.querySelectorAll('input, select');
+  
+  inputs.forEach(input => {
+    if (input.name) {
+      if (input.type === 'checkbox') {
+        data[input.name] = input.checked;
+      } else {
+        data[input.name] = input.value;
+      }
+    }
+  });
+  
+  addProductModalRow(data);
+}
+
+function updateModalRowNumbers() {
+  const rows = document.querySelectorAll('.product-modal-row');
+  rows.forEach((row, index) => {
+    const badge = row.querySelector('td:first-child .badge');
+    if (badge) {
+      badge.textContent = index + 1;
+    }
+  });
+}
+
+// Initialiser la modale
+$('#addMultipleProductsModal').on('show.bs.modal', function() {
+  modalRowCounter = 0;
+  const tbody = document.getElementById('productsModalTableBody');
+  tbody.innerHTML = '';
+  
+  // Ajouter 5 lignes vides initiales
+  for (let i = 0; i < 5; i++) {
+    addProductModalRow();
+  }
+});
+
+// Gérer la soumission du formulaire dans la modale
+document.getElementById('submitMultipleProductsBtn').addEventListener('click', function() {
+  const form = document.getElementById('multipleProductsModalForm');
+  const rows = document.querySelectorAll('.product-modal-row');
+  
+  if (rows.length === 0) {
+    alert('Veuillez ajouter au moins un produit');
+    return;
+  }
+  
+  // Collecter les données de chaque produit
+  const products = [];
+  let hasValidProduct = false;
+  
+  rows.forEach((row, index) => {
+    const name = row.querySelector('.product-modal-name').value.trim();
+    const sellingPrice = row.querySelector('input[name="selling_price"]').value;
+    
+    if (name && sellingPrice) {
+      const productData = {
+        name: name,
+        barcode: row.querySelector('input[name="barcode"]').value.trim() || '',
+        category: row.querySelector('select[name="category"]').value || '',
+        purchase_price: row.querySelector('input[name="purchase_price"]').value || '0',
+        selling_price: sellingPrice,
+        wholesale_price: row.querySelector('input[name="wholesale_price"]').value || '0',
+        stock_quantity: row.querySelector('input[name="stock_quantity"]').value || '0',
+        min_stock_level: row.querySelector('input[name="min_stock_level"]').value || '10',
+        manufacturer: row.querySelector('input[name="manufacturer"]').value.trim() || '',
+        supplier: ''
+      };
+      
+      products.push(JSON.stringify(productData));
+      hasValidProduct = true;
+    }
+  });
+  
+  if (!hasValidProduct) {
+    alert('Veuillez remplir au moins le nom et le prix de vente pour au moins un produit');
+    return;
+  }
+  
+  // Créer des champs cachés pour chaque produit
+  products.forEach(productJson => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'products[]';
+    input.value = productJson;
+    form.appendChild(input);
+  });
+  
+  // Soumettre le formulaire
+  form.submit();
+});
+</script>
 
 {% endblock %}

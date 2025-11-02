@@ -65,6 +65,7 @@
                 <th>Utilisateur</th>
                 <th>Nom Complet</th>
                 <th>Email</th>
+                <th>Pharmacie</th>
                 <th>Rôle</th>
                 <th>Statut</th>
                 <th class="text-right">Actions</th>
@@ -76,6 +77,11 @@
                 <td><span class="font-weight-bold">{{ user.username }}</span></td>
                 <td>{{ user.full_name or '-' }}</td>
                 <td><small>{{ user.email }}</small></td>
+                <td>
+                  <span class="badge badge-pill badge-info">
+                    {{ user_primary_pharmacy.get(user.id, '—') }}
+                  </span>
+                </td>
                 <td>
                   {% if user.role == 'admin' %}
                     <span class="badge badge-danger">Admin</span>
@@ -95,14 +101,100 @@
                   {% endif %}
                 </td>
                 <td class="text-right">
-                  <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-icon btn-primary">
-                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
-                  </a>
+                  <!-- Actions pour admin -->
+                  {% if current_user.role == 'admin' %}
+                  <div class="btn-group" role="group">
+                    <!-- Voir profil -->
+                    <a href="{{ url_for('users.view', id=user.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir profil">
+                      <span class="btn-inner--icon"><i class="ni ni-single-02"></i></span>
+                    </a>
+                    
+                    <!-- Modifier -->
+                    <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    
+                    <!-- Menu déroulant pour plus d'actions -->
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-sm btn-icon btn-secondary dropdown-toggle" data-toggle="dropdown" title="Plus d'actions">
+                        <span class="btn-inner--icon"><i class="fas fa-ellipsis-v"></i></span>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <!-- Historique des connexions -->
+                        <a class="dropdown-item" href="{{ url_for('users.login_history', id=user.id) }}">
+                          <i class="fas fa-history text-info"></i> Historique Connexions
+                        </a>
+                        
+                        <!-- Journal d'activités -->
+                        <a class="dropdown-item" href="{{ url_for('users.activity_log', id=user.id) }}">
+                          <i class="fas fa-clipboard-list text-primary"></i> Journal d'Activités
+                        </a>
+                        
+                        <!-- Réinitialiser mot de passe -->
+                        <a class="dropdown-item" href="{{ url_for('users.reset_password', id=user.id) }}" 
+                           onclick="return confirm('Réinitialiser le mot de passe de cet utilisateur ?')">
+                          <i class="fas fa-key text-warning"></i> Réinitialiser Mot de Passe
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Gestion des permissions -->
+                        <a class="dropdown-item" href="{{ url_for('users.manage_permissions', id=user.id) }}">
+                          <i class="fas fa-shield-alt text-success"></i> Gérer Permissions
+                        </a>
+                        
+                        <!-- Assigner pharmacies -->
+                        <a class="dropdown-item" href="{{ url_for('users.assign_pharmacies', id=user.id) }}">
+                          <i class="fas fa-store text-info"></i> Assigner Pharmacies
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Changer rôle -->
+                        <a class="dropdown-item" href="{{ url_for('users.change_role', id=user.id) }}">
+                          <i class="fas fa-user-tag text-secondary"></i> Changer Rôle
+                        </a>
+                        
+                        <!-- Désactiver/Activer -->
+                        {% if user.is_active %}
+                        <a class="dropdown-item text-warning" href="{{ url_for('users.toggle_status', id=user.id) }}" 
+                           onclick="return confirm('Désactiver cet utilisateur ?')">
+                          <i class="fas fa-pause"></i> Désactiver
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item text-success" href="{{ url_for('users.toggle_status', id=user.id) }}">
+                          <i class="fas fa-play"></i> Activer
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Supprimer (sauf admin) -->
+                        {% if user.role != 'admin' %}
+                        <a class="dropdown-item text-danger" href="{{ url_for('users.delete', id=user.id) }}" 
+                           onclick="return confirm('Supprimer définitivement cet utilisateur ?')">
+                          <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <!-- Actions limitées pour non-admin -->
+                  <div class="btn-group" role="group">
+                    <a href="{{ url_for('users.view', id=user.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir profil">
+                      <span class="btn-inner--icon"><i class="ni ni-single-02"></i></span>
+                    </a>
+                    {% if current_user.has_permission('manage_users') %}
+                    <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    {% endif %}
+                  </div>
+                  {% endif %}
                 </td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="6" class="text-center text-muted py-5">
+                <td colspan="7" class="text-center text-muted py-5">
                   <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
                   Aucun utilisateur trouvé
                 </td>

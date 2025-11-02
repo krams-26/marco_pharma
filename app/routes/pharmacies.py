@@ -102,6 +102,7 @@ def edit(id):
             pharmacy.manager_name = request.form.get('manager_name')
             pharmacy.license_number = request.form.get('license_number')
             pharmacy.opening_hours = request.form.get('opening_hours')
+            
             pharmacy.revenue_target = float(request.form.get('revenue_target', 0))
             pharmacy.status = request.form.get('status', 'active')
             pharmacy.is_active = request.form.get('is_active') == 'on'
@@ -280,4 +281,94 @@ def stats():
     pharmacy_stats.sort(key=lambda x: x['total_revenue'], reverse=True)
     
     return render_template('pharmacies/stats.html', pharmacy_stats=pharmacy_stats)
+
+@pharmacies_bp.route('/toggle-status/<int:id>', methods=['POST'])
+@require_permission('manage_settings')
+def toggle_status(id):
+    pharmacy = Pharmacy.query.get_or_404(id)
+    pharmacy.is_active = not pharmacy.is_active
+    pharmacy.status = 'active' if pharmacy.is_active else 'inactive'
+    
+    audit = Audit(
+        user_id=current_user.id,
+        action='toggle_pharmacy_status',
+        entity_type='pharmacy',
+        entity_id=pharmacy.id,
+        details=f'Statut pharmacie changé: {pharmacy.name} -> {"Actif" if pharmacy.is_active else "Inactif"}',
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit)
+    
+    db.session.commit()
+    
+    flash(f'Pharmacie {"activée" if pharmacy.is_active else "désactivée"} avec succès!', 'success')
+    return redirect(url_for('pharmacies.index'))
+
+@pharmacies_bp.route('/export/<int:id>')
+@require_permission('manage_settings')
+def export(id):
+    pharmacy = Pharmacy.query.get_or_404(id)
+    
+    # Données à exporter
+    export_data = {
+        'pharmacy': {
+            'name': pharmacy.name,
+            'type': pharmacy.type,
+            'code': pharmacy.code,
+            'address': pharmacy.address,
+            'phone': pharmacy.phone,
+            'email': pharmacy.email,
+            'status': pharmacy.status,
+            'manager_name': pharmacy.manager_name,
+            'license_number': pharmacy.license_number,
+            'opening_hours': pharmacy.opening_hours,
+            'revenue_target': pharmacy.revenue_target,
+            'is_active': pharmacy.is_active
+        },
+        'users': [],
+        'products': [],
+        'sales_summary': {}
+    }
+    
+    # Utilisateurs affectés
+    user_pharmacies = UserPharmacy.query.filter_by(pharmacy_id=id).all()
+    for up in user_pharmacies:
+        user = User.query.get(up.user_id)
+        if user:
+            export_data['users'].append({
+                'username': user.username,
+                'full_name': user.full_name,
+                'email': user.email,
+                'role': user.role,
+                'is_primary': up.is_primary
+            })
+    
+    # Produits
+    products = Product.query.filter_by(pharmacy_id=id, is_active=True).all()
+    for product in products:
+        export_data['products'].append({
+            'name': product.name,
+            'barcode': product.barcode,
+            'category': product.category,
+            'selling_price': product.selling_price,
+            'stock_quantity': product.stock_quantity
+        })
+    
+    # Résumé des ventes
+    total_sales = db.session.query(func.sum(Sale.total_amount)).filter_by(pharmacy_id=id).scalar() or 0
+    sales_count = Sale.query.filter_by(pharmacy_id=id).count()
+    export_data['sales_summary'] = {
+        'total_revenue': total_sales,
+        'sales_count': sales_count
+    }
+    
+    # Créer un fichier JSON
+    import json
+    from flask import make_response
+    
+    response = make_response(json.dumps(export_data, indent=2, ensure_ascii=False))
+    response.headers['Content-Type'] = 'application/json'
+    response.headers['Content-Disposition'] = f'attachment; filename=pharmacy_{pharmacy.code}_export.json'
+    
+    return response
 

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Dupliquer Produit - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-copy text-secondary"></i>
+                                Dupliquer Produit
+                            </h3>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Informations du produit original -->
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle"></i> Produit Original</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Nom:</strong> {{ product.name }}<br>
+                                <strong>Code-barres:</strong> {{ product.barcode or 'N/A' }}<br>
+                                <strong>Catégorie:</strong> {{ product.category or 'N/A' }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Prix d'achat:</strong> {{ product.purchase_price }} FC<br>
+                                <strong>Prix de vente:</strong> {{ product.selling_price }} FC<br>
+                                <strong>Prix de gros:</strong> {{ product.wholesale_price }} FC
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulaire de duplication -->
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Nom du nouveau produit *</label>
+                                    <input type="text" class="form-control" name="name" 
+                                           value="{{ product.name }} (Copie)" required>
+                                    <small class="form-text text-muted">
+                                        Le nom sera utilisé pour identifier le nouveau produit
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Code-barres</label>
+                                    <input type="text" class="form-control" name="barcode" 
+                                           placeholder="Laissez vide pour générer automatiquement">
+                                    <small class="form-text text-muted">
+                                        Laissez vide pour générer un nouveau code-barres
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Informations qui seront copiées -->
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Informations qui seront copiées</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Catégorie:</strong> {{ product.category or 'N/A' }}<br>
+                                    <strong>Unité:</strong> {{ product.unit or 'N/A' }}
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Prix d'achat:</strong> {{ product.purchase_price }} FC<br>
+                                    <strong>Prix de vente:</strong> {{ product.selling_price }} FC
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Prix de gros:</strong> {{ product.wholesale_price }} FC<br>
+                                    <strong>Stock minimum:</strong> {{ product.min_stock_level }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Fabricant:</strong> {{ product.manufacturer or 'N/A' }}<br>
+                                    <strong>Fournisseur:</strong> {{ product.supplier or 'N/A' }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Pharmacie:</strong> {{ product.pharmacy.name if product.pharmacy else 'N/A' }}<br>
+                                    <strong>Stock initial:</strong> 0 (zéro)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        {% if product.description %}
+                        <div class="form-group">
+                            <label class="form-label">Description (copiée)</label>
+                            <textarea class="form-control" rows="3" readonly>{{ product.description }}</textarea>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Boutons d'action -->
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-copy"></i> Dupliquer le Produit
+                            </button>
+                            <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

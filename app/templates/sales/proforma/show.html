@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Facture Pro Forma {{ proforma.proforma_number }} - MARCO PHARMA{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+    .no-print { display: none !important; }
+    body { background: white; }
+    .main-wrapper { margin-left: 0 !important; }
+    .main-content { padding: 15px !important; }
+    .card { box-shadow: none !important; border: 1px solid #000 !important; }
+    .top-header, .sidebar { display: none !important; }
+}
+
+.invoice-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+}
+
+.invoice-body {
+    background: white;
+    padding: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.status-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+}
+
+.status-draft { background: #6c757d; color: white; }
+.status-sent { background: #17a2b8; color: white; }
+.status-accepted { background: #28a745; color: white; }
+.status-rejected { background: #dc3545; color: white; }
+
+.invoice-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.5rem 0;
+}
+
+.invoice-table th,
+.invoice-table td {
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    text-align: left;
+}
+
+.invoice-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.invoice-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.total-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header avec actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h2><i class="bi bi-file-earmark-text"></i> Facture Pro Forma</h2>
+            <p class="text-muted mb-0">{{ proforma.proforma_number }}</p>
+        </div>
+        <div class="action-buttons">
+            <a href="{{ url_for('sales.proforma_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+            <a href="{{ url_for('sales.proforma_edit', id=proforma.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            <a href="{{ url_for('sales.proforma_print', id=proforma.id) }}" class="btn btn-info" target="_blank">
+                <i class="bi bi-printer"></i> Imprimer
+            </a>
+            {% if proforma.status == 'draft' %}
+            <form method="POST" action="{{ url_for('sales.proforma_send', id=proforma.id) }}" style="display: inline;">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-send"></i> Envoyer
+                </button>
+            </form>
+            {% endif %}
+            {% if proforma.status == 'sent' %}
+            <form method="POST" action="{{ url_for('sales.proforma_convert_to_sale', id=proforma.id) }}" style="display: inline;">
+                <button type="submit" class="btn btn-warning" onclick="return confirm('Convertir cette proforma en vente ?')">
+                    <i class="bi bi-arrow-right-circle"></i> Convertir en Vente
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Facture -->
+    <div class="card">
+        <div class="invoice-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h3 mb-2">MARCO PHARMA</h1>
+                    <p class="mb-1">Système de Gestion Pharmaceutique</p>
+                    <p class="mb-0">République Démocratique du Congo</p>
+                </div>
+                <div class="col-md-6 text-md-right">
+                    <h2 class="h4 mb-2">FACTURE PRO FORMA</h2>
+                    <p class="mb-1"><strong>N°:</strong> {{ proforma.proforma_number }}</p>
+                    <p class="mb-1"><strong>Date:</strong> {{ proforma.issue_date.strftime('%d/%m/%Y') }}</p>
+                    <p class="mb-0"><strong>Validité:</strong> {{ proforma.validity_date.strftime('%d/%m/%Y') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="invoice-body">
+            <!-- Informations client -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5 class="text-primary mb-3">Client</h5>
+                    <p class="mb-1"><strong>{{ proforma.customer_name }}</strong></p>
+                    {% if proforma.customer_address %}
+                    <p class="mb-1">{{ proforma.customer_address }}</p>
+                    {% endif %}
+                    {% if proforma.customer_phone %}
+                    <p class="mb-1">Tél: {{ proforma.customer_phone }}</p>
+                    {% endif %}
+                    {% if proforma.customer_email %}
+                    <p class="mb-0">Email: {{ proforma.customer_email }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <h5 class="text-primary mb-3">Statut</h5>
+                    <span class="status-badge status-{{ proforma.status }}">
+                        {% if proforma.status == 'draft' %}Brouillon
+                        {% elif proforma.status == 'sent' %}Envoyé
+                        {% elif proforma.status == 'accepted' %}Accepté
+                        {% elif proforma.status == 'rejected' %}Rejeté
+                        {% else %}{{ proforma.status }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tableau des produits -->
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Code</th>
+                        <th>Quantité</th>
+                        <th>Prix unitaire</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in proforma.items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.product_code }}</td>
+                        <td>{{ item.quantity_requested }}</td>
+                        <td>${{ "%.2f"|format(item.unit_price) }}</td>
+                        <td>${{ "%.2f"|format(item.line_total) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Totaux -->
+            <div class="row">
+                <div class="col-md-6">
+                    {% if proforma.notes %}
+                    <div class="mt-4">
+                        <h6 class="text-primary">Notes:</h6>
+                        <p class="text-muted">{{ proforma.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <div class="total-section">
+                        <div class="d-flex justify-content-between font-weight-bold h5">
+                            <span>Total:</span>
+                            <span class="text-primary">${{ "%.2f"|format(proforma.total_ttc) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conditions -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h6 class="text-primary">Conditions de paiement:</h6>
+                    <p class="text-muted">{{ proforma.payment_conditions }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary">Conditions de livraison:</h6>
+                    <p class="text-muted">{{ proforma.delivery_conditions }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

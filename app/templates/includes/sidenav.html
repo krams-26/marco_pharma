@@ -2,7 +2,7 @@
   <!-- Brand FIXE en haut -->
   <div class="sidenav-header align-items-center">
     <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
-      <img src="{{ url_for('static', filename='img/marco-pharma-logo.png') }}" class="navbar-brand-img" alt="Marco Pharma" style="max-height: 50px;">
+      <span class="navbar-brand-text">MARCO PHARMA</span>
     </a>
   </div>
 
@@ -112,7 +112,7 @@
           {% endif %}
 
           <!-- Tâches -->
-          {% if current_user.has_permission('view_tasks') %}
+          {% if current_user.has_permission('view_tasks') or current_user.has_permission('tasks_view') %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('tasks.index') }}">
               <i class="ni ni-check-bold text-teal"></i>
@@ -122,7 +122,7 @@
           {% endif %}
 
           <!-- Approbations -->
-          {% if current_user.has_permission('view_approvals') %}
+          {% if current_user.has_permission('view_approvals') or current_user.has_permission('approvals_view') %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('approvals.index') }}">
               <i class="ni ni-check-bold text-success"></i>

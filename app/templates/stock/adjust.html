@@ -1,40 +1,128 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Ajuster le Stock - {{ product.name }}{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Ajustement de stock</h2>
-<div class="card">
-    <div class="card-body">
-        <form method="POST">
-            <div class="mb-3">
-                <label class="form-label">Produit *</label>
-                <select class="form-control" name="product_id" required>
-                    <option value="">Sélectionner un produit</option>
-                    {% for product in products %}
-                    <option value="{{ product.id }}">{{ product.name }} (Stock: {{ product.stock_quantity }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Type de mouvement *</label>
-                <select class="form-control" name="movement_type" required>
-                    <option value="in">Entrée</option>
-                    <option value="out">Sortie</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Quantité *</label>
-                <input type="number" class="form-control" name="quantity" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Référence</label>
-                <input type="text" class="form-control" name="reference">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Notes</label>
-                <textarea class="form-control" name="notes" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a href="{{ url_for('stock.index') }}" class="btn btn-secondary">Annuler</a>
-        </form>
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Ajuster le Stock</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('products.index') }}">Produits</a></li>
+              <li class="breadcrumb-item active">{{ product.name }}</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Ajuster le Stock - {{ product.name }}</h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-control-label">Type d'ajustement</label>
+                  <select name="adjustment_type" class="form-control" required>
+                    <option value="">Sélectionner un type</option>
+                    <option value="increase">Augmenter le stock</option>
+                    <option value="decrease">Diminuer le stock</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-control-label">Quantité</label>
+                  <input type="number" name="quantity" class="form-control" min="1" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-control-label">Raison de l'ajustement</label>
+              <select name="reason" class="form-control" required>
+                <option value="">Sélectionner une raison</option>
+                <option value="inventory">Inventaire</option>
+                <option value="damage">Produits endommagés</option>
+                <option value="theft">Vol</option>
+                <option value="expired">Produits expirés</option>
+                <option value="return">Retour client</option>
+                <option value="other">Autre</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-control-label">Notes (optionnel)</label>
+              <textarea name="notes" class="form-control" rows="3" placeholder="Détails supplémentaires..."></textarea>
+            </div>
+            
+            <div class="text-right">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Ajuster le Stock
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Informations Produit</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <h6 class="text-muted">Stock Actuel</h6>
+              <h4 class="text-primary">{{ product.stock_quantity }}</h4>
+            </div>
+            <div class="col-6">
+              <h6 class="text-muted">Stock Minimum</h6>
+              <h4 class="text-warning">{{ product.min_stock_level }}</h4>
+            </div>
+          </div>
+          
+          <hr>
+          
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-muted">Prix de Vente</h6>
+              <h5 class="text-success">${{ "%.2f"|format(product.selling_price) }}</h5>
+            </div>
+          </div>
+          
+          {% if product.expiry_date %}
+          <hr>
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-muted">Date d'Expiration</h6>
+              <p>{{ product.expiry_date.strftime('%d/%m/%Y') }}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

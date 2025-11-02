@@ -379,3 +379,102 @@ def export_products_excel():
         as_attachment=True,
         download_name=f'rapport_produits_{datetime.now().strftime("%Y%m%d")}.xlsx'
     )
+
+@reports_bp.route('/export/sales-excel')
+@require_permission('view_reports')
+def export_sales_excel():
+    from app.export_utils import export_to_excel
+    
+    # Récupérer les ventes
+    sales = Sale.query.order_by(Sale.sale_date.desc()).all()
+    
+    # Préparer les données
+    data = []
+    for sale in sales:
+        data.append({
+            'Numéro': sale.invoice_number,
+            'Date': sale.sale_date.strftime('%d/%m/%Y %H:%M') if sale.sale_date else '',
+            'Client': sale.customer.name if sale.customer else 'Anonyme',
+            'Total': sale.total_amount,
+            'Payé': sale.paid_amount,
+            'Solde': sale.balance_due,
+            'Statut': sale.payment_status,
+            'Pharmacie': sale.pharmacy.name if sale.pharmacy else 'N/A'
+        })
+    
+    headers = ['Numéro', 'Date', 'Client', 'Total', 'Payé', 'Solde', 'Statut', 'Pharmacie']
+    
+    return export_to_excel(
+        data, 
+        'rapport_ventes', 
+        headers, 
+        'Ventes',
+        download_name=f'rapport_ventes_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    )
+
+@reports_bp.route('/export/customers-excel')
+@require_permission('view_reports')
+def export_customers_excel():
+    from app.export_utils import export_to_excel
+    
+    # Récupérer les clients
+    customers = Customer.query.order_by(Customer.name).all()
+    
+    # Préparer les données
+    data = []
+    for customer in customers:
+        # Calculer le total des achats
+        total_purchases = db.session.query(func.sum(Sale.total_amount)).filter_by(customer_id=customer.id).scalar() or 0
+        
+        data.append({
+            'Nom': customer.name,
+            'Type': customer.customer_type,
+            'Email': customer.email or '',
+            'Téléphone': customer.phone or '',
+            'Adresse': customer.address or '',
+            'Total Achats': total_purchases,
+            'Statut': 'Actif' if customer.is_active else 'Inactif'
+        })
+    
+    headers = ['Nom', 'Type', 'Email', 'Téléphone', 'Adresse', 'Total Achats', 'Statut']
+    
+    return export_to_excel(
+        data, 
+        'rapport_clients', 
+        headers, 
+        'Clients',
+        download_name=f'rapport_clients_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    )
+
+@reports_bp.route('/export/stock-excel')
+@require_permission('view_reports')
+def export_stock_excel():
+    from app.export_utils import export_to_excel
+    
+    # Récupérer les produits
+    products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
+    
+    # Préparer les données
+    data = []
+    for product in products:
+        data.append({
+            'Nom': product.name,
+            'Code-barres': product.barcode or '',
+            'Catégorie': product.category or '',
+            'Stock': product.stock_quantity,
+            'Stock Min': product.min_stock_level,
+            'Prix Achat': product.purchase_price,
+            'Prix Vente': product.selling_price,
+            'Prix Gros': product.wholesale_price,
+            'Statut Stock': 'Faible' if product.stock_quantity <= product.min_stock_level else 'Normal'
+        })
+    
+    headers = ['Nom', 'Code-barres', 'Catégorie', 'Stock', 'Stock Min', 'Prix Achat', 'Prix Vente', 'Prix Gros', 'Statut Stock']
+    
+    return export_to_excel(
+        data, 
+        'rapport_stock', 
+        headers, 
+        'Stock',
+        download_name=f'rapport_stock_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    )

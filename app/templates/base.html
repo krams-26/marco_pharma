@@ -18,23 +18,21 @@
   </title>
 
   <!-- Favicon - Multiple formats pour compatibilité -->
-  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
-  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
-  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='assets/img/brand/favicon.png') }}">
+  <link rel="icon" href="/static/assets/img/brand/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/assets/img/brand/favicon.png">
   
   <!-- Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
-  
   <!-- Icons -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/nucleo/css/nucleo.css') }}" type="text/css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/@fortawesome/fontawesome-free/css/all.min.css') }}" type="text/css">
-  
+  <link rel="stylesheet" href="/static/assets/vendor/nucleo/css/nucleo.css" type="text/css">
+  <link rel="stylesheet" href="/static/assets/vendor/@fortawesome/fontawesome-free/css/all.min.css" type="text/css">
   <!-- Argon CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/argon.min.css') }}?v=1.2.0" type="text/css">
+  <link rel="stylesheet" href="/static/assets/css/argon.css?v=1.2.0" type="text/css">
   
   <!-- Custom Layout CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom-argon.css') }}" type="text/css">
+  <link rel="stylesheet" href="/static/css/custom-argon.css" type="text/css">
+  <!-- Fix Icons CSS - Corrige les chemins des fonts d'icônes -->
+  <link rel="stylesheet" href="/static/css/fix-icons.css" type="text/css">
 
   <!-- Specific CSS goes HERE -->
   {% block stylesheets %}{% endblock stylesheets %}
@@ -72,16 +70,74 @@
   {% include "includes/all_modals.html" %}
 
   <!-- Flash Messages -->
-  <script>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for forme, message in messages %}
-          // Afficher les messages Flash via notifications Argon
-          console.log('{{ forme }}', '{{ message }}');
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-  </script>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script id="flash-messages-script" type="application/json">
+        {{ messages|tojson|safe }}
+      </script>
+      <script>
+        (function() {
+          var scriptElement = document.getElementById('flash-messages-script');
+          if (scriptElement) {
+            try {
+              var flashMessages = JSON.parse(scriptElement.textContent);
+              flashMessages.forEach(function(msg) {
+                var category = msg[0] || 'info';
+                var message = msg[1] || '';
+                
+                // Mapper les catégories Flask vers Bootstrap
+                var alertClass = 'alert-info';
+                var iconClass = 'ni ni-bell-55';
+                
+                if (category === 'success') {
+                  alertClass = 'alert-success';
+                  iconClass = 'ni ni-check-bold';
+                } else if (category === 'danger' || category === 'error') {
+                  alertClass = 'alert-danger';
+                  iconClass = 'ni ni-fat-remove';
+                } else if (category === 'warning') {
+                  alertClass = 'alert-warning';
+                  iconClass = 'ni ni-notification-70';
+                }
+                
+                // Créer et afficher l'alerte
+                var alertDiv = document.createElement('div');
+                alertDiv.className = 'alert ' + alertClass + ' alert-dismissible fade show';
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.style.position = 'fixed';
+                alertDiv.style.top = '20px';
+                alertDiv.style.right = '20px';
+                alertDiv.style.zIndex = '9999';
+                alertDiv.style.minWidth = '300px';
+                alertDiv.style.maxWidth = '500px';
+                
+                alertDiv.innerHTML = '<span class="alert-inner--icon"><i class="' + iconClass + '"></i></span>' +
+                  '<span class="alert-inner--text"><strong>' + message + '</strong></span>' +
+                  '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                  '<span aria-hidden="true">&times;</span></button>';
+                
+                document.body.appendChild(alertDiv);
+                
+                // Auto-dismiss après 5 secondes
+                setTimeout(function() {
+                  if (alertDiv.parentNode) {
+                    alertDiv.classList.remove('show');
+                    setTimeout(function() {
+                      if (alertDiv.parentNode) {
+                        alertDiv.parentNode.removeChild(alertDiv);
+                      }
+                    }, 300);
+                  }
+                }, 5000);
+              });
+            } catch (e) {
+              console.error('Erreur lors du parsing des messages flash:', e);
+            }
+          }
+        })();
+      </script>
+    {% endif %}
+  {% endwith %}
 
   <!-- Dark Mode Toggle -->
   <script>
@@ -120,8 +176,94 @@
     }
   </script>
 
+  <!-- Notifications Sonores Globales -->
+  <script>
+    // Fonction globale pour afficher une notification avec son
+    function showNotification(message, type = 'info') {
+        // Jouer le son correspondant au type de notification
+        playNotificationSound(type);
+        
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-suppression après 5 secondes
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // Fonction pour jouer les sons de notification
+    function playNotificationSound(type) {
+        try {
+            // Créer un contexte audio
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Fréquences et durées selon le type
+            let frequency, duration;
+            
+            switch(type) {
+                case 'success':
+                    frequency = 800; // Son aigu et agréable
+                    duration = 0.3;
+                    break;
+                case 'error':
+                    frequency = 300; // Son grave et d'alerte
+                    duration = 0.5;
+                    break;
+                case 'warning':
+                    frequency = 600; // Son moyen
+                    duration = 0.4;
+                    break;
+                default: // info
+                    frequency = 500; // Son neutre
+                    duration = 0.2;
+                    break;
+            }
+            
+            // Créer l'oscillateur
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Configuration du son
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = 'sine';
+            
+            // Enveloppe du son (fade in/out)
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            // Jouer le son
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+            
+        } catch (error) {
+            // Fallback: utiliser l'API Web Audio simple
+            console.log('Notification sonore:', type);
+        }
+    }
+  </script>
+
   <!-- Specific JS goes HERE --> 
   {% block javascripts %}{% endblock javascripts %}
+
+  <script src="/static/assets/js/argon.js?v=1.2.0"></script>
 
 </body>
 

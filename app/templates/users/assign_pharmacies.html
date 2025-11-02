@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Assigner des Pharmacies{% endblock %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Assigner des Pharmacies</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('users.index') }}">Utilisateurs</a></li>
+              <li class="breadcrumb-item active">Assigner</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('users.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">
+            <i class="fas fa-store text-info"></i> Assigner des Pharmacies - {{ user.username }}
+          </h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="form-group">
+              <label class="form-control-label">Sélectionner les pharmacies:</label>
+              <div class="row">
+                {% for pharmacy in all_pharmacies %}
+                <div class="col-md-6 mb-3">
+                  <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" 
+                           id="pharmacy_{{ pharmacy.id }}" 
+                           name="pharmacy_ids"
+                           value="{{ pharmacy.id }}"
+                           {% if pharmacy.id in assigned_pharmacy_ids %}checked{% endif %}>
+                    <label class="custom-control-label" for="pharmacy_{{ pharmacy.id }}">
+                      <strong>{{ pharmacy.name }}</strong>
+                      {% if pharmacy.location %}
+                        <br><small class="text-muted">{{ pharmacy.location }}</small>
+                      {% endif %}
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            
+            <div class="form-group mt-4">
+              <label class="form-control-label">Pharmacie principale:</label>
+              <select name="primary_pharmacy" class="form-control">
+                <option value="">Aucune</option>
+                {% for pharmacy in all_pharmacies %}
+                <option value="{{ pharmacy.id }}" 
+                        {% if pharmacy.id in assigned_pharmacy_ids and user.primary_pharmacy and pharmacy.id == user.primary_pharmacy.id %}selected{% endif %}>
+                  {{ pharmacy.name }}
+                </option>
+                {% endfor %}
+              </select>
+              <small class="form-text text-muted">La pharmacie principale sera utilisée par défaut pour cet utilisateur.</small>
+            </div>
+            
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer
+              </button>
+              <a href="{{ url_for('users.index') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

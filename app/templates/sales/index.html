@@ -28,6 +28,9 @@
           </span>
           {% endif %}
           {% if current_user.has_permission('manage_sales') %}
+          <a href="{{ url_for('sales.proforma_index') }}" class="btn btn-sm btn-info mr-2">
+            <i class="ni ni-single-copy-04"></i> Proformas
+          </a>
           <a href="{{ url_for('pos.index') }}" class="btn btn-sm btn-neutral">
             <i class="ni ni-fat-add"></i> Nouvelle Vente
           </a>

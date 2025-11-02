@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Historique des Paiements - {{ customer.name }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Historique des Paiements</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('customers.index') }}">Clients</a></li>
+              <li class="breadcrumb-item active">{{ customer.name }}</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('customers.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Historique des Paiements - {{ customer.name }}</h3>
+              <p class="text-muted mb-0">{{ customer.email }} | {{ customer.phone }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Date</th>
+                <th>Montant</th>
+                <th>Méthode</th>
+                <th>Référence</th>
+                <th>Notes</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for payment in payments.items %}
+              <tr>
+                <td>
+                  {{ payment.payment_date.strftime('%d/%m/%Y %H:%M') if payment.payment_date else 'N/A' }}
+                </td>
+                <td>
+                  <span class="text-success font-weight-bold">${{ "%.2f"|format(payment.amount) }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-info">{{ payment.payment_method }}</span>
+                </td>
+                <td>
+                  <span class="font-weight-bold">{{ payment.reference or 'N/A' }}</span>
+                </td>
+                <td>
+                  <span class="text-muted">{{ payment.notes or 'Aucune note' }}</span>
+                </td>
+                <td class="text-right">
+                  <a href="{{ url_for('payments.view', id=payment.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir détails">
+                    <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucun paiement trouvé
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if payments.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not payments.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ payments.prev_num }}">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% for page_num in range(1, payments.pages + 1) %}
+                {% if page_num == payments.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == payments.pages or (page_num >= payments.page - 2 and page_num <= payments.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                {% elif page_num == payments.page - 3 or page_num == payments.page + 3 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not payments.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ payments.next_num }}">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -80,7 +80,7 @@
                 <option value="all">Tous</option>
                 {% for mod in modules %}
                 <option value="{{ mod }}" {% if filters.module == mod %}selected{% endif %}>
-                  {{ mod.capitalize() }}
+                  {{ module_translations.get(mod, mod.replace('_', ' ').title()) }}
                 </option>
                 {% endfor %}
               </select>
@@ -91,7 +91,7 @@
                 <option value="all">Tous</option>
                 {% for type in action_types %}
                 <option value="{{ type }}" {% if filters.action_type == type %}selected{% endif %}>
-                  {{ type.capitalize() }}
+                  {{ action_type_translations.get(type, type.replace('_', ' ').title()) }}
                 </option>
                 {% endfor %}
               </select>

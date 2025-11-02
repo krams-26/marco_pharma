@@ -1,6 +1,13 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
-from app.models import db, Setting, ExchangeRate, Audit
+from app.models import (
+    db, Setting, ExchangeRate, Audit, SystemConfig, User, Product, ProductBatch,
+    BatchMovement, Customer, Sale, SaleItem, Payment, SalePayment, StockMovement,
+    Employee, Absence, SalaryPayment, LeaveRequest, CreditRequest, CashTransaction,
+    Expense, Proforma, ProformaItem, Pharmacy, UserPharmacy, Notification,
+    ValidationCode, EmployeeEvaluation, EvaluationCriteria, Task, Approval,
+    Supplier, SaleCredit, CreditPayment, CreditTerms, TempSale
+)
 from app.decorators import require_permission
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -9,7 +16,15 @@ settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 @require_permission('manage_settings')
 def index():
     settings = Setting.query.all()
-    settings_dict = {s.key: s.value for s in settings}
+    settings_dict = {}
+    for s in settings:
+        # Convertir les valeurs booléennes string en booléens Python
+        if s.value == 'true':
+            settings_dict[s.key] = True
+        elif s.value == 'false':
+            settings_dict[s.key] = False
+        else:
+            settings_dict[s.key] = s.value
     
     # Récupérer le taux de change actuel
     current_rate = ExchangeRate.query.filter_by(is_active=True).first()
@@ -17,10 +32,14 @@ def index():
     # Récupérer tous les taux de change pour l'historique
     exchange_rates = ExchangeRate.query.order_by(ExchangeRate.created_at.desc()).all()
     
+    # Récupérer le paramètre tab pour activer l'onglet approprié
+    default_tab = request.args.get('tab', 'general')
+    
     return render_template('settings/index.html', 
                          settings=settings_dict,
                          current_rate=current_rate,
-                         exchange_rates=exchange_rates)
+                         exchange_rates=exchange_rates,
+                         default_tab=default_tab)
 
 @settings_bp.route('/update', methods=['POST'])
 @require_permission('manage_settings')
@@ -73,6 +92,9 @@ def save():
         # Sauvegarder les paramètres de stock
         if 'stock' in data:
             for key, value in data['stock'].items():
+                # Convertir les booléens en string pour le stockage
+                if isinstance(value, bool):
+                    value = 'true' if value else 'false'
                 setting = Setting.query.filter_by(key=key).first()
                 if setting:
                     setting.value = str(value)
@@ -82,17 +104,53 @@ def save():
         
         # Sauvegarder les paramètres de profil
         if 'profile' in data:
-            for key, value in data['profile'].items():
-                setting = Setting.query.filter_by(key=key).first()
-                if setting:
-                    setting.value = str(value)
-                else:
-                    setting = Setting(key=key, value=str(value))
-                    db.session.add(setting)
+            profile_data = data['profile']
+            
+            # Mettre à jour les informations de l'utilisateur directement dans la table User
+            if 'user_fullname' in profile_data:
+                # Séparer le nom complet en prénom et nom
+                fullname = profile_data['user_fullname'].strip()
+                if fullname:
+                    parts = fullname.split(' ', 1)
+                    current_user.first_name = parts[0]
+                    current_user.last_name = parts[1] if len(parts) > 1 else ''
+            
+            if 'user_email' in profile_data:
+                # Vérifier que l'email n'est pas déjà utilisé par un autre utilisateur
+                email = profile_data['user_email'].strip()
+                if email:
+                    # Valider le format de l'email
+                    import re
+                    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                    if not re.match(email_pattern, email):
+                        return jsonify({'success': False, 'message': 'Format d\'email invalide'}), 400
+                    
+                    # Vérifier l'unicité
+                    existing_user = User.query.filter_by(email=email).first()
+                    if existing_user and existing_user.id != current_user.id:
+                        return jsonify({'success': False, 'message': 'Cet email est déjà utilisé par un autre utilisateur'}), 400
+                    current_user.email = email
+            
+            if 'user_phone' in profile_data:
+                # Le téléphone peut être stocké dans la table User ou Setting
+                current_user.phone = profile_data['user_phone'].strip() if profile_data['user_phone'] else None
+            
+            # Sauvegarder les autres paramètres de profil dans Setting
+            for key, value in profile_data.items():
+                if key not in ['user_fullname', 'user_email', 'user_phone']:
+                    setting = Setting.query.filter_by(key=key).first()
+                    if setting:
+                        setting.value = str(value)
+                    else:
+                        setting = Setting(key=key, value=str(value))
+                        db.session.add(setting)
         
         # Sauvegarder les paramètres de sécurité
         if 'security' in data:
             for key, value in data['security'].items():
+                # Convertir les booléens en string pour le stockage
+                if isinstance(value, bool):
+                    value = 'true' if value else 'false'
                 setting = Setting.query.filter_by(key=key).first()
                 if setting:
                     setting.value = str(value)
@@ -103,6 +161,9 @@ def save():
         # Sauvegarder les paramètres de notifications
         if 'notifications' in data:
             for key, value in data['notifications'].items():
+                # Convertir les booléens en string pour le stockage
+                if isinstance(value, bool):
+                    value = 'true' if value else 'false'
                 setting = Setting.query.filter_by(key=key).first()
                 if setting:
                     setting.value = str(value)
@@ -297,4 +358,170 @@ def exchange_rates():
     current_rate = ExchangeRate.query.filter_by(from_currency='USD', to_currency='CDF', is_active=True).first()
     active_rate_id = current_rate.id if current_rate else (rates[0].id if len(rates) > 0 else None)
     return render_template('settings/exchange_rates.html', rates=rates, current_rate=current_rate, active_rate_id=active_rate_id)
+
+@settings_bp.route('/system-config')
+@require_permission('manage_settings')
+def system_config():
+    """Gérer les configurations système"""
+    configs = SystemConfig.query.order_by(SystemConfig.category, SystemConfig.key).all()
+    
+    # Grouper par catégorie
+    by_category = {}
+    for config in configs:
+        if config.category not in by_category:
+            by_category[config.category] = []
+        by_category[config.category].append(config)
+    
+    return render_template('settings/system_config.html', configs_by_category=by_category)
+
+@settings_bp.route('/system-config/update', methods=['POST'])
+@require_permission('manage_settings')
+def update_system_config():
+    """Mettre à jour les configurations système"""
+    try:
+        data = request.get_json()
+        
+        for key, value in data.items():
+            SystemConfig.set(key, value)
+        
+        # Audit
+        audit = Audit(
+            user_id=current_user.id,
+            action='update_system_config',
+            entity_type='system_config',
+            details=f'Configurations système mises à jour',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Configurations mises à jour avec succès!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur: {str(e)}'}), 500
+
+@settings_bp.route('/reset-database', methods=['POST'])
+@require_permission('manage_settings')
+def reset_database():
+    """Réinitialiser toutes les données de la base de données sauf le compte admin"""
+    try:
+        # Vérifier que l'utilisateur est bien admin
+        if current_user.role != 'admin':
+            return jsonify({'success': False, 'message': 'Seul un administrateur peut réinitialiser la base de données'}), 403
+        
+        # Récupérer l'ID de l'admin actuel
+        admin_user = current_user
+        
+        # Enregistrer d'abord l'audit de réinitialisation (avant de supprimer les autres audits)
+        reset_audit = Audit(
+            user_id=admin_user.id,
+            action='reset_database',
+            module='settings',
+            action_type='delete',
+            entity_type='database',
+            details=f'Réinitialisation complète de la base de données par {admin_user.username}',
+            result='success',
+            ip_address=request.remote_addr
+        )
+        db.session.add(reset_audit)
+        db.session.flush()  # Enregistrer l'audit avant de continuer
+        
+        # Supprimer toutes les données dans l'ordre correct (en respectant les foreign keys)
+        # Supprimer tous les audits sauf celui que nous venons de créer
+        Audit.query.filter(Audit.id != reset_audit.id).delete()
+        
+        # Supprimer les notifications
+        Notification.query.delete()
+        
+        # Supprimer les ventes et leurs éléments
+        SaleItem.query.delete()
+        SalePayment.query.delete()
+        Payment.query.delete()
+        Sale.query.delete()
+        
+        # Supprimer les proformas
+        ProformaItem.query.delete()
+        Proforma.query.delete()
+        
+        # Supprimer les ventes à crédit
+        CreditPayment.query.delete()
+        SaleCredit.query.delete()
+        
+        # Supprimer les paiements partiels
+        SalePayment.query.delete()
+        
+        # Supprimer les mouvements de stock
+        BatchMovement.query.delete()
+        StockMovement.query.delete()
+        
+        # Supprimer les lots
+        ProductBatch.query.delete()
+        
+        # Supprimer les produits
+        Product.query.delete()
+        
+        # Supprimer les clients
+        Customer.query.delete()
+        
+        # Supprimer les fournisseurs
+        Supplier.query.delete()
+        
+        # Supprimer les transactions de caisse
+        CashTransaction.query.delete()
+        
+        # Supprimer les dépenses
+        Expense.query.delete()
+        
+        # Supprimer les données RH
+        CreditRequest.query.delete()
+        LeaveRequest.query.delete()
+        SalaryPayment.query.delete()
+        Absence.query.delete()
+        EmployeeEvaluation.query.delete()
+        Employee.query.delete()
+        
+        # Supprimer les tâches
+        Task.query.delete()
+        
+        # Supprimer les approbations
+        Approval.query.delete()
+        
+        # Supprimer les codes de validation
+        ValidationCode.query.delete()
+        
+        # Supprimer les ventes temporaires
+        TempSale.query.delete()
+        
+        # Supprimer les critères d'évaluation
+        EvaluationCriteria.query.delete()
+        
+        # Supprimer les termes de crédit
+        CreditTerms.query.delete()
+        
+        # Supprimer les assignations de pharmacies (sauf pour l'admin)
+        UserPharmacy.query.filter(UserPharmacy.user_id != admin_user.id).delete()
+        
+        # Supprimer les pharmacies (optionnel - vous pouvez les garder si nécessaire)
+        # Pharmacy.query.delete()
+        
+        # Supprimer tous les utilisateurs sauf l'admin
+        User.query.filter(User.id != admin_user.id).delete()
+        
+        # Garder les paramètres système (Settings, SystemConfig, ExchangeRate peuvent être conservés ou réinitialisés)
+        # Pour une réinitialisation complète, on peut aussi les supprimer
+        
+        # Optionnel: Réinitialiser les taux de change (garder le dernier actif ou supprimer)
+        # ExchangeRate.query.delete()
+        
+        # Le commit final (l'audit est déjà ajouté et flushé)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Base de données réinitialisée avec succès! Seul le compte administrateur a été conservé.'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur lors de la réinitialisation: {str(e)}'}), 500
 

@@ -206,7 +206,23 @@ def index():
         page=page, per_page=6, error_out=False
     )
     
-    return render_template('users/index.html', users=users, search=search)
+    # Récupérer la pharmacie principale assignée à chaque utilisateur affiché
+    user_ids = [u.id for u in users.items]
+    user_primary_pharmacy = {}
+    if user_ids:
+        assignments = (
+            db.session.query(UserPharmacy.user_id, Pharmacy.name, UserPharmacy.is_primary)
+            .join(Pharmacy, UserPharmacy.pharmacy_id == Pharmacy.id)
+            .filter(UserPharmacy.user_id.in_(user_ids))
+            .order_by(UserPharmacy.is_primary.desc())
+            .all()
+        )
+        # Garder la première (priorité à is_primary=True)
+        for uid, pharmacy_name, is_primary in assignments:
+            if uid not in user_primary_pharmacy:
+                user_primary_pharmacy[uid] = pharmacy_name
+    
+    return render_template('users/index.html', users=users, search=search, user_primary_pharmacy=user_primary_pharmacy)
 
 @users_bp.route('/add', methods=['GET', 'POST'])
 @require_permission('manage_users')
@@ -225,10 +241,13 @@ def add():
             
             user.set_password(request.form.get('password'))
             
-            perms = {}
-            for perm, _ in PERMISSIONS:
-                perms[perm] = request.form.get(f'perm_{perm}') == 'on'
-            user.set_permissions(perms)
+            # Ne mettre à jour les permissions que si des champs de permissions ont été envoyés
+            has_perm_fields = any(k.startswith('perm_') for k in request.form.keys())
+            if has_perm_fields:
+                perms = {}
+                for perm, _ in PERMISSIONS:
+                    perms[perm] = request.form.get(f'perm_{perm}') == 'on'
+                user.set_permissions(perms)
             
             db.session.add(user)
             db.session.flush()
@@ -297,10 +316,13 @@ def edit(id):
             if password:
                 user.set_password(password)
             
+            # Mettre à jour les permissions: lire toutes les cases transmises
             perms = {}
             for perm, _ in PERMISSIONS:
                 perms[perm] = request.form.get(f'perm_{perm}') == 'on'
-            user.set_permissions(perms)
+            # Si aucune case n'est envoyée, conserver l'existant
+            if any(perms.values()) or any(k.startswith('perm_') for k in request.form.keys()):
+                user.set_permissions(perms)
             
             # Mettre à jour l'affectation de pharmacie
             db.session.query(UserPharmacy).filter_by(user_id=user.id).delete()
@@ -353,7 +375,58 @@ def edit(id):
             flash(f'Erreur: {str(e)}', 'danger')
     
     pharmacies = Pharmacy.query.all()
-    return render_template('users/edit.html', user=user, permissions=PERMISSIONS, permissions_by_module=PERMISSIONS_BY_MODULE, roles=ROLES, pharmacies=pharmacies)
+    # Pré-remplir fin selon règles:
+    # 1) Admin: tout vrai
+    # 2) Si perm explicite dans JSON
+    # 3) Si manage_* correspondant au préfixe du module est vrai (compat héritage)
+    user_raw_perms = user.get_permissions() or {}
+    prefill_permissions = {}
+    if user.role == 'admin':
+        for perm, _ in PERMISSIONS:
+            prefill_permissions[perm] = True
+    else:
+        def has_manage(prefix):
+            mapping = {
+                'products_': 'manage_products',
+                'sales_': 'manage_sales',
+                'customers_': 'manage_customers',
+                'users_': 'manage_users',
+                'stock_': 'manage_stock',
+                'hr_': 'manage_hr',
+                'payments_': 'manage_payments',
+                'cashier_': 'manage_cashier',
+                'reports_': 'view_reports',
+                'pharmacies_': 'manage_settings',
+                'settings_': 'manage_settings',
+                'approvals_': 'view_approvals',
+                'tasks_': 'tasks_view',
+                'proforma_': 'sales_view',
+                'credit_sales_': 'sales_view',
+            }
+            key = mapping.get(prefix)
+            return bool(user_raw_perms.get(key)) if key else False
+
+        for perm, _ in PERMISSIONS:
+            explicit = bool(user_raw_perms.get(perm))
+            if explicit:
+                prefill_permissions[perm] = True
+                continue
+            # Déterminer le préfixe
+            prefix = None
+            for p in ['products_','sales_','customers_','users_','stock_','hr_','payments_','cashier_','reports_','pharmacies_','settings_','approvals_','tasks_','proforma_','credit_sales_']:
+                if perm.startswith(p):
+                    prefix = p
+                    break
+            prefill_permissions[perm] = has_manage(prefix) if prefix else False
+    return render_template(
+        'users/edit.html',
+        user=user,
+        permissions=PERMISSIONS,
+        permissions_by_module=PERMISSIONS_BY_MODULE,
+        roles=ROLES,
+        pharmacies=pharmacies,
+        prefill_permissions=prefill_permissions,
+    )
 
 @users_bp.route('/delete/<int:id>', methods=['POST'])
 @require_permission('manage_users')
@@ -384,3 +457,184 @@ def delete(id):
         flash(f'Erreur: {str(e)}', 'danger')
     
     return redirect(url_for('users.index'))
+
+@users_bp.route('/view/<int:id>')
+@require_permission('manage_users')
+def view(id):
+    """View user details"""
+    user = User.query.get_or_404(id)
+    employee = Employee.query.filter_by(user_id=user.id).first()
+    user_pharmacies = UserPharmacy.query.filter_by(user_id=user.id).all()
+    
+    return render_template('users/view.html', user=user, employee=employee, user_pharmacies=user_pharmacies)
+
+@users_bp.route('/toggle-status/<int:id>', methods=['GET', 'POST'])
+@require_permission('manage_users')
+def toggle_status(id):
+    user = User.query.get_or_404(id)
+    user.is_active = not user.is_active
+    
+    audit = Audit(
+        user_id=current_user.id,
+        action='toggle_user_status',
+        entity_type='user',
+        entity_id=user.id,
+        details=f'Statut utilisateur changé: {user.username} -> {"Actif" if user.is_active else "Inactif"}',
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit)
+    
+    db.session.commit()
+    
+    flash(f'Utilisateur {"activé" if user.is_active else "désactivé"} avec succès!', 'success')
+    return redirect(url_for('users.index'))
+
+@users_bp.route('/login-history/<int:id>')
+@require_permission('manage_users')
+def login_history(id):
+    """View user login history"""
+    user = User.query.get_or_404(id)
+    # Implementation would go here - depends on your login tracking system
+    return render_template('users/login_history.html', user=user)
+
+@users_bp.route('/activity-log/<int:id>')
+@require_permission('manage_users')
+def activity_log(id):
+    """View user activity log"""
+    user = User.query.get_or_404(id)
+    audits = Audit.query.filter_by(user_id=user.id).order_by(Audit.created_at.desc()).limit(50).all()
+    return render_template('users/activity_log.html', user=user, audits=audits)
+
+@users_bp.route('/reset-password/<int:id>', methods=['GET', 'POST'])
+@require_permission('manage_users')
+def reset_password(id):
+    """Reset user password"""
+    user = User.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if password != confirm_password:
+            flash('Les mots de passe ne correspondent pas!', 'danger')
+            return render_template('users/reset_password.html', user=user)
+        
+        user.set_password(password)
+        
+        audit = Audit(
+            user_id=current_user.id,
+            action='reset_password',
+            entity_type='user',
+            entity_id=user.id,
+            details=f'Mot de passe réinitialisé pour: {user.username}',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        db.session.commit()
+        
+        flash('Mot de passe réinitialisé avec succès!', 'success')
+        return redirect(url_for('users.index'))
+    
+    return render_template('users/reset_password.html', user=user)
+
+@users_bp.route('/manage-permissions/<int:id>', methods=['GET', 'POST'])
+@require_permission('manage_users')
+def manage_permissions(id):
+    """Manage user permissions"""
+    user = User.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        perms = {}
+        for perm, _ in PERMISSIONS:
+            perms[perm] = request.form.get(f'perm_{perm}') == 'on'
+        # Ne pas écraser par {} si rien n'est coché
+        if any(perms.values()) or any(k.startswith('perm_') for k in request.form.keys()):
+            user.set_permissions(perms)
+        
+        audit = Audit(
+            user_id=current_user.id,
+            action='update_permissions',
+            entity_type='user',
+            entity_id=user.id,
+            details=f'Permissions modifiées pour: {user.username}',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        db.session.commit()
+        
+        flash('Permissions modifiées avec succès!', 'success')
+        return redirect(url_for('users.index'))
+    
+    return render_template('users/manage_permissions.html', user=user, permissions=PERMISSIONS, permissions_by_module=PERMISSIONS_BY_MODULE)
+
+@users_bp.route('/assign-pharmacies/<int:id>', methods=['GET', 'POST'])
+@require_permission('manage_users')
+def assign_pharmacies(id):
+    """Assign pharmacies to user"""
+    user = User.query.get_or_404(id)
+    all_pharmacies = Pharmacy.query.all()
+    user_pharmacies = UserPharmacy.query.filter_by(user_id=user.id).all()
+    assigned_pharmacy_ids = [up.pharmacy_id for up in user_pharmacies]
+    
+    if request.method == 'POST':
+        # Remove all existing assignments
+        UserPharmacy.query.filter_by(user_id=user.id).delete()
+        
+        # Add new assignments
+        pharmacy_ids = request.form.getlist('pharmacy_ids')
+        is_primary = request.form.get('primary_pharmacy')
+        
+        for pharmacy_id in pharmacy_ids:
+            user_pharmacy = UserPharmacy(
+                user_id=user.id,
+                pharmacy_id=int(pharmacy_id),
+                is_primary=(str(pharmacy_id) == is_primary)
+            )
+            db.session.add(user_pharmacy)
+        
+        audit = Audit(
+            user_id=current_user.id,
+            action='assign_pharmacies',
+            entity_type='user',
+            entity_id=user.id,
+            details=f'Pharmacies assignées pour: {user.username}',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        db.session.commit()
+        
+        flash('Pharmacies assignées avec succès!', 'success')
+        return redirect(url_for('users.index'))
+    
+    return render_template('users/assign_pharmacies.html', user=user, all_pharmacies=all_pharmacies, assigned_pharmacy_ids=assigned_pharmacy_ids)
+
+@users_bp.route('/change-role/<int:id>', methods=['GET', 'POST'])
+@require_permission('manage_users')
+def change_role(id):
+    """Change user role"""
+    user = User.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        new_role = request.form.get('role')
+        user.role = new_role
+        
+        # Update employee position if exists
+        employee = Employee.query.filter_by(user_id=user.id).first()
+        if employee:
+            employee.position = new_role.capitalize()
+        
+        audit = Audit(
+            user_id=current_user.id,
+            action='change_role',
+            entity_type='user',
+            entity_id=user.id,
+            details=f'Rôle changé pour: {user.username} -> {new_role}',
+            ip_address=request.remote_addr
+        )
+        db.session.add(audit)
+        db.session.commit()
+        
+        flash('Rôle changé avec succès!', 'success')
+        return redirect(url_for('users.index'))
+    
+    return render_template('users/change_role.html', user=user, roles=ROLES)

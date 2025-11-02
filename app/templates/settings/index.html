@@ -40,32 +40,32 @@
         <div class="card-header border-0">
           <ul class="nav nav-tabs card-header-tabs" id="settingsTabs" role="tablist">
             <li class="nav-item">
-              <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab">
+              <a class="nav-link {% if default_tab == 'general' %}active{% endif %}" id="general-tab" data-toggle="tab" href="#general" role="tab">
                 <i class="fas fa-cog mr-2"></i>Général
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="stock-tab" data-toggle="tab" href="#stock" role="tab">
+              <a class="nav-link {% if default_tab == 'stock' %}active{% endif %}" id="stock-tab" data-toggle="tab" href="#stock" role="tab">
                 <i class="fas fa-boxes mr-2"></i>Stock
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab">
+              <a class="nav-link {% if default_tab == 'profile' %}active{% endif %}" id="profile-tab" data-toggle="tab" href="#profile" role="tab">
                 <i class="fas fa-user mr-2"></i>Profil
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab">
+              <a class="nav-link {% if default_tab == 'security' %}active{% endif %}" id="security-tab" data-toggle="tab" href="#security" role="tab">
                 <i class="fas fa-shield-alt mr-2"></i>Sécurité
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="notifications-tab" data-toggle="tab" href="#notifications" role="tab">
+              <a class="nav-link {% if default_tab == 'notifications' %}active{% endif %}" id="notifications-tab" data-toggle="tab" href="#notifications" role="tab">
                 <i class="fas fa-bell mr-2"></i>Notifications
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="exchange-tab" data-toggle="tab" href="#exchange" role="tab">
+              <a class="nav-link {% if default_tab == 'exchange' %}active{% endif %}" id="exchange-tab" data-toggle="tab" href="#exchange" role="tab">
                 <i class="fas fa-exchange-alt mr-2"></i>Taux de Change
               </a>
             </li>
@@ -76,7 +76,7 @@
           <div class="tab-content" id="settingsTabContent">
             
             <!-- General Settings Tab -->
-            <div class="tab-pane fade show active" id="general" role="tabpanel">
+            <div class="tab-pane fade {% if default_tab == 'general' %}show active{% endif %}" id="general" role="tabpanel">
               <div class="row">
                 <!-- Company Information -->
                 <div class="col-lg-8">
@@ -197,16 +197,11 @@
                   </h4>
                   
                   <div class="form-group">
-                    <label class="form-control-label">Fuseau horaire</label>
-                    <input type="text" id="timezone" class="form-control" value="{{ settings.get('timezone', 'Africa/Kinshasa') }}" readonly>
-                    <small class="form-text text-muted">Détecté automatiquement</small>
-                  </div>
-                  
-                  <div class="form-group">
                     <label class="form-control-label">Langue</label>
                     <select id="language" class="form-control">
                       <option value="fr" {{ 'selected' if settings.get('language') == 'fr' else '' }}>Français</option>
                       <option value="en" {{ 'selected' if settings.get('language') == 'en' else '' }}>English</option>
+                      <option value="sw" {{ 'selected' if settings.get('language') == 'sw' else '' }}>Kiswahili</option>
                       <option value="es" {{ 'selected' if settings.get('language') == 'es' else '' }}>Español</option>
                     </select>
                   </div>
@@ -231,7 +226,7 @@
             </div>
             
             <!-- Stock Settings Tab -->
-            <div class="tab-pane fade" id="stock" role="tabpanel">
+            <div class="tab-pane fade {% if default_tab == 'stock' %}show active{% endif %}" id="stock" role="tabpanel">
               <h4 class="mb-4">
                 <i class="fas fa-boxes text-orange mr-2"></i>
                 Paramètres de Stock
@@ -281,7 +276,7 @@
             </div>
             
             <!-- Profile Settings Tab -->
-            <div class="tab-pane fade" id="profile" role="tabpanel">
+            <div class="tab-pane fade {% if default_tab == 'profile' %}show active{% endif %}" id="profile" role="tabpanel">
               <h4 class="mb-4">
                 <i class="fas fa-user text-purple mr-2"></i>
                 Paramètres du Profil
@@ -303,7 +298,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label class="form-control-label">Téléphone</label>
-                    <input type="tel" id="user_phone" class="form-control" value="{{ settings.get('user_phone', '') }}">
+                    <input type="tel" id="user_phone" class="form-control" value="{{ current_user.phone or '' }}">
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -312,6 +307,7 @@
                     <select id="user_language" class="form-control">
                       <option value="fr" {{ 'selected' if settings.get('user_language') == 'fr' else '' }}>Français</option>
                       <option value="en" {{ 'selected' if settings.get('user_language') == 'en' else '' }}>English</option>
+                      <option value="sw" {{ 'selected' if settings.get('user_language') == 'sw' else '' }}>Kiswahili</option>
                       <option value="es" {{ 'selected' if settings.get('user_language') == 'es' else '' }}>Español</option>
                     </select>
                   </div>
@@ -326,7 +322,7 @@
             </div>
             
             <!-- Security Settings Tab -->
-            <div class="tab-pane fade" id="security" role="tabpanel">
+            <div class="tab-pane fade {% if default_tab == 'security' %}show active{% endif %}" id="security" role="tabpanel">
               <h4 class="mb-4">
                 <i class="fas fa-shield-alt text-red mr-2"></i>
                 Paramètres de Sécurité
@@ -378,10 +374,30 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- Zone de danger - Réinitialisation de la base de données -->
+              <div class="alert alert-danger mt-4" role="alert">
+                <h5 class="alert-heading">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>Zone Dangereuse
+                </h5>
+                <hr>
+                <p class="mb-3">
+                  <strong>Réinitialisation de la base de données</strong>
+                  <br>
+                  Cette action supprimera <strong>TOUTES</strong> les données de la base de données, à l'exception du compte administrateur actuel.
+                  <br>
+                  <small class="text-muted">
+                    Les données suivantes seront supprimées : produits, ventes, clients, utilisateurs (sauf admin), stock, paiements, RH, audits, etc.
+                  </small>
+                </p>
+                <button type="button" class="btn btn-danger btn-lg" onclick="confirmResetDatabase()">
+                  <i class="fas fa-database mr-2"></i>Réinitialiser la Base de Données
+                </button>
+              </div>
             </div>
             
             <!-- Notifications Settings Tab -->
-            <div class="tab-pane fade" id="notifications" role="tabpanel">
+            <div class="tab-pane fade {% if default_tab == 'notifications' %}show active{% endif %}" id="notifications" role="tabpanel">
               <h4 class="mb-4">
                 <i class="fas fa-bell text-purple mr-2"></i>
                 Paramètres de Notifications
@@ -439,7 +455,7 @@
             </div>
             
             <!-- Exchange Rates Tab -->
-            <div class="tab-pane fade" id="exchange" role="tabpanel">
+            <div class="tab-pane fade {% if default_tab == 'exchange' %}show active{% endif %}" id="exchange" role="tabpanel">
               <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0">
                   <i class="fas fa-exchange-alt text-green mr-2"></i>
@@ -786,29 +802,6 @@ function saveLogoToDatabase(logoData) {
     });
 }
 
-// Détecter automatiquement le fuseau horaire
-function detectTimezone() {
-    try {
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (timezone) {
-            document.getElementById('timezone').value = timezone;
-            return timezone;
-        } else {
-            const offset = new Date().getTimezoneOffset();
-            const hours = Math.abs(Math.floor(offset / 60));
-            const minutes = Math.abs(offset % 60);
-            const sign = offset > 0 ? '-' : '+';
-            let timezone = 'UTC' + sign + hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
-            document.getElementById('timezone').value = timezone;
-            return timezone;
-        }
-    } catch (error) {
-        console.error('Erreur lors de la détection du fuseau horaire:', error);
-        const defaultTimezone = 'Africa/Kinshasa';
-        document.getElementById('timezone').value = defaultTimezone;
-        return defaultTimezone;
-    }
-}
 
 // Sauvegarder tous les paramètres
 function saveAllSettings() {
@@ -824,7 +817,6 @@ function saveAllSettings() {
             company_rccm: document.getElementById('company_rccm').value,
             company_national_id: document.getElementById('company_national_id').value,
             company_tax_number: document.getElementById('company_tax_number').value,
-            timezone: document.getElementById('timezone').value,
             language: document.getElementById('language').value,
             main_currency: document.getElementById('main_currency').value,
             secondary_currency: document.getElementById('secondary_currency').value
@@ -837,6 +829,8 @@ function saveAllSettings() {
             auto_lot_management: document.getElementById('auto_lot_management').checked
         },
         profile: {
+            user_fullname: document.getElementById('user_fullname').value,
+            user_email: document.getElementById('user_email').value,
             user_phone: document.getElementById('user_phone').value,
             user_language: document.getElementById('user_language').value,
             user_signature: document.getElementById('user_signature').value
@@ -873,6 +867,10 @@ function saveAllSettings() {
     .then(data => {
         if (data.success) {
             showNotification('Paramètres sauvegardés avec succès !', 'success');
+            // Recharger la page après 2 secondes pour appliquer les changements
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         } else {
             showNotification('Erreur lors de la sauvegarde: ' + data.message, 'error');
         }
@@ -915,8 +913,11 @@ function exportSettings() {
     showNotification('Paramètres exportés avec succès !', 'success');
 }
 
-// Afficher une notification
+// Afficher une notification avec son
 function showNotification(message, type = 'info') {
+    // Jouer le son correspondant au type de notification
+    playNotificationSound(type);
+    
     const notification = document.createElement('div');
     notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} alert-dismissible fade show position-fixed`;
     notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
@@ -937,6 +938,60 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }
     }, 5000);
+}
+
+// Fonction pour jouer les sons de notification
+function playNotificationSound(type) {
+    try {
+        // Créer un contexte audio
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Fréquences et durées selon le type
+        let frequency, duration;
+        
+        switch(type) {
+            case 'success':
+                frequency = 800; // Son aigu et agréable
+                duration = 0.3;
+                break;
+            case 'error':
+                frequency = 300; // Son grave et d'alerte
+                duration = 0.5;
+                break;
+            case 'warning':
+                frequency = 600; // Son moyen
+                duration = 0.4;
+                break;
+            default: // info
+                frequency = 500; // Son neutre
+                duration = 0.2;
+                break;
+        }
+        
+        // Créer l'oscillateur
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        // Configuration du son
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        oscillator.type = 'sine';
+        
+        // Enveloppe du son (fade in/out)
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        // Jouer le son
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+        
+    } catch (error) {
+        // Fallback: utiliser l'API Web Audio simple
+        console.log('Notification sonore:', type);
+    }
 }
 
 // Gestion des taux de change
@@ -1060,8 +1115,6 @@ document.getElementById('updateExchangeRateForm').addEventListener('submit', fun
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
-    // Détecter automatiquement le fuseau horaire
-    detectTimezone();
     
     // Charger le logo existant s'il existe (seulement si pas déjà affiché)
     const preview = document.getElementById('company_logo_preview');
@@ -1071,6 +1124,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Gestion de l'aperçu du taux
     document.getElementById('new_exchange_rate').addEventListener('input', updateRatePreview);
+    
+    // Vérifier si un onglet spécifique doit être ouvert (via paramètre URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+        // Désactiver tous les onglets actifs
+        document.querySelectorAll('.nav-link').forEach(function(navLink) {
+            navLink.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-pane').forEach(function(tabPane) {
+            tabPane.classList.remove('show', 'active');
+        });
+        
+        // Activer l'onglet demandé
+        const targetTab = document.getElementById(tabParam + '-tab');
+        const targetPane = document.getElementById(tabParam);
+        if (targetTab && targetPane) {
+            targetTab.classList.add('active');
+            targetPane.classList.add('show', 'active');
+        }
+    }
 });
 
 // Fonction pour charger le logo depuis la base de données
@@ -1090,6 +1164,61 @@ function loadCompanyLogo() {
         .catch(error => {
             console.error('Erreur lors du chargement du logo:', error);
         });
+}
+
+// Fonction de confirmation et réinitialisation de la base de données
+function confirmResetDatabase() {
+    // Première confirmation
+    const firstConfirmation = prompt(
+        'ATTENTION: Cette action est IRRÉVERSIBLE!\n\n' +
+        'Toutes les données seront supprimées sauf votre compte administrateur.\n\n' +
+        'Pour confirmer, tapez exactement: "RÉINITIALISER"'
+    );
+    
+    if (firstConfirmation !== 'RÉINITIALISER') {
+        showNotification('Réinitialisation annulée. Le texte saisi ne correspond pas.', 'warning');
+        return;
+    }
+    
+    // Deuxième confirmation avec checkbox virtuelle
+    const secondConfirmation = confirm(
+        'DERNIÈRE CONFIRMATION\n\n' +
+        'Êtes-vous ABSOLUMENT CERTAIN de vouloir supprimer toutes les données?\n\n' +
+        'Cette action ne peut pas être annulée!\n\n' +
+        'Cliquez sur OK pour continuer ou Annuler pour arrêter.'
+    );
+    
+    if (!secondConfirmation) {
+        showNotification('Réinitialisation annulée.', 'info');
+        return;
+    }
+    
+    // Afficher un message de chargement
+    showNotification('Réinitialisation en cours... Cette opération peut prendre quelques instants.', 'info');
+    
+    // Envoyer la requête
+    fetch('/settings/reset-database', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Base de données réinitialisée avec succès! Redirection...', 'success');
+            // Rediriger vers la page de login après 3 secondes
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 3000);
+        } else {
+            showNotification('Erreur lors de la réinitialisation: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showNotification('Erreur lors de la réinitialisation de la base de données', 'error');
+    });
 }
 </script>
 {% endblock %}

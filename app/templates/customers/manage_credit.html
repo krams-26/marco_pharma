@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Gérer le Crédit - {{ customer.name }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Gérer le Crédit</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('customers.index') }}">Clients</a></li>
+              <li class="breadcrumb-item active">{{ customer.name }}</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('customers.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Gérer le Crédit - {{ customer.name }}</h3>
+              <p class="text-muted mb-0">{{ customer.email }} | {{ customer.phone }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-control-label">Action</label>
+                  <select name="action" class="form-control" required>
+                    <option value="">Sélectionner une action</option>
+                    <option value="increase">Augmenter la limite</option>
+                    <option value="decrease">Réduire la limite</option>
+                    <option value="set">Définir la limite</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-control-label">Montant ($)</label>
+                  <input type="number" name="amount" class="form-control" step="0.01" min="0" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-control-label">Notes (optionnel)</label>
+              <textarea name="notes" class="form-control" rows="3" placeholder="Raison du changement..."></textarea>
+            </div>
+            
+            <div class="text-right">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Appliquer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Informations Client</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <h6 class="text-muted">Limite Actuelle</h6>
+              <h4 class="text-success">${{ "%.2f"|format(customer.credit_limit) }}</h4>
+            </div>
+            <div class="col-6">
+              <h6 class="text-muted">Type</h6>
+              <span class="badge badge-info">{{ customer.customer_type }}</span>
+            </div>
+          </div>
+          
+          <hr>
+          
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-muted">Contact</h6>
+              <p class="mb-1">
+                <i class="fas fa-envelope"></i> {{ customer.email or 'N/A' }}
+              </p>
+              <p class="mb-0">
+                <i class="fas fa-phone"></i> {{ customer.phone or 'N/A' }}
+              </p>
+            </div>
+          </div>
+          
+          {% if customer.address %}
+          <hr>
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-muted">Adresse</h6>
+              <p class="mb-0">{{ customer.address }}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -23,7 +23,7 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     sales = db.relationship('Sale', foreign_keys='Sale.user_id', backref='seller', lazy=True)
-    audits = db.relationship('Audit', backref='audit_user', lazy=True)
+    audits = db.relationship('Audit', backref='user', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -50,6 +50,7 @@ class User(UserMixin, db.Model):
         
         # Mapping de compatibilité pour anciennes permissions
         permission_mapping = {
+            'view_dashboard': ['dashboard_stats', 'products_view', 'sales_view', 'customers_view', 'reports_view'],
             'manage_products': ['products_view', 'products_create', 'products_edit', 'products_delete'],
             'manage_sales': ['sales_view', 'sales_create', 'sales_edit', 'sales_delete', 'sales_print', 'sales_validate'],
             'manage_customers': ['customers_view', 'customers_create', 'customers_edit', 'customers_delete'],
@@ -84,10 +85,20 @@ class User(UserMixin, db.Model):
     def full_name(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()
     
-    def get_primary_pharmacy(self):
-        """Obtenir la pharmacie principale de l'utilisateur"""
+    @property
+    def primary_pharmacy(self):
+        """Obtenir la pharmacie principale de l'utilisateur (propriété)"""
         assignment = UserPharmacy.query.filter_by(user_id=self.id, is_primary=True).first()
-        return assignment.pharmacy if assignment else None
+        if assignment and assignment.pharmacy:
+            return assignment.pharmacy
+        return None
+    
+    def get_primary_pharmacy(self):
+        """Obtenir la pharmacie principale de l'utilisateur (méthode)"""
+        assignment = UserPharmacy.query.filter_by(user_id=self.id, is_primary=True).first()
+        if assignment and assignment.pharmacy:
+            return assignment.pharmacy
+        return None
     
     def get_all_pharmacies(self):
         """Obtenir toutes les pharmacies de l'utilisateur"""
@@ -451,6 +462,7 @@ class Audit(db.Model):
     # Champs optionnels (ajoutés progressivement)
     module = db.Column(db.String(50), index=True, nullable=True)
     action_type = db.Column(db.String(20), index=True, nullable=True)
+    result = db.Column(db.String(20), default='success', nullable=True)
     old_value = db.Column(db.Text, nullable=True)
     new_value = db.Column(db.Text, nullable=True)
     user_agent = db.Column(db.String(255), nullable=True)
@@ -466,7 +478,7 @@ class Audit(db.Model):
         if self.result == 'denied':
             return True
         # Suppression en masse
-        if self.action_type == 'delete' and 'mass' in (self.details or '').lower():
+        if self.action_type == 'delete' and self.details and 'mass' in self.details.lower():
             return True
         return False
     
@@ -515,6 +527,72 @@ class Setting(db.Model):
     value = db.Column(db.Text)
     description = db.Column(db.String(200))
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class SystemConfig(db.Model):
+    """Configuration système de l'application - remplace les valeurs hardcodées de config.py"""
+    __tablename__ = 'system_config'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(50), nullable=False, index=True)  # company, financial, stock, regional
+    key = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    value = db.Column(db.Text)
+    data_type = db.Column(db.String(20), default='string')  # string, number, boolean, json
+    is_active = db.Column(db.Boolean, default=True, index=True)
+    description = db.Column(db.Text)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    creator = db.relationship('User', foreign_keys=[created_by], backref='configs_created')
+    updater = db.relationship('User', foreign_keys=[updated_by], backref='configs_updated')
+    
+    @staticmethod
+    def get(key, default=None):
+        """Récupérer une valeur de configuration"""
+        config = SystemConfig.query.filter_by(key=key, is_active=True).first()
+        if config:
+            return config.get_value()
+        return default
+    
+    def get_value(self):
+        """Convertir la valeur selon son type"""
+        if self.data_type == 'number':
+            try:
+                if '.' in self.value:
+                    return float(self.value)
+                return int(self.value)
+            except (ValueError, TypeError):
+                return 0
+        elif self.data_type == 'boolean':
+            return self.value.lower() in ('true', '1', 'yes', 'on')
+        elif self.data_type == 'json':
+            try:
+                return json.loads(self.value)
+            except:
+                return {}
+        return self.value
+    
+    @staticmethod
+    def set(key, value, category='general', data_type='string', description=None):
+        """Définir une valeur de configuration"""
+        config = SystemConfig.query.filter_by(key=key).first()
+        if config:
+            config.value = str(value)
+            config.data_type = data_type
+            if description:
+                config.description = description
+        else:
+            config = SystemConfig(
+                key=key,
+                value=str(value),
+                category=category,
+                data_type=data_type,
+                description=description
+            )
+            db.session.add(config)
+        db.session.commit()
+        return config
 
 class ExchangeRate(db.Model):
     __tablename__ = 'exchange_rates'
@@ -591,7 +669,7 @@ class Pharmacy(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    users = db.relationship('UserPharmacy', backref='pharmacy', lazy=True, cascade='all, delete-orphan')
+    user_pharmacy_assignments = db.relationship('UserPharmacy', back_populates='pharmacy', lazy=True, cascade='all, delete-orphan')
     products = db.relationship('Product', backref='pharmacy', lazy=True)
     sales = db.relationship('Sale', backref='pharmacy', lazy=True)
     stock_movements = db.relationship('StockMovement', backref='pharmacy', lazy=True, foreign_keys='StockMovement.pharmacy_id')
@@ -607,6 +685,7 @@ class UserPharmacy(db.Model):
     assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', foreign_keys=[user_id], backref='pharmacy_assignments')
+    pharmacy = db.relationship('Pharmacy', back_populates='user_pharmacy_assignments')
     assigner = db.relationship('User', foreign_keys=[assigned_by])
 
 class Notification(db.Model):

@@ -40,8 +40,8 @@
         </div>
         <div class="card-body">
           <div class="alert alert-info">
-            <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Format du fichier CSV</h4>
-            <p>Le fichier CSV doit contenir les colonnes suivantes (en-têtes):</p>
+            <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Formats de fichier acceptés</h4>
+            <p><strong>Excel (.xlsx) recommandé</strong> ou CSV - Le fichier doit contenir les colonnes suivantes (en-têtes):</p>
             <ul class="mb-0">
               <li><strong>Nom</strong> (Obligatoire) - Nom du produit</li>
               <li><strong>Prix Vente</strong> (Obligatoire) - Prix de vente en USD</li>
@@ -61,8 +61,9 @@
           <div class="alert alert-warning">
             <strong><i class="fas fa-exclamation-triangle"></i> Important:</strong>
             <ul class="mb-0">
-              <li>Le fichier doit être au format CSV (séparateur: virgule)</li>
-              <li>L'encodage doit être UTF-8</li>
+              <li><strong>Pour Excel:</strong> Utilisez le template téléchargeable ci-dessous pour un format optimal</li>
+              <li><strong>Pour CSV:</strong> Séparateur virgule, encodage UTF-8</li>
+              <li>Les colonnes <strong>Nom</strong> et <strong>Prix Vente</strong> sont obligatoires</li>
               <li>Les produits seront associés à votre pharmacie par défaut</li>
               <li>Les lignes avec des erreurs seront ignorées</li>
             </ul>
@@ -78,12 +79,12 @@
         <div class="card-body">
           <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
-              <label class="form-control-label">Fichier CSV</label>
+              <label class="form-control-label">Fichier Excel ou CSV</label>
               <div class="custom-file">
-                <input type="file" name="file" class="custom-file-input" id="csvFile" accept=".csv" required>
+                <input type="file" name="file" class="custom-file-input" id="csvFile" accept=".csv,.xlsx,.xls" required>
                 <label class="custom-file-label" for="csvFile">Choisir un fichier...</label>
               </div>
-              <small class="form-text text-muted">Format accepté: .csv uniquement</small>
+              <small class="form-text text-muted">Formats acceptés: .xlsx (recommandé), .xls, .csv</small>
             </div>
 
             <div class="text-center mt-4">
@@ -98,16 +99,23 @@
         </div>
       </div>
 
-      <!-- Template CSV -->
+      <!-- Template Excel -->
       <div class="card mt-4">
         <div class="card-header">
-          <h3 class="mb-0"><i class="ni ni-single-copy-04"></i> Template CSV</h3>
+          <h3 class="mb-0"><i class="ni ni-single-copy-04"></i> Template Excel</h3>
         </div>
         <div class="card-body">
-          <p>Téléchargez ce template pour faciliter l'import:</p>
-          <a href="#" onclick="downloadTemplate()" class="btn btn-sm btn-outline-primary">
-            <i class="fas fa-download"></i> Télécharger le Template
+          <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> <strong>Template Excel professionnel disponible !</strong>
+            <p class="mb-0 mt-2">Ce template est bien organisé avec des instructions, des exemples et un formatage professionnel.</p>
+          </div>
+          <p>Téléchargez ce template Excel bien organisé pour faciliter l'import:</p>
+          <a href="{{ url_for('products.download_import_template') }}" class="btn btn-primary">
+            <i class="fas fa-file-excel"></i> Télécharger le Template Excel
           </a>
+          <button type="button" onclick="downloadCSVTemplate()" class="btn btn-sm btn-outline-secondary ml-2">
+            <i class="fas fa-download"></i> Template CSV (simple)
+          </button>
         </div>
       </div>
     </div>
@@ -122,8 +130,8 @@ document.querySelector('.custom-file-input').addEventListener('change', function
   label.textContent = fileName;
 });
 
-// Télécharger un template CSV
-function downloadTemplate() {
+// Télécharger un template CSV simple
+function downloadCSVTemplate() {
   const csvContent = "Nom,Description,Code-barres,Forme,Unité,Prix Achat,Prix Vente,Prix Gros,Stock,Stock Min,Fabricant,Fournisseur\n" +
                     "Paracétamol 500mg,Antalgique et antipyrétique,1234567890,Médicaments,boite,2.50,5.00,4.00,100,20,PharmaCo,SupplierX\n" +
                     "Amoxicilline 250mg,Antibiotique,9876543210,Médicaments,boite,3.00,6.50,5.50,50,15,MediLab,SupplierY";

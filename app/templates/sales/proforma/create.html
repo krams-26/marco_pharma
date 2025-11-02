@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvelle Proforma{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-file-earmark-plus"></i> Nouvelle Facture Proforma</h2>
+    <a href="{{ url_for('sales.proforma_index') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<form method="POST" id="proformaForm">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Informations Client</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Client</label>
+                            <select class="form-control" id="customer_select" name="customer_id">
+                                <option value="">Nouveau client...</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" 
+                                    data-name="{{ customer.name }}"
+                                    data-address="{{ customer.address }}"
+                                    data-phone="{{ customer.phone }}"
+                                    data-email="{{ customer.email }}">
+                                    {{ customer.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date de validité</label>
+                            <input type="date" class="form-control" name="validity_date" value="{{ default_validity_date }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom du client *</label>
+                            <input type="text" class="form-control" name="customer_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="text" class="form-control" name="customer_phone">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="customer_email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Adresse</label>
+                            <textarea class="form-control" name="customer_address" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Produits</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Quantité</th>
+                                    <th>Prix unitaire</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsBody">
+                                <tr>
+                                    <td>
+                                        <select class="form-control product-select" name="product_id[]">
+                                            <option value="">Sélectionner un produit...</option>
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}" 
+                                                data-price="{{ product.selling_price }}"
+                                                data-stock="{{ product.stock_quantity }}">
+                                                {{ product.name }} (Stock: {{ product.stock_quantity }})
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control quantity" name="quantity[]" min="1" value="1">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control price" name="price[]" step="0.01" min="0">
+                                    </td>
+                                    <td>
+                                        <span class="line-total">0.00</span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger remove-product">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-primary" id="addProduct">
+                        <i class="bi bi-plus"></i> Ajouter un produit
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Conditions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Conditions de paiement</label>
+                        <textarea class="form-control" name="payment_conditions" rows="3">Paiement à la livraison</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Conditions de livraison</label>
+                        <textarea class="form-control" name="delivery_conditions" rows="3">Retrait en magasin</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Résumé</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between font-weight-bold h4">
+                        <span>Total:</span>
+                        <span class="text-primary" id="totalAmount">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Créer la Proforma
+            </button>
+            <a href="{{ url_for('sales.proforma_index') }}" class="btn btn-secondary">
+                <i class="bi bi-x"></i> Annuler
+            </a>
+        </div>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la sélection du client
+    const customerSelect = document.getElementById('customer_select');
+    const customerName = document.querySelector('input[name="customer_name"]');
+    const customerPhone = document.querySelector('input[name="customer_phone"]');
+    const customerEmail = document.querySelector('input[name="customer_email"]');
+    const customerAddress = document.querySelector('textarea[name="customer_address"]');
+    
+    customerSelect.addEventListener('change', function() {
+        if (this.value) {
+            const option = this.options[this.selectedIndex];
+            customerName.value = option.dataset.name || '';
+            customerPhone.value = option.dataset.phone || '';
+            customerEmail.value = option.dataset.email || '';
+            customerAddress.value = option.dataset.address || '';
+        }
+    });
+    
+    // Gestion des produits
+    let productRowIndex = 0;
+    
+    function addProductRow() {
+        const tbody = document.getElementById('productsBody');
+        const newRow = tbody.rows[0].cloneNode(true);
+        
+        // Réinitialiser les valeurs
+        newRow.querySelector('.product-select').value = '';
+        newRow.querySelector('.quantity').value = 1;
+        newRow.querySelector('.price').value = '';
+        newRow.querySelector('.line-total').textContent = '0.00';
+        
+        tbody.appendChild(newRow);
+        productRowIndex++;
+    }
+    
+    function removeProductRow(button) {
+        const tbody = document.getElementById('productsBody');
+        if (tbody.rows.length > 1) {
+            button.closest('tr').remove();
+            calculateTotals();
+        }
+    }
+    
+    function calculateLineTotal(row) {
+        const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.price').value) || 0;
+        const total = quantity * price;
+        row.querySelector('.line-total').textContent = total.toFixed(2);
+        return total;
+    }
+    
+    function calculateTotals() {
+        let total = 0;
+        const rows = document.querySelectorAll('#productsBody tr');
+        
+        rows.forEach(row => {
+            const lineTotal = calculateLineTotal(row);
+            total += lineTotal;
+        });
+        
+        document.getElementById('totalAmount').textContent = total.toFixed(2);
+    }
+    
+    // Event listeners
+    document.getElementById('addProduct').addEventListener('click', addProductRow);
+    
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-product')) {
+            removeProductRow(e.target);
+        }
+    });
+    
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('product-select')) {
+            const row = e.target.closest('tr');
+            const priceInput = row.querySelector('.price');
+            const option = e.target.options[e.target.selectedIndex];
+            if (option.dataset.price) {
+                priceInput.value = option.dataset.price;
+                calculateLineTotal(row);
+                calculateTotals();
+            }
+        }
+    });
+    
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('quantity') || e.target.classList.contains('price')) {
+            const row = e.target.closest('tr');
+            calculateLineTotal(row);
+            calculateTotals();
+        }
+    });
+    
+    // Calcul initial
+    calculateTotals();
+});
+</script>
+{% endblock %}

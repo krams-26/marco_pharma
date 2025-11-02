@@ -56,18 +56,93 @@ def index():
     # Récupérer les utilisateurs pour le filtre
     users = User.query.all()
     
-    # Récupérer les modules et types uniques
-    modules = db.session.query(Audit.module).distinct().filter(Audit.module.isnot(None)).all()
-    modules = [m[0] for m in modules]
+    # Liste complète des modules possibles dans l'application
+    ALL_POSSIBLE_MODULES = [
+        'auth', 'products', 'sales', 'customers', 'users', 'pharmacies',
+        'stock', 'payments', 'hr', 'settings', 'audits', 'cashier',
+        'credit_sales', 'suppliers', 'evaluation', 'notifications',
+        'reports', 'approvals', 'proforma'
+    ]
     
-    action_types = db.session.query(Audit.action_type).distinct().filter(Audit.action_type.isnot(None)).all()
-    action_types = [a[0] for a in action_types]
+    # Dictionnaire de traduction des modules en français
+    MODULE_TRANSLATIONS = {
+        'auth': 'Authentification',
+        'products': 'Produits',
+        'sales': 'Ventes',
+        'customers': 'Clients',
+        'users': 'Utilisateurs',
+        'pharmacies': 'Pharmacies',
+        'stock': 'Stock',
+        'payments': 'Paiements',
+        'hr': 'Ressources Humaines',
+        'settings': 'Paramètres',
+        'audits': 'Audits',
+        'cashier': 'Caisse',
+        'credit_sales': 'Ventes à Crédit',
+        'suppliers': 'Fournisseurs',
+        'evaluation': 'Évaluation',
+        'notifications': 'Notifications',
+        'reports': 'Rapports',
+        'approvals': 'Approbations',
+        'proforma': 'Proforma'
+    }
+    
+    # Liste complète des types d'actions possibles
+    ALL_POSSIBLE_ACTION_TYPES = [
+        'create', 'update', 'delete', 'view', 'export', 'import',
+        'login', 'logout', 'toggle', 'approve', 'reject', 'validate',
+        'assign', 'remove', 'change', 'reset', 'send', 'duplicate',
+        'adjust', 'transfer', 'add', 'edit', 'pay', 'record', 'manage'
+    ]
+    
+    # Dictionnaire de traduction des types d'actions en français
+    ACTION_TYPE_TRANSLATIONS = {
+        'create': 'Créer',
+        'update': 'Modifier',
+        'delete': 'Supprimer',
+        'view': 'Consulter',
+        'export': 'Exporter',
+        'import': 'Importer',
+        'login': 'Connexion',
+        'logout': 'Déconnexion',
+        'toggle': 'Activer/Désactiver',
+        'approve': 'Approuver',
+        'reject': 'Rejeter',
+        'validate': 'Valider',
+        'assign': 'Assigner',
+        'remove': 'Retirer',
+        'change': 'Changer',
+        'reset': 'Réinitialiser',
+        'send': 'Envoyer',
+        'duplicate': 'Dupliquer',
+        'adjust': 'Ajuster',
+        'transfer': 'Transférer',
+        'add': 'Ajouter',
+        'edit': 'Éditer',
+        'pay': 'Payer',
+        'record': 'Enregistrer',
+        'manage': 'Gérer'
+    }
+    
+    # Récupérer TOUS les modules uniques depuis la table - sans aucun filtre
+    modules_query = db.session.query(Audit.module).distinct().filter(Audit.module.isnot(None)).order_by(Audit.module)
+    modules_db = [m[0] for m in modules_query.all()] if modules_query else []
+    
+    # Récupérer TOUS les types d'action uniques depuis la table - sans aucun filtre
+    action_types_query = db.session.query(Audit.action_type).distinct().filter(Audit.action_type.isnot(None)).order_by(Audit.action_type)
+    action_types_db = [a[0] for a in action_types_query.all()] if action_types_query else []
+    
+    # Combiner les valeurs de la DB avec les valeurs possibles (sans doublons)
+    modules = sorted(list(set(ALL_POSSIBLE_MODULES + modules_db)))
+    action_types = sorted(list(set(ALL_POSSIBLE_ACTION_TYPES + action_types_db)))
     
     return render_template('audits/index.html', 
                          audits=audits, 
                          users=users,
                          modules=modules,
                          action_types=action_types,
+                         module_translations=MODULE_TRANSLATIONS,
+                         action_type_translations=ACTION_TYPE_TRANSLATIONS,
                          filters={
                              'user_id': user_id,
                              'action': action,

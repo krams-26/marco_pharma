@@ -47,6 +47,7 @@ def index():
 def show(id):
     approval = Approval.query.get_or_404(id)
     
+    # Parser les données JSON
     try:
         if approval.request_data:
             approval.parsed_data = json.loads(approval.request_data)
@@ -54,6 +55,72 @@ def show(id):
             approval.parsed_data = {}
     except:
         approval.parsed_data = {}
+    
+    # Enrichir les données avec les informations détaillées
+    enriched_data = {}
+    
+    if approval.entity_type == 'product' and approval.parsed_data.get('products'):
+        # Enrichir avec les détails des produits
+        from app.models import Product
+        product_ids = approval.parsed_data.get('products', [])
+        enriched_data['products'] = []
+        for product_id in product_ids:
+            product = Product.query.get(product_id)
+            if product:
+                enriched_data['products'].append({
+                    'id': product.id,
+                    'name': product.name,
+                    'barcode': product.barcode,
+                    'stock': product.stock_quantity,
+                    'selling_price': product.selling_price
+                })
+            else:
+                enriched_data['products'].append({'id': product_id, 'name': 'Produit introuvable'})
+    
+    if approval.entity_type == 'customer' and approval.parsed_data.get('customer_id'):
+        # Enrichir avec les détails du client
+        from app.models import Customer
+        customer = Customer.query.get(approval.parsed_data.get('customer_id'))
+        if customer:
+            enriched_data['customer'] = {
+                'id': customer.id,
+                'name': customer.name,
+                'phone': customer.phone,
+                'email': customer.email
+            }
+    
+    if approval.entity_type == 'sale' and approval.parsed_data.get('sale_id'):
+        # Enrichir avec les détails de la vente
+        from app.models import Sale
+        sale = Sale.query.get(approval.parsed_data.get('sale_id'))
+        if sale:
+            enriched_data['sale'] = {
+                'id': sale.id,
+                'invoice_number': sale.invoice_number,
+                'total_amount': sale.total_amount,
+                'paid_amount': sale.paid_amount,
+                'sale_date': sale.sale_date.strftime('%d/%m/%Y') if sale.sale_date else ''
+            }
+    
+    # Autres données enrichies
+    if 'quantity' in approval.parsed_data:
+        enriched_data['quantity'] = approval.parsed_data['quantity']
+    if 'reason' in approval.parsed_data:
+        enriched_data['reason'] = approval.parsed_data['reason']
+    if 'amount' in approval.parsed_data:
+        enriched_data['amount'] = approval.parsed_data['amount']
+    if 'new_prices' in approval.parsed_data:
+        enriched_data['new_prices'] = approval.parsed_data['new_prices']
+    if 'discount_percent' in approval.parsed_data:
+        enriched_data['discount_percent'] = approval.parsed_data['discount_percent']
+    if 'total_amount' in approval.parsed_data:
+        enriched_data['total_amount'] = approval.parsed_data['total_amount']
+    
+    # Utiliser les données enrichies si disponibles, sinon les données originales
+    if enriched_data:
+        approval.enriched_data = enriched_data
+    else:
+        approval.enriched_data = approval.parsed_data
     
     return render_template('approvals/show.html', approval=approval)
 

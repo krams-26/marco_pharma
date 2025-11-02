@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from app.decorators import require_permission
 from flask_login import login_required, current_user
-from app.models import db, Payment, Sale, Customer, Audit, SalePayment
+from app.models import db, Payment, Sale, Customer, Audit, SalePayment, ExchangeRate
 from app.pharmacy_utils import filter_by_pharmacy, get_accessible_pharmacies, is_admin
 from app.export_utils import export_to_csv, export_to_excel
 
@@ -185,4 +185,14 @@ def record(sale_id):
             db.session.rollback()
             flash(f'Erreur: {str(e)}', 'danger')
     
-    return render_template('payments/record.html', sale=sale)
+    # Taux de change actif pour l'affichage
+    exchange_rate = ExchangeRate.query.filter_by(from_currency='USD', to_currency='CDF').first()
+    rate = exchange_rate.rate if exchange_rate else 2800
+    return render_template('payments/record.html', sale=sale, exchange_rate=rate)
+
+@payments_bp.route('/view/<int:id>')
+@require_permission('manage_payments')
+def view(id):
+    """Voir les détails d'un paiement"""
+    payment = Payment.query.get_or_404(id)
+    return render_template('payments/view.html', payment=payment)

@@ -1,48 +1,48 @@
 @echo off
-title Marco Pharma - Systeme de Gestion de Pharmacie
+title MARCO PHARMA - Systeme de Gestion Pharmaceutique
 color 0A
 
 echo.
 echo ========================================
-echo   MARCO PHARMA - SYSTEME DE GESTION
+echo    MARCO PHARMA - DEMARRAGE
 echo ========================================
 echo.
 
-REM Verifier si Python est installe
+echo [1/3] Verification de Python...
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERREUR] Python n'est pas installe ou pas dans le PATH
-    echo Veuillez installer Python 3.8+ depuis https://python.org
+    echo ❌ Python n'est pas installe ou pas dans le PATH
+    echo 💡 Installez Python depuis https://python.org
     pause
     exit /b 1
 )
+echo ✅ Python detecte
 
-echo [OK] Python detecte
 echo.
-
-REM Verifier si les dependances sont installees
-echo [INFO] Verification des dependances...
-pip show flask >nul 2>&1
+echo [2/3] Installation des dependances...
+pip install -r requirements.txt >nul 2>&1
 if errorlevel 1 (
-    echo [INFO] Installation des dependances...
-    pip install -r requirements.txt
-    if errorlevel 1 (
-        echo [ERREUR] Echec de l'installation des dependances
-        pause
-        exit /b 1
-    )
-    echo [OK] Dependances installees
-) else (
-    echo [OK] Dependances deja installees
+    echo ⚠️  Certaines dependances peuvent manquer
+    echo 💡 Essayez: pip install -r requirements.txt
 )
 
 echo.
-echo [INFO] Demarrage de l'application...
-echo [INFO] L'application sera accessible sur: http://localhost:5000
-echo [INFO] Appuyez sur Ctrl+C pour arreter
+echo [3/3] Demarrage de l'application...
+echo.
+echo 🌐 URL: http://localhost:200
+echo 🌐 Reseau: http://192.168.1.154:200
+echo 👤 Admin: admin / admin123
+echo.
+echo ========================================
 echo.
 
-REM Demarrer l'application
 python run.py
 
-pause
+if errorlevel 1 (
+    echo.
+    echo ❌ Erreur de demarrage
+    echo 💡 Verifiez que tous les modules sont installes
+    echo 💡 Essayez: pip install -r requirements.txt
+    echo.
+    pause
+)

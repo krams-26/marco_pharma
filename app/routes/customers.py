@@ -310,3 +310,168 @@ def delete(id):
         flash(f'Erreur: {str(e)}', 'danger')
     
     return redirect(url_for('customers.index'))
+
+@customers_bp.route('/toggle-status/<int:id>', methods=['POST'])
+@require_permission('manage_customers')
+def toggle_status(id):
+    customer = Customer.query.get_or_404(id)
+    customer.is_active = not customer.is_active
+    
+    audit = Audit(
+        user_id=current_user.id,
+        action='toggle_customer_status',
+        entity_type='customer',
+        entity_id=customer.id,
+        details=f'Statut client changé: {customer.name} -> {"Actif" if customer.is_active else "Inactif"}',
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit)
+    
+    db.session.commit()
+    
+    flash(f'Client {"activé" if customer.is_active else "désactivé"} avec succès!', 'success')
+    return redirect(url_for('customers.index'))
+
+@customers_bp.route('/export-single/<int:id>')
+@require_permission('manage_customers')
+def export_single(id):
+    customer = Customer.query.get_or_404(id)
+    
+    # Données à exporter
+    export_data = {
+        'customer': {
+            'name': customer.name,
+            'customer_type': customer.customer_type,
+            'email': customer.email,
+            'phone': customer.phone,
+            'address': customer.address,
+            'is_active': customer.is_active,
+            'created_at': customer.created_at.isoformat() if customer.created_at else None
+        },
+        'sales': [],
+        'total_purchases': 0
+    }
+    
+    # Ventes du client
+    sales = Sale.query.filter_by(customer_id=id).all()
+    total_purchases = 0
+    for sale in sales:
+        export_data['sales'].append({
+            'invoice_number': sale.invoice_number,
+            'sale_date': sale.sale_date.isoformat() if sale.sale_date else None,
+            'total_amount': sale.total_amount,
+            'payment_status': sale.payment_status
+        })
+        total_purchases += sale.total_amount
+    
+    export_data['total_purchases'] = total_purchases
+    
+    # Créer un fichier JSON
+    import json
+    from flask import make_response
+    
+    response = make_response(json.dumps(export_data, indent=2, ensure_ascii=False))
+    response.headers['Content-Type'] = 'application/json'
+    response.headers['Content-Disposition'] = f'attachment; filename=customer_{customer.name}_export.json'
+    
+    return response
+
+@customers_bp.route('/sales-history/<int:id>')
+@require_permission('manage_customers')
+def sales_history(id):
+    """Historique des ventes d'un client"""
+    customer = Customer.query.get_or_404(id)
+    page = request.args.get('page', 1, type=int)
+    
+    sales = Sale.query.filter_by(customer_id=id).order_by(Sale.sale_date.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('customers/sales_history.html', customer=customer, sales=sales)
+
+@customers_bp.route('/payments-history/<int:id>')
+@require_permission('manage_customers')
+def payments_history(id):
+    """Historique des paiements d'un client"""
+    customer = Customer.query.get_or_404(id)
+    page = request.args.get('page', 1, type=int)
+    
+    payments = Payment.query.filter_by(customer_id=id).order_by(Payment.payment_date.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('customers/payments_history.html', customer=customer, payments=payments)
+
+@customers_bp.route('/manage-credit/<int:id>', methods=['GET', 'POST'])
+@require_permission('manage_customers')
+def manage_credit(id):
+    """Gérer le crédit d'un client"""
+    customer = Customer.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        try:
+            action = request.form.get('action')
+            amount = float(request.form.get('amount', 0))
+            notes = request.form.get('notes', '')
+            
+            if action == 'increase':
+                customer.credit_limit += amount
+                flash(f'Limite de crédit augmentée de ${amount:.2f}', 'success')
+            elif action == 'decrease':
+                customer.credit_limit = max(0, customer.credit_limit - amount)
+                flash(f'Limite de crédit réduite de ${amount:.2f}', 'success')
+            elif action == 'set':
+                customer.credit_limit = amount
+                flash(f'Limite de crédit définie à ${amount:.2f}', 'success')
+            
+            # Audit
+            audit = Audit(
+                user_id=current_user.id,
+                action='manage_customer_credit',
+                entity_type='customer',
+                entity_id=customer.id,
+                details=f'Crédit modifié: {action} ${amount}. Notes: {notes}',
+                ip_address=request.remote_addr
+            )
+            db.session.add(audit)
+            
+            db.session.commit()
+            return redirect(url_for('customers.manage_credit', id=id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur: {str(e)}', 'danger')
+    
+    return render_template('customers/manage_credit.html', customer=customer)
+
+@customers_bp.route('/change-type/<int:id>', methods=['GET', 'POST'])
+@require_permission('manage_customers')
+def change_type(id):
+    """Changer le type d'un client"""
+    customer = Customer.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        try:
+            old_type = customer.customer_type
+            customer.customer_type = request.form.get('customer_type', 'regular')
+            
+            # Audit
+            audit = Audit(
+                user_id=current_user.id,
+                action='change_customer_type',
+                entity_type='customer',
+                entity_id=customer.id,
+                details=f'Type changé: {old_type} -> {customer.customer_type}',
+                ip_address=request.remote_addr
+            )
+            db.session.add(audit)
+            
+            db.session.commit()
+            flash(f'Type de client changé en {customer.customer_type}', 'success')
+            return redirect(url_for('customers.index'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur: {str(e)}', 'danger')
+    
+    return render_template('customers/change_type.html', customer=customer)

@@ -149,12 +149,92 @@
                   {% endif %}
                 </td>
                 <td class="text-right">
-                  <a href="{{ url_for('pharmacies.view', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-info">
-                    <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
-                  </a>
-                  <a href="{{ url_for('pharmacies.edit', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-primary">
-                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
-                  </a>
+                  <!-- Actions pour admin -->
+                  {% if current_user.role == 'admin' %}
+                  <div class="btn-group" role="group">
+                    <!-- Voir détails -->
+                    <a href="{{ url_for('pharmacies.view', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir détails">
+                      <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                    </a>
+                    
+                    <!-- Modifier -->
+                    <a href="{{ url_for('pharmacies.edit', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    
+                    <!-- Menu déroulant pour plus d'actions -->
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-sm btn-icon btn-secondary dropdown-toggle" data-toggle="dropdown" title="Plus d'actions">
+                        <span class="btn-inner--icon"><i class="fas fa-ellipsis-v"></i></span>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <!-- Statistiques -->
+                        <a class="dropdown-item" href="{{ url_for('pharmacies.stats', id=pharmacy.id) }}">
+                          <i class="fas fa-chart-bar text-info"></i> Statistiques
+                        </a>
+                        
+                        <!-- Gestion des utilisateurs -->
+                        <a class="dropdown-item" href="{{ url_for('pharmacies.assign_user', id=pharmacy.id) }}">
+                          <i class="fas fa-users text-primary"></i> Gérer Utilisateurs
+                        </a>
+                        
+                        <!-- Gestion du stock -->
+                        <a class="dropdown-item" href="{{ url_for('stock.index', pharmacy_id=pharmacy.id) }}">
+                          <i class="fas fa-boxes text-warning"></i> Gestion Stock
+                        </a>
+                        
+                        <!-- Historique des ventes -->
+                        <a class="dropdown-item" href="{{ url_for('sales.index', pharmacy_id=pharmacy.id) }}">
+                          <i class="fas fa-shopping-cart text-success"></i> Historique Ventes
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Rapports -->
+                        <a class="dropdown-item" href="{{ url_for('reports.pharmacies', id=pharmacy.id) }}">
+                          <i class="fas fa-file-alt text-secondary"></i> Rapports
+                        </a>
+                        
+                        <!-- Exporter données -->
+                        <a class="dropdown-item" href="{{ url_for('pharmacies.export', id=pharmacy.id) }}">
+                          <i class="fas fa-download text-info"></i> Exporter Données
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Désactiver/Activer -->
+                        {% if pharmacy.is_active %}
+                        <a class="dropdown-item text-warning" href="{{ url_for('pharmacies.toggle_status', id=pharmacy.id) }}" 
+                           onclick="return confirm('Désactiver cette pharmacie ?')">
+                          <i class="fas fa-pause"></i> Désactiver
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item text-success" href="{{ url_for('pharmacies.toggle_status', id=pharmacy.id) }}">
+                          <i class="fas fa-play"></i> Activer
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Supprimer -->
+                        <a class="dropdown-item text-danger" href="{{ url_for('pharmacies.delete', id=pharmacy.id) }}" 
+                           onclick="return confirm('Supprimer définitivement cette pharmacie ?')">
+                          <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <!-- Actions limitées pour non-admin -->
+                  <div class="btn-group" role="group">
+                    <a href="{{ url_for('pharmacies.view', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir détails">
+                      <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                    </a>
+                    {% if current_user.has_permission('manage_pharmacies') %}
+                    <a href="{{ url_for('pharmacies.edit', id=pharmacy.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    {% endif %}
+                  </div>
+                  {% endif %}
                 </td>
               </tr>
               {% else %}

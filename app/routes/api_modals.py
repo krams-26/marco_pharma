@@ -107,7 +107,7 @@ def batch_details(id):
             'expiry_date': batch.expiry_date.strftime('%d/%m/%Y') if batch.expiry_date else 'N/A',
             'supplier': batch.supplier or 'N/A',
             'purchase_price': batch.purchase_price,
-            'notes': batch.notes or ''
+            'status': batch.status
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -138,7 +138,7 @@ def task_details(id):
             'description': task.description or '',
             'priority': task.priority,
             'status': task.status,
-            'assigned_to': task.assigned_user.full_name if task.assigned_user else 'Non assigné',
+            'assigned_to': task.assignee.full_name if task.assignee else 'Non assigné',
             'assigned_by': task.assigner.full_name if task.assigner else 'N/A',
             'due_date': task.due_date.strftime('%d/%m/%Y') if task.due_date else 'Aucune',
             'created_at': task.created_at.strftime('%d/%m/%Y %H:%M'),
@@ -153,13 +153,13 @@ def task_details(id):
 def notification_details(id):
     try:
         notif = Notification.query.get_or_404(id)
-        notif.is_read = True
+        notif.read_at = datetime.utcnow()
         db.session.commit()
         return jsonify({
             'title': notif.title,
             'message': notif.message,
             'created_at': notif.created_at.strftime('%d/%m/%Y %H:%M'),
-            'sender': notif.sender.full_name if hasattr(notif, 'sender') and notif.sender else 'Système'
+            'sender': notif.requester.full_name if notif.requester else 'Système'
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -177,10 +177,11 @@ def create_notification():
         
         for user_id in users:
             notif = Notification(
-                user_id=int(user_id),
+                requester_id=current_user.id,
+                target_admin_id=int(user_id),
                 title=data['title'],
                 message=data['message'],
-                is_read=False
+                read_at=None
             )
             db.session.add(notif)
         
@@ -197,18 +198,18 @@ def proforma_preview(id):
     try:
         proforma = Proforma.query.get_or_404(id)
         return jsonify({
-            'reference': proforma.reference,
-            'customer': proforma.customer.name if proforma.customer else 'Anonyme',
+            'reference': proforma.proforma_number,
+            'customer': proforma.customer.name if proforma.customer else proforma.customer_name,
             'date': proforma.created_at.strftime('%d/%m/%Y'),
-            'valid_until': proforma.valid_until.strftime('%d/%m/%Y') if proforma.valid_until else 'N/A',
+            'valid_until': proforma.validity_date.strftime('%d/%m/%Y') if proforma.validity_date else 'N/A',
             'items': [{
-                'product': item.product.name if item.product else 'N/A',
-                'quantity': item.quantity,
+                'product': item.product_name,
+                'quantity': item.quantity_requested,
                 'price': item.unit_price,
-                'total': item.total
+                'total': item.line_total
             } for item in proforma.items],
-            'discount': proforma.discount,
-            'total': proforma.total_amount
+            'discount': 0,
+            'total': proforma.total_ttc
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -220,7 +221,7 @@ def convert_proforma(id):
         data = request.get_json()
         proforma = Proforma.query.get_or_404(id)
         
-        if proforma.status != 'pending':
+        if proforma.status != 'draft':
             return jsonify({'success': False, 'message': 'Proforma déjà convertie'}), 400
         
         from app.models import SaleItem
@@ -231,9 +232,9 @@ def convert_proforma(id):
             invoice_number=f"INV{datetime.now().strftime('%Y%m%d')}{randint(1000, 9999)}",
             customer_id=proforma.customer_id,
             user_id=current_user.id,
-            pharmacy_id=proforma.pharmacy_id,
-            discount=proforma.discount,
-            payment_method=data.get('payment_method', 'cash')
+            total_amount=proforma.total_ttc,
+            discount=0,
+            payment_method='cash'
         )
         db.session.add(sale)
         db.session.flush()
@@ -242,14 +243,14 @@ def convert_proforma(id):
         for item in proforma.items:
             sale_item = SaleItem(
                 sale_id=sale.id,
-                product_id=item.product_id,
-                quantity=item.quantity,
-                unit_price=item.unit_price
+                product_id=item.product_id if item.product_id else None,
+                quantity=item.quantity_requested,
+                unit_price=item.unit_price,
+                total=item.line_total
             )
             db.session.add(sale_item)
         
         proforma.status = 'converted'
-        proforma.converted_sale_id = sale.id
         
         db.session.commit()
         return jsonify({'success': True, 'message': 'Proforma convertie en vente', 'sale_id': sale.id})

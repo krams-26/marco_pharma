@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Changer le Rôle{% endblock %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Changer le Rôle</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('users.index') }}">Utilisateurs</a></li>
+              <li class="breadcrumb-item active">Changer Rôle</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('users.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row justify-content-center">
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header bg-transparent">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">
+                <i class="fas fa-user-tag text-secondary"></i> Changer le Rôle
+              </h3>
+              <p class="text-muted mb-0">Utilisateur: <strong>{{ user.username }}</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="form-group">
+              <label for="role">Sélectionner le nouveau rôle *</label>
+              <select name="role" id="role" class="form-control" required>
+                {% for role_code, role_name in roles %}
+                <option value="{{ role_code }}" {% if user.role == role_code %}selected{% endif %}>
+                  {{ role_name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i> 
+              Le rôle actuel de l'utilisateur est: 
+              <strong>
+                {% if user.role == 'admin' %}
+                  Administrateur
+                {% elif user.role == 'manager' %}
+                  Manager
+                {% elif user.role == 'pharmacien' %}
+                  Pharmacien
+                {% elif user.role == 'caissier' %}
+                  Caissier
+                {% elif user.role == 'vendeur' %}
+                  Vendeur
+                {% else %}
+                  {{ user.role|title }}
+                {% endif %}
+              </strong>
+            </div>
+            
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> Changer le Rôle
+              </button>
+              <a href="{{ url_for('users.index') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

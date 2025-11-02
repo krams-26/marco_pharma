@@ -1,10 +1,65 @@
 <!-- Core -->
-<script src="{{ url_for('static', filename='assets/vendor/jquery/dist/jquery.min.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/js-cookie/js.cookie.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/jquery.scrollbar/jquery.scrollbar.min.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/jquery-scroll-lock/dist/jquery-scrollLock.min.js') }}"></script>
+<script src="/static/assets/vendor/jquery/dist/jquery.min.js"></script>
+<script src="/static/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/vendor/js-cookie/js.cookie.js"></script>
+<script src="/static/assets/vendor/jquery.scrollbar/jquery.scrollbar.min.js"></script>
+<script src="/static/assets/vendor/jquery-scroll-lock/dist/jquery-scrollLock.min.js"></script>
 
-<!-- Argon JS -->
-<script src="{{ url_for('static', filename='assets/js/argon.js?v=1.2.0') }}"></script>
+<!-- Custom Scripts -->
+<script>
+// Charger les notifications
+function loadNotifications() {
+    $.ajax({
+        url: '{{ url_for("notifications.recent") }}',
+        method: 'GET',
+        success: function(notifications) {
+            const count = notifications.length;
+            const unreadCount = notifications.filter(n => !n.read).length;
+            
+            // Mettre à jour le compteur
+            $('#notificationCountText').text(count);
+            $('#notificationCount').text(unreadCount).toggle(unreadCount > 0);
+            $('#notificationBadge').toggle(unreadCount > 0);
+            
+            // Afficher les notifications
+            const listHtml = notifications.map(n => `
+                <a href="{{ url_for('notifications.index') }}" class="dropdown-item ${!n.read ? 'bg-light' : ''}" onclick="${n.read ? '' : 'markNotificationRead(' + n.id + ')'}">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-fill">
+                            <span class="text-sm font-weight-bold">${n.title}</span>
+                            <p class="text-xs text-muted mb-0">${n.message}</p>
+                            <small class="text-xs text-muted">${n.created_at}</small>
+                        </div>
+                        ${!n.read ? '<span class="badge badge-primary badge-xs">Nouveau</span>' : ''}
+                    </div>
+                </a>
+            `).join('');
+            
+            $('#notificationList').html(listHtml || '<div class="dropdown-item text-center text-muted"><small>Aucune notification</small></div>');
+        },
+        error: function() {
+            console.error('Erreur lors du chargement des notifications');
+        }
+    });
+}
+
+// Marquer une notification comme lue
+function markNotificationRead(notificationId) {
+    $.ajax({
+        url: `/notifications/mark-read/${notificationId}`,
+        method: 'POST',
+        success: function() {
+            loadNotifications(); // Recharger
+        }
+    });
+}
+
+// Charger les notifications au chargement de la page
+$(document).ready(function() {
+    loadNotifications();
+    
+    // Recharger toutes les 30 secondes
+    setInterval(loadNotifications, 30000);
+});
+</script>
 

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Détails Utilisateur{% endblock %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Détails Utilisateur</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('users.index') }}">Utilisateurs</a></li>
+              <li class="breadcrumb-item active">{{ user.username }}</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('users.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+          <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-primary">
+            <i class="fas fa-edit"></i> Modifier
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <!-- User Info Card -->
+    <div class="col-xl-4 order-xl-2">
+      <div class="card card-profile">
+        <div class="card-body pt-0">
+          <div class="text-center">
+            <div class="icon icon-shape icon-shape-primary rounded-circle mb-4">
+              <i class="ni ni-single-02" style="font-size: 3rem;"></i>
+            </div>
+            <h3 class="mb-0">{{ user.full_name or user.username }}</h3>
+            <p class="text-muted">{{ user.email }}</p>
+            {% if user.role == 'admin' %}
+              <span class="badge badge-danger badge-lg">Admin</span>
+            {% elif user.role == 'manager' %}
+              <span class="badge badge-primary badge-lg">Manager</span>
+            {% else %}
+              <span class="badge badge-secondary badge-lg">{{ user.role|title }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Employee Info -->
+      {% if employee %}
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Information Employé</h3>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-6">ID Employé:</dt>
+            <dd class="col-sm-6"><strong>{{ employee.employee_id }}</strong></dd>
+            
+            <dt class="col-sm-6">Département:</dt>
+            <dd class="col-sm-6">{{ employee.department }}</dd>
+            
+            <dt class="col-sm-6">Poste:</dt>
+            <dd class="col-sm-6">{{ employee.position }}</dd>
+            
+            <dt class="col-sm-6">Date d'embauche:</dt>
+            <dd class="col-sm-6">{{ employee.hire_date.strftime('%d/%m/%Y') if employee.hire_date else '-' }}</dd>
+            
+            <dt class="col-sm-6">Statut:</dt>
+            <dd class="col-sm-6">
+              {% if employee.is_active %}
+                <span class="badge badge-success">Actif</span>
+              {% else %}
+                <span class="badge badge-danger">Inactif</span>
+              {% endif %}
+            </dd>
+          </dl>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-xl-8 order-xl-1">
+      <!-- Account Information -->
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h3 class="mb-0">Informations du Compte</h3>
+            </div>
+            <div class="col-4 text-right">
+              <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> Modifier
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-3">Nom d'utilisateur:</dt>
+            <dd class="col-sm-9">{{ user.username }}</dd>
+            
+            <dt class="col-sm-3">Email:</dt>
+            <dd class="col-sm-9">{{ user.email }}</dd>
+            
+            <dt class="col-sm-3">Prénom:</dt>
+            <dd class="col-sm-9">{{ user.first_name or '-' }}</dd>
+            
+            <dt class="col-sm-3">Nom:</dt>
+            <dd class="col-sm-9">{{ user.last_name or '-' }}</dd>
+            
+            <dt class="col-sm-3">Téléphone:</dt>
+            <dd class="col-sm-9">{{ user.phone or '-' }}</dd>
+            
+            <dt class="col-sm-3">Rôle:</dt>
+            <dd class="col-sm-9">
+              {% if user.role == 'admin' %}
+                <span class="badge badge-danger">Admin</span>
+              {% elif user.role == 'manager' %}
+                <span class="badge badge-primary">Manager</span>
+              {% elif user.role == 'pharmacien' %}
+                <span class="badge badge-info">Pharmacien</span>
+              {% else %}
+                <span class="badge badge-secondary">{{ user.role|title }}</span>
+              {% endif %}
+            </dd>
+            
+            <dt class="col-sm-3">Statut:</dt>
+            <dd class="col-sm-9">
+              {% if user.is_active %}
+                <span class="badge badge-success">Actif</span>
+              {% else %}
+                <span class="badge badge-warning">Inactif</span>
+              {% endif %}
+            </dd>
+            
+            <dt class="col-sm-3">Créé le:</dt>
+            <dd class="col-sm-9">{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</dd>
+            
+            <dt class="col-sm-3">Modifié le:</dt>
+            <dd class="col-sm-9">{{ user.updated_at.strftime('%d/%m/%Y %H:%M') if user.updated_at else '-' }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Pharmacy Assignments -->
+      {% if user_pharmacies %}
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Pharmacies Assignées</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table align-items-center table-flush">
+              <thead class="thead-light">
+                <tr>
+                  <th scope="col">Pharmacie</th>
+                  <th scope="col">Principale</th>
+                  <th scope="col">Date d'assignation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for up in user_pharmacies %}
+                <tr>
+                  <td>{{ up.pharmacy.name if up.pharmacy else '-' }}</td>
+                  <td>
+                    {% if up.is_primary %}
+                      <span class="badge badge-success">Oui</span>
+                    {% else %}
+                      <span class="badge badge-secondary">Non</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ up.assigned_at.strftime('%d/%m/%Y') if up.assigned_at else '-' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

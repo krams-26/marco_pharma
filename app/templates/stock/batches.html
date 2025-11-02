@@ -1,308 +1,126 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Lots de Stock{% endblock %}
+{% block title %}Gestion des Lots - {{ product.name }}{% endblock %}
 
 {% block content %}
-<div class="header bg-gradient-primary pb-6">
-    <div class="container-fluid">
-        <div class="header-body">
-            <div class="row align-items-center py-4">
-                <div class="col-lg-6">
-                    <h6 class="h2 text-white d-inline-block mb-0">Gestion des Lots</h6>
-                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
-                            <li class="breadcrumb-item"><a href="{{ url_for('stock.index') }}">Stock</a></li>
-                            <li class="breadcrumb-item active">Lots</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="col-lg-6 text-right">
-                    <a href="{{ url_for('stock.batches_expiring') }}" class="btn btn-sm btn-warning">
-                        <i class="fas fa-exclamation-triangle"></i> Lots Expirant
-                    </a>
-                    <a href="{{ url_for('stock.add_batch') }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-plus"></i> Ajouter un Lot
-                    </a>
-                </div>
-            </div>
-
-            <!-- Statistiques -->
-            <div class="row">
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Total Lots</h5>
-                                    <span class="h2 font-weight-bold mb-0">{{ stats.total | format_number }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
-                                        <i class="fas fa-boxes"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Actifs</h5>
-                                    <span class="h2 font-weight-bold mb-0 text-success">{{ stats.active | format_number }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Expirant</h5>
-                                    <span class="h2 font-weight-bold mb-0 text-warning">{{ stats.expiring_soon | format_number }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Expirés</h5>
-                                    <span class="h2 font-weight-bold mb-0 text-danger">{{ stats.expired | format_number }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
-                                        <i class="fas fa-times-circle"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Gestion des Lots</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('products.index') }}">Produits</a></li>
+              <li class="breadcrumb-item active">{{ product.name }}</li>
+            </ol>
+          </nav>
         </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
+<!-- Page content -->
 <div class="container-fluid mt--6">
-    <div class="row">
-        <div class="col">
-<div class="card">
-                <!-- Card header -->
-                <div class="card-header border-0">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h3 class="mb-0">Liste des Lots</h3>
-                        </div>
-                        <div class="col-md-6 text-right">
-                            <a href="{{ url_for('stock.export_batches', format='excel', pharmacy_id=pharmacy_filter, status=status_filter) }}" class="btn btn-sm btn-success">
-                                <i class="fas fa-file-excel"></i> Excel
-                            </a>
-                            <a href="{{ url_for('stock.export_batches', format='csv', pharmacy_id=pharmacy_filter, status=status_filter) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-file-csv"></i> CSV
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filtres -->
-                <div class="card-body bg-secondary">
-                    <form method="get" class="row">
-                        <div class="col-md-3 form-group">
-                            <label class="form-control-label">Recherche</label>
-                            <input type="text" name="search" class="form-control form-control-sm" 
-                                   placeholder="N° lot ou produit..." value="{{ search }}">
-                        </div>
-                        {% if pharmacies %}
-                        <div class="col-md-3 form-group">
-                            <label class="form-control-label">Pharmacie</label>
-                            <select name="pharmacy_id" class="form-control form-control-sm">
-                                <option value="all" {% if pharmacy_filter == 'all' %}selected{% endif %}>Toutes</option>
-                                {% for pharmacy in pharmacies %}
-                                <option value="{{ pharmacy.id }}" {% if pharmacy_filter == pharmacy.id|string %}selected{% endif %}>
-                                    {{ pharmacy.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-                        <div class="col-md-3 form-group">
-                            <label class="form-control-label">Statut</label>
-                            <select name="status" class="form-control form-control-sm">
-                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tous</option>
-                                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Actif</option>
-                                <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expiré</option>
-                                <option value="depleted" {% if status_filter == 'depleted' %}selected{% endif %}>Épuisé</option>
-                                <option value="recalled" {% if status_filter == 'recalled' %}selected{% endif %}>Rappelé</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 form-group d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary btn-sm mr-2">
-                                <i class="fas fa-search"></i> Filtrer
-                            </button>
-                            <a href="{{ url_for('stock.batches') }}" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-redo"></i> Réinitialiser
-                            </a>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Table -->
-        <div class="table-responsive">
-                    <table class="table align-items-center table-flush">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Produit</th>
-                                <th>N° Lot</th>
-                                <th>Pharmacie</th>
-                                <th>Quantité</th>
-                                <th>Prix Achat</th>
-                                <th>Expiration</th>
-                                <th>Statut</th>
-                                <th class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                <tbody>
-                    {% for batch in batches.items %}
-                    <tr>
-                                <td>
-                                    <strong>{{ batch.product.name }}</strong>
-                                </td>
-                                <td>
-                                    <span class="badge badge-pill badge-info">{{ batch.batch_number }}</span>
-                                </td>
-                                <td>
-                                    {% if batch.pharmacy %}
-                                        <small>{{ batch.pharmacy.name }}</small>
-                                    {% else %}
-                                        <small class="text-muted">N/A</small>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <strong>{{ batch.quantity }}</strong> / {{ batch.initial_quantity }}
-                                    {% if batch.quantity <= 0 %}
-                                        <i class="fas fa-ban text-danger ml-2" title="Épuisé"></i>
-                                    {% elif batch.quantity < (batch.initial_quantity * 0.2) %}
-                                        <i class="fas fa-exclamation-triangle text-warning ml-2" title="Stock faible"></i>
-                                    {% endif %}
-                                </td>
-                        <td>${{ "%.2f"|format(batch.purchase_price) }}</td>
-                                <td>
-                                    {% if batch.expiry_date %}
-                                        <div>
-                                            {{ batch.expiry_date.strftime('%d/%m/%Y') }}
-                                            {% if batch.days_until_expiry is not none %}
-                                                {% if batch.days_until_expiry < 0 %}
-                                                    <span class="badge badge-danger">Expiré</span>
-                                                {% elif batch.days_until_expiry <= 30 %}
-                                                    <span class="badge badge-danger">{{ batch.days_until_expiry }}j</span>
-                                                {% elif batch.days_until_expiry <= 60 %}
-                                                    <span class="badge badge-warning">{{ batch.days_until_expiry }}j</span>
-                                                {% elif batch.days_until_expiry <= 90 %}
-                                                    <span class="badge badge-info">{{ batch.days_until_expiry }}j</span>
-                                                {% endif %}
-                                            {% endif %}
-                                        </div>
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if batch.status == 'active' %}
-                                        <span class="badge badge-success">Actif</span>
-                                    {% elif batch.status == 'expired' %}
-                                        <span class="badge badge-danger">Expiré</span>
-                                    {% elif batch.status == 'depleted' %}
-                                        <span class="badge badge-secondary">Épuisé</span>
-                                    {% elif batch.status == 'recalled' %}
-                                        <span class="badge badge-warning">Rappelé</span>
-                                    {% else %}
-                                        <span class="badge badge-light">{{ batch.status }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-right">
-                                    <div class="dropdown">
-                                        <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
-                                            <a class="dropdown-item" href="{{ url_for('stock.batch_view', id=batch.id) }}">
-                                                <i class="fas fa-eye"></i> Voir détails
-                                            </a>
-                                            <a class="dropdown-item" href="{{ url_for('stock.batch_edit', id=batch.id) }}">
-                                                <i class="fas fa-edit"></i> Modifier
-                                            </a>
-                                            <a class="dropdown-item" href="{{ url_for('stock.batch_movements', id=batch.id) }}">
-                                                <i class="fas fa-history"></i> Historique
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                    </tr>
-                    {% else %}
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
-                                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                                    <p>Aucun lot trouvé</p>
-                                </td>
-                            </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-                </div>
-
-                <!-- Pagination -->
-                {% if batches.pages > 1 %}
-                <div class="card-footer py-4">
-                    <nav>
-                        <ul class="pagination justify-content-end mb-0">
-                            <li class="page-item {% if not batches.has_prev %}disabled{% endif %}">
-                                <a class="page-link" href="{{ url_for('stock.batches', page=batches.prev_num, pharmacy_id=pharmacy_filter, status=status_filter, search=search) }}">
-                                    <i class="fas fa-angle-left"></i>
-                                    <span class="sr-only">Précédent</span>
-                                </a>
-                            </li>
-                            {% for page_num in batches.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-                                {% if page_num %}
-                                    <li class="page-item {% if page_num == batches.page %}active{% endif %}">
-                                        <a class="page-link" href="{{ url_for('stock.batches', page=page_num, pharmacy_id=pharmacy_filter, status=status_filter, search=search) }}">
-                                            {{ page_num }}
-                                        </a>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item disabled"><span class="page-link">...</span></li>
-                                {% endif %}
-                            {% endfor %}
-                            <li class="page-item {% if not batches.has_next %}disabled{% endif %}">
-                                <a class="page-link" href="{{ url_for('stock.batches', page=batches.next_num, pharmacy_id=pharmacy_filter, status=status_filter, search=search) }}">
-                                    <i class="fas fa-angle-right"></i>
-                                    <span class="sr-only">Suivant</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-                {% endif %}
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Lots - {{ product.name }}</h3>
             </div>
+          </div>
         </div>
+
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th>Numéro de Lot</th>
+                <th>Quantité</th>
+                <th>Date d'Expiration</th>
+                <th>Statut</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for batch in batches.items %}
+              <tr>
+                <td>
+                  <span class="font-weight-bold">{{ batch.batch_number }}</span>
+                </td>
+                <td>
+                  <span class="text-primary font-weight-bold">{{ batch.quantity }}</span>
+                </td>
+                <td>
+                  {{ batch.expiry_date.strftime('%d/%m/%Y') if batch.expiry_date else 'N/A' }}
+                </td>
+                <td>
+                  {% if batch.expiry_date and batch.expiry_date < today %}
+                    <span class="badge badge-danger">Expiré</span>
+                  {% elif batch.expiry_date and batch.expiry_date <= soon_expiry %}
+                    <span class="badge badge-warning">Expire bientôt</span>
+                  {% else %}
+                    <span class="badge badge-success">Valide</span>
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  <a href="#" class="btn btn-sm btn-icon btn-info" title="Voir détails">
+                    <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-5">
+                  <i class="ni ni-fat-remove" style="font-size: 3rem;"></i><br>
+                  Aucun lot trouvé
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if batches.pages > 1 %}
+        <div class="card-footer py-4">
+          <nav>
+            <ul class="pagination justify-content-end mb-0">
+              <li class="page-item {% if not batches.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ batches.prev_num }}">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% for page_num in range(1, batches.pages + 1) %}
+                {% if page_num == batches.page %}
+                  <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% elif page_num == 1 or page_num == batches.pages or (page_num >= batches.page - 2 and page_num <= batches.page + 2) %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                {% elif page_num == batches.page - 3 or page_num == batches.page + 3 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not batches.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ batches.next_num }}">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

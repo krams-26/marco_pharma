@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
-from app.models import db, Product, Customer, Sale, SaleItem, Payment, StockMovement, Audit, TempSale, ProductBatch, BatchMovement
+from app.models import db, Product, Customer, Sale, SaleItem, Payment, StockMovement, Audit, TempSale, ProductBatch, BatchMovement, ExchangeRate
 from app.decorators import require_permission
 from app.pharmacy_utils import filter_by_pharmacy
 from datetime import datetime
@@ -78,7 +78,16 @@ def index():
     products = products_query.all()
     
     customers = Customer.query.filter_by(is_active=True).all()
-    return render_template('pos/index.html', products=products, customers=customers)
+    
+    # Récupérer le taux de change actif
+    exchange_rate = ExchangeRate.query.filter_by(
+        from_currency='USD',
+        to_currency='CDF'
+    ).first()
+    
+    rate = exchange_rate.rate if exchange_rate else 2800  # Valeur par défaut
+    
+    return render_template('pos/index.html', products=products, customers=customers, exchange_rate=rate)
 
 @pos_bp.route('/search-product')
 @require_permission('manage_sales')

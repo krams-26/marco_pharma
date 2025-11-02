@@ -147,17 +147,8 @@
                     <h5 class="mb-0">Totaux</h5>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Total HT:</span>
-                        <strong><span id="total_ht">{{ "%.2f"|format(proforma.total_ht) }}</span> $</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>TVA (16%):</span>
-                        <strong><span id="total_tax">{{ "%.2f"|format(proforma.total_tax) }}</span> $</strong>
-                    </div>
-                    <hr>
                     <div class="d-flex justify-content-between">
-                        <span><strong>Total TTC:</strong></span>
+                        <span><strong>Total:</strong></span>
                         <strong class="text-primary"><span id="total_ttc">{{ "%.2f"|format(proforma.total_ttc) }}</span> $</strong>
                     </div>
                 </div>
@@ -247,17 +238,12 @@ function removeProductRow(index) {
 }
 
 function calculateTotals() {
-    let totalHt = 0;
+    let total = 0;
     document.querySelectorAll('.line-total').forEach(el => {
-        totalHt += parseFloat(el.textContent) || 0;
+        total += parseFloat(el.textContent) || 0;
     });
     
-    const totalTax = totalHt * 0.16;
-    const totalTtc = totalHt * 1.16;
-    
-    document.getElementById('total_ht').textContent = totalHt.toFixed(2);
-    document.getElementById('total_tax').textContent = totalTax.toFixed(2);
-    document.getElementById('total_ttc').textContent = totalTtc.toFixed(2);
+    document.getElementById('total_ttc').textContent = total.toFixed(2);
 }
 
 // Calculer les totaux initiaux

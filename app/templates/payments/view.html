@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Détails du Paiement{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Détails du Paiement</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('payments.index') }}">Paiements</a></li>
+              <li class="breadcrumb-item active">Détails</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('payments.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Informations du Paiement</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-muted">Montant</h6>
+              <h4 class="text-success">${{ "%.2f"|format(payment.amount) }}</h4>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted">Méthode de Paiement</h6>
+              <span class="badge badge-info">{{ payment.payment_method }}</span>
+            </div>
+          </div>
+          
+          <hr>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-muted">Date</h6>
+              <p>{{ payment.payment_date.strftime('%d/%m/%Y %H:%M') if payment.payment_date else 'N/A' }}</p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted">Référence</h6>
+              <p>{{ payment.reference or 'N/A' }}</p>
+            </div>
+          </div>
+          
+          {% if payment.notes %}
+          <hr>
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-muted">Notes</h6>
+              <p>{{ payment.notes }}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Informations de la Vente</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-muted">Facture</h6>
+              <p class="font-weight-bold">{{ payment.sale.invoice_number if payment.sale else 'N/A' }}</p>
+            </div>
+          </div>
+          
+          <hr>
+          
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-muted">Client</h6>
+              <p>{{ payment.customer.name if payment.customer else 'Anonyme' }}</p>
+            </div>
+          </div>
+          
+          {% if payment.sale %}
+          <hr>
+          <div class="row">
+            <div class="col-6">
+              <h6 class="text-muted">Total Vente</h6>
+              <h5 class="text-primary">${{ "%.2f"|format(payment.sale.total_amount) }}</h5>
+            </div>
+            <div class="col-6">
+              <h6 class="text-muted">Payé</h6>
+              <h5 class="text-success">${{ "%.2f"|format(payment.sale.paid_amount) }}</h5>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

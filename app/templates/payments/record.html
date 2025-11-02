@@ -211,7 +211,7 @@
 
 {% block javascripts %}
 <script>
-const TAUX_USD_CDF = 2800;
+const TAUX_USD_CDF = {{ exchange_rate }};
 const currentBalance = {{ sale.balance_due }};
 
 // Calculer en temps réel

@@ -1,0 +1,62 @@
+/* Fix pour les chemins des icônes Font Awesome et Nucleo */
+/* Ce fichier corrige les chemins relatifs qui ne fonctionnent pas avec Flask */
+
+@font-face {
+  font-family: 'Font Awesome 5 Free';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2") format("woff2"),
+       url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff") format("woff"),
+       url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-regular-400.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: 'Font Awesome 5 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2") format("woff2"),
+       url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff") format("woff"),
+       url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: 'Font Awesome 5 Brands';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2") format("woff2"),
+       url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff") format("woff"),
+       url("/static/assets/vendor/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: 'NucleoIcons';
+  font-style: normal;
+  font-weight: normal;
+  font-display: swap;
+  src: url("/static/assets/vendor/nucleo/fonts/nucleo-icons.woff2") format("woff2"),
+       url("/static/assets/vendor/nucleo/fonts/nucleo-icons.woff") format("woff"),
+       url("/static/assets/vendor/nucleo/fonts/nucleo-icons.ttf") format("truetype");
+}
+
+/* Force l'utilisation des bonnes font-families */
+.fa, .fas, .far, .fab, .fal, .fad {
+  font-family: 'Font Awesome 5 Free', 'Font Awesome 5 Brands' !important;
+  font-weight: 900 !important;
+}
+
+.far {
+  font-weight: 400 !important;
+}
+
+.fab {
+  font-family: 'Font Awesome 5 Brands' !important;
+  font-weight: 400 !important;
+}
+
+.ni, [class*="ni-"] {
+  font-family: 'NucleoIcons' !important;
+}
+

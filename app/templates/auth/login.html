@@ -1,54 +1,412 @@
 {% extends "base.html" %}
 
+{% block title %}Connexion - MARCO PHARMA{% endblock %}
+
 {% block auth_content %}
-<div class="container">
-    <div class="row justify-content-center align-items-center min-vh-100">
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <i class="bi bi-hospital" style="font-size: 48px; color: #3498db;"></i>
-                        <h3 class="mt-3">Pharmacie Moderne</h3>
-                        <p class="text-muted">Connectez-vous à votre compte</p>
+<div class="login-container">
+  <!-- Background avec overlay -->
+  <div class="login-background">
+    <div class="login-overlay"></div>
+    <div class="login-pattern"></div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="login-wrapper">
+    <div class="container-fluid h-100">
+      <div class="row h-100 align-items-center justify-content-center">
+        <div class="col-xl-5 col-lg-6 col-md-8 col-sm-10">
+          
+          <!-- Carte de connexion -->
+          <div class="login-card shadow-lg">
+            <div class="login-card-body">
+              
+              <!-- Logo et en-tête -->
+              <div class="login-header text-center mb-5">
+                <div class="login-logo-wrapper">
+                  <img src="{{ url_for('static', filename='img/marco-pharma-logo.png') }}" 
+                       alt="MARCO PHARMA" 
+                       class="login-logo"
+                       onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                  <div class="login-logo-fallback" style="display: none;">
+                    <i class="fas fa-pills fa-4x text-primary mb-3"></i>
+                  </div>
+                </div>
+                <h1 class="login-title mb-2">MARCO PHARMA</h1>
+                <p class="login-subtitle text-muted">Système de Gestion Pharmaceutique</p>
                     </div>
                     
+              <!-- Messages flash -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
-                            {% for forme, message in messages %}
-                                <div class="alert alert-{{ forme }} alert-dismissible fade show" role="alert">
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show auto-dismiss-alert" role="alert" data-auto-dismiss="3000">
+                      <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
                                     {{ message }}
-                                    <button type="button" class="close" data-bs-dismiss="alert"></button>
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
                     
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label class="form-label">Nom d'utilisateur</label>
-                            <input type="text" class="form-control" name="username" required autofocus>
+              <!-- Formulaire de connexion -->
+              <form method="POST" class="login-form" id="loginForm">
+                <div class="form-group mb-4">
+                  <label for="username" class="form-label">
+                    <i class="fas fa-user me-2"></i>Nom d'utilisateur
+                  </label>
+                  <div class="input-group input-group-merge">
+                    <span class="input-group-text">
+                      <i class="fas fa-user text-muted"></i>
+                    </span>
+                    <input 
+                      type="text" 
+                      class="form-control form-control-lg" 
+                      id="username"
+                      name="username" 
+                      placeholder="Entrez votre nom d'utilisateur"
+                      required 
+                      autofocus
+                      autocomplete="username">
+                  </div>
+                </div>
+
+                <div class="form-group mb-4">
+                  <label for="password" class="form-label">
+                    <i class="fas fa-lock me-2"></i>Mot de passe
+                  </label>
+                  <div class="input-group input-group-merge">
+                    <span class="input-group-text">
+                      <i class="fas fa-lock text-muted"></i>
+                    </span>
+                    <input 
+                      type="password" 
+                      class="form-control form-control-lg" 
+                      id="password"
+                      name="password" 
+                      placeholder="Entrez votre mot de passe"
+                      required
+                      autocomplete="current-password">
+                    <button 
+                      class="btn btn-outline-secondary" 
+                      type="button" 
+                      id="togglePassword"
+                      title="Afficher/Masquer le mot de passe">
+                      <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Mot de passe</label>
-                            <input type="password" class="form-control" name="password" required>
                         </div>
-                        <div class="mb-3 custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" name="remember" id="remember">
+
+                <div class="form-group mb-4 d-flex justify-content-between align-items-center">
+                  <div class="custom-control custom-checkbox">
+                    <input 
+                      type="checkbox" 
+                      class="custom-control-input" 
+                      name="remember" 
+                      id="remember">
                             <label class="custom-control-label" for="remember">
                                 Se souvenir de moi
                             </label>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-box-arrow-in-right"></i> Connexion
+                  <a href="#" class="text-sm text-primary text-decoration-none">
+                    Mot de passe oublié ?
+                  </a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 mb-4" id="loginBtn">
+                  <i class="fas fa-sign-in-alt me-2"></i>
+                  <span>Se connecter</span>
+                  <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
                         </button>
                     </form>
                     
-                    <div class="mt-4 text-center text-muted small">
-                        <p>Identifiants par défaut: admin / admin123</p>
+              <!-- Informations supplémentaires -->
+              <div class="login-footer text-center">
+                <div class="alert alert-info alert-sm mb-0">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <small>Identifiants par défaut: <strong>admin</strong> / <strong>admin123</strong></small>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="text-center mt-4 text-white">
+            <p class="mb-0">
+              <small>&copy; 2024 MARCO PHARMA. Tous droits réservés.</small>
+            </p>
+          </div>
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+<style>
+  .login-container {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .login-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  }
+
+  .login-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+  }
+
+  .login-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    z-index: 1;
+  }
+
+  .login-wrapper {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 2rem 0;
+  }
+
+  .login-card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    animation: slideUp 0.5s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .login-card-body {
+    padding: 3rem;
+  }
+
+  .login-header {
+    margin-bottom: 2rem;
+  }
+
+  .login-logo-wrapper {
+    margin-bottom: 1.5rem;
+  }
+
+  .login-logo {
+    max-width: 120px;
+    height: auto;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+  }
+
+  .login-logo-fallback i {
+    color: #667eea;
+  }
+
+  .login-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+  }
+
+  .login-subtitle {
+    font-size: 0.95rem;
+    color: #718096;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .input-group-text {
+    background: #f7fafc;
+    border-right: none;
+    border-color: #e2e8f0;
+  }
+
+  .form-control {
+    border-left: none;
+    border-color: #e2e8f0;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+  }
+
+  .input-group-merge .form-control:focus + .input-group-text,
+  .input-group-merge .form-control:focus ~ .input-group-text {
+    border-color: #667eea;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 0.875rem 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 126, 0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #667eea;
+    border-color: #667eea;
+  }
+
+  .login-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .alert-sm {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 768px) {
+    .login-card-body {
+      padding: 2rem 1.5rem;
+    }
+
+    .login-title {
+      font-size: 1.75rem;
+    }
+  }
+
+  /* Animation de chargement */
+  .btn-primary .spinner-border {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+</style>
+
+<script>
+  // Toggle password visibility
+  document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    if (togglePassword) {
+      togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        toggleIcon.classList.toggle('fa-eye');
+        toggleIcon.classList.toggle('fa-eye-slash');
+      });
+    }
+
+    // Form submission with loading state
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    if (loginForm) {
+      loginForm.addEventListener('submit', function() {
+        const spinner = loginBtn.querySelector('.spinner-border');
+        const btnText = loginBtn.querySelector('span:not(.spinner-border)');
+        
+        if (spinner) spinner.classList.remove('d-none');
+        if (btnText) btnText.textContent = 'Connexion en cours...';
+        loginBtn.disabled = true;
+      });
+    }
+
+    // Auto-dismiss alerts after 3 seconds
+    const autoDismissAlerts = document.querySelectorAll('.auto-dismiss-alert');
+    autoDismissAlerts.forEach(function(alert) {
+      const dismissTime = parseInt(alert.getAttribute('data-auto-dismiss')) || 3000;
+      let timeout = setTimeout(function() {
+        // Try Bootstrap 5 alert dismissal first
+        if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+          try {
+            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+            bsAlert.close();
+          } catch (e) {
+            // Fallback if Bootstrap Alert fails
+            dismissAlert(alert);
+          }
+        } else {
+          // Fallback: manually dismiss the alert
+          dismissAlert(alert);
+        }
+      }, dismissTime);
+      
+      // Helper function to dismiss alert
+      function dismissAlert(alertElement) {
+        alertElement.classList.remove('show');
+        alertElement.classList.add('fade');
+        setTimeout(function() {
+          alertElement.remove();
+        }, 300); // Wait for fade animation
+      }
+      
+      // Clear timeout if user manually closes the alert
+      const closeButton = alert.querySelector('.btn-close');
+      if (closeButton) {
+        closeButton.addEventListener('click', function() {
+          clearTimeout(timeout);
+        });
+      }
+    });
+  });
+</script>
+
 {% endblock %}

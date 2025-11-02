@@ -76,10 +76,104 @@
                         </div>
                     </div>
 
-                    {% if approval.parsed_data %}
+                    {% if approval.enriched_data %}
+                    <div class="mb-3">
+                        <strong>Détails de la demande:</strong>
+                        <div class="bg-light p-3 rounded">
+                            {% if approval.enriched_data.products %}
+                            <div class="mb-2">
+                                <strong><i class="bi bi-capsule"></i> Produits concernés:</strong>
+                                <ul class="mt-2 mb-0">
+                                    {% for product in approval.enriched_data.products %}
+                                    <li>
+                                        {{ product.name }}
+                                        {% if product.barcode %}(Code: {{ product.barcode }}){% endif %}
+                                        - Stock: {{ product.stock }} unités
+                                        {% if product.selling_price %}- Prix: ${{ "%.2f"|format(product.selling_price) }}{% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.quantity %}
+                            <div class="mb-2">
+                                <strong>Quantité:</strong> {{ approval.enriched_data.quantity }}
+                                {% if approval.enriched_data.quantity < 0 %}
+                                <span class="badge bg-danger">Réduction</span>
+                                {% else %}
+                                <span class="badge bg-success">Ajout</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.reason %}
+                            <div class="mb-2">
+                                <strong>Raison:</strong> <span class="text-muted">{{ approval.enriched_data.reason }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.amount %}
+                            <div class="mb-2">
+                                <strong>Montant:</strong> ${{ "%.2f"|format(approval.enriched_data.amount) }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.customer %}
+                            <div class="mb-2">
+                                <strong>Client:</strong> {{ approval.enriched_data.customer.name }}
+                                {% if approval.enriched_data.customer.phone %} ({{ approval.enriched_data.customer.phone }}){% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.sale %}
+                            <div class="mb-2">
+                                <strong>Vente #{{ approval.enriched_data.sale.invoice_number }}</strong>
+                                - Date: {{ approval.enriched_data.sale.sale_date }}
+                                - Montant total: ${{ "%.2f"|format(approval.enriched_data.sale.total_amount) }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.discount_percent %}
+                            <div class="mb-2">
+                                <strong>Remise:</strong> {{ approval.enriched_data.discount_percent }}%
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.new_prices %}
+                            <div class="mb-2">
+                                <strong>Nouveaux prix:</strong>
+                                <ul class="mt-2 mb-0">
+                                    {% for product_id, new_price in approval.enriched_data.new_prices.items() %}
+                                    <li>Produit #{{ product_id }}: ${{ "%.2f"|format(new_price) }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.total_amount %}
+                            <div class="mb-2">
+                                <strong>Montant total:</strong> ${{ "%.2f"|format(approval.enriched_data.total_amount) }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.requested_amount %}
+                            <div class="mb-2">
+                                <strong>Montant demandé:</strong> ${{ "%.2f"|format(approval.enriched_data.requested_amount) }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if approval.enriched_data.current_limit %}
+                            <div class="mb-2">
+                                <strong>Limite actuelle:</strong> ${{ "%.2f"|format(approval.enriched_data.current_limit) }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% elif approval.parsed_data %}
                     <div class="mb-3">
                         <strong>Données de la demande:</strong>
-                        <pre class="bg-light p-3 rounded">{{ approval.parsed_data | tojson(indent=2) }}</pre>
+                        <pre class="bg-light p-3 rounded" style="white-space: pre-wrap; word-wrap: break-word;">{{ approval.parsed_data | format_json }}</pre>
                     </div>
                     {% endif %}
 

@@ -102,7 +102,7 @@ $(document).ready(function() {
     $('#credit-amount').on('input', function() {
         const usd = $(this).val();
         if (usd > 0) {
-            const cdf = usd * 2800; // Taux de change approximatif
+            const cdf = usd * {{ exchange_rate }};
             $('#credit-cdf-equivalent').text(`≈ ${cdf.toLocaleString('fr-FR')} FC`);
         } else {
             $('#credit-cdf-equivalent').text('');

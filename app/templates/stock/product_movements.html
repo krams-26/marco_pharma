@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Historique des Mouvements - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-history text-info"></i>
+                                Historique des Mouvements - {{ product.name }}
+                            </h3>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour aux Produits
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Informations du produit -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <strong>Produit:</strong><br>
+                            {{ product.name }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Code-barres:</strong><br>
+                            {{ product.barcode or 'N/A' }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Stock Actuel:</strong><br>
+                            <span class="badge badge-{{ 'success' if product.stock_quantity > product.min_stock_level else 'warning' }}">
+                                {{ product.stock_quantity }} {{ product.unit }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Stock Minimum:</strong><br>
+                            {{ product.min_stock_level }} {{ product.unit }}
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des mouvements -->
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Quantité</th>
+                                    <th>Stock Avant</th>
+                                    <th>Stock Après</th>
+                                    <th>Référence</th>
+                                    <th>Notes</th>
+                                    <th>Utilisateur</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movement in movements.items %}
+                                <tr>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ movement.created_at.strftime('%d/%m/%Y %H:%M') if movement.created_at else 'N/A' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ 
+                                            'success' if movement.movement_type == 'in' else 
+                                            'danger' if movement.movement_type == 'out' else 
+                                            'warning' if movement.movement_type == 'adjustment' else 
+                                            'info' 
+                                        }}">
+                                            {% if movement.movement_type == 'in' %}
+                                                <i class="fas fa-arrow-up"></i> Entrée
+                                            {% elif movement.movement_type == 'out' %}
+                                                <i class="fas fa-arrow-down"></i> Sortie
+                                            {% elif movement.movement_type == 'adjustment' %}
+                                                <i class="fas fa-edit"></i> Ajustement
+                                            {% elif movement.movement_type == 'transfer' %}
+                                                <i class="fas fa-exchange-alt"></i> Transfert
+                                            {% else %}
+                                                {{ movement.movement_type }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="font-weight-bold {{ 
+                                            'text-success' if movement.movement_type == 'in' else 
+                                            'text-danger' if movement.movement_type == 'out' else 
+                                            'text-warning' 
+                                        }}">
+                                            {{ '+' if movement.movement_type == 'in' else '-' if movement.movement_type == 'out' else '' }}{{ movement.quantity }}
+                                        </span>
+                                    </td>
+                                    <td>{{ movement.stock_before or 'N/A' }}</td>
+                                    <td>{{ movement.stock_after or 'N/A' }}</td>
+                                    <td>
+                                        {% if movement.reference %}
+                                            <small class="text-muted">{{ movement.reference }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movement.notes %}
+                                            <small>{{ movement.notes }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movement.user %}
+                                            <small>{{ movement.user.full_name or movement.user.username }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Système</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        <i class="fas fa-info-circle"></i>
+                                        Aucun mouvement enregistré pour ce produit.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if movements.pages > 1 %}
+                    <nav aria-label="Pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if movements.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('stock.product_movements', product_id=product.id, page=movements.prev_num) }}">
+                                        <i class="fas fa-chevron-left"></i> Précédent
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in movements.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != movements.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('stock.product_movements', product_id=product.id, page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">…</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if movements.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('stock.product_movements', product_id=product.id, page=movements.next_num) }}">
+                                        Suivant <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

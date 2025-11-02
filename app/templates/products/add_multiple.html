@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Ajout Multiple de Produits{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Ajout Multiple de Produits</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('products.index') }}">Produits</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Ajout Multiple</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Ajouter Plusieurs Produits</h3>
+            </div>
+            <div class="col text-right">
+              <button type="button" class="btn btn-sm btn-success" onclick="addProductRow()">
+                <i class="fas fa-plus"></i> Ajouter une Ligne
+              </button>
+              <button type="button" class="btn btn-sm btn-primary" onclick="duplicateLastRow()">
+                <i class="fas fa-copy"></i> Dupliquer Dernière Ligne
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <form id="multipleProductsForm" method="POST">
+            <div class="table-responsive">
+              <table class="table align-items-center table-flush" id="productsTable">
+                <thead class="thead-light">
+                  <tr>
+                    <th style="width: 2%;">#</th>
+                    <th style="width: 20%;">Nom *</th>
+                    <th style="width: 12%;">Code-barres</th>
+                    <th style="width: 12%;">Forme</th>
+                    <th style="width: 9%;">Prix Achat</th>
+                    <th style="width: 9%;">Prix Vente *</th>
+                    <th style="width: 9%;">Prix Gros</th>
+                    <th style="width: 7%;">Stock</th>
+                    <th style="width: 7%;">Stock Min</th>
+                    <th style="width: 10%;">Fabricant</th>
+                    <th style="width: 8%;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                  <!-- Les lignes seront ajoutées dynamiquement -->
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="alert alert-info mt-3">
+              <i class="fas fa-info-circle"></i> 
+              <strong>Astuce:</strong> Remplissez au moins le <strong>Nom</strong> et le <strong>Prix de Vente</strong> pour chaque produit. 
+              Cliquez sur "Ajouter une Ligne" pour ajouter plus de produits.
+            </div>
+            
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                <i class="fas fa-save"></i> Enregistrer Tous les Produits
+              </button>
+              <a href="{{ url_for('products.index') }}" class="btn btn-secondary btn-lg ml-2">
+                <i class="fas fa-times"></i> Annuler
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let rowCounter = 0;
+
+function addProductRow(data = {}) {
+  rowCounter++;
+  const tbody = document.getElementById('productsTableBody');
+  const row = document.createElement('tr');
+  row.id = `product-row-${rowCounter}`;
+  row.className = 'product-row';
+  
+  row.innerHTML = `
+    <td>
+      <span class="badge badge-primary">${rowCounter}</span>
+    </td>
+    <td>
+      <input type="text" class="form-control form-control-sm product-name" 
+             name="name" placeholder="Nom du produit" value="${data.name || ''}" required>
+    </td>
+    <td>
+      <input type="text" class="form-control form-control-sm" 
+             name="barcode" placeholder="Code-barres" value="${data.barcode || ''}">
+    </td>
+    <td>
+      <select class="form-control form-control-sm" name="category">
+        <option value="">-- Sélectionner --</option>
+        <option value="Comprimé" ${data.category === 'Comprimé' ? 'selected' : ''}>Comprimé</option>
+        <option value="Capsule" ${data.category === 'Capsule' ? 'selected' : ''}>Capsule</option>
+        <option value="Gélule" ${data.category === 'Gélule' ? 'selected' : ''}>Gélule</option>
+        <option value="Sirop" ${data.category === 'Sirop' ? 'selected' : ''}>Sirop</option>
+        <option value="Suspension" ${data.category === 'Suspension' ? 'selected' : ''}>Suspension</option>
+        <option value="Gouttes" ${data.category === 'Gouttes' ? 'selected' : ''}>Gouttes</option>
+        <option value="Pommade" ${data.category === 'Pommade' ? 'selected' : ''}>Pommade</option>
+        <option value="Crème" ${data.category === 'Crème' ? 'selected' : ''}>Crème</option>
+        <option value="Gel" ${data.category === 'Gel' ? 'selected' : ''}>Gel</option>
+        <option value="Injection" ${data.category === 'Injection' ? 'selected' : ''}>Injection</option>
+        <option value="Suppositoire" ${data.category === 'Suppositoire' ? 'selected' : ''}>Suppositoire</option>
+        <option value="Ampoule" ${data.category === 'Ampoule' ? 'selected' : ''}>Ampoule</option>
+        <option value="Sachet" ${data.category === 'Sachet' ? 'selected' : ''}>Sachet</option>
+        <option value="Autre" ${data.category === 'Autre' ? 'selected' : ''}>Autre</option>
+      </select>
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="purchase_price" step="0.01" placeholder="0.00" value="${data.purchase_price || ''}">
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="selling_price" step="0.01" placeholder="0.00" value="${data.selling_price || ''}" required>
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="wholesale_price" step="0.01" placeholder="0.00" value="${data.wholesale_price || ''}">
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="stock_quantity" placeholder="0" value="${data.stock_quantity || ''}">
+    </td>
+    <td>
+      <input type="number" class="form-control form-control-sm" 
+             name="min_stock_level" placeholder="10" value="${data.min_stock_level || '10'}">
+    </td>
+    <td>
+      <input type="text" class="form-control form-control-sm" 
+             name="manufacturer" placeholder="Fabricant" value="${data.manufacturer || ''}">
+    </td>
+    <td>
+      <button type="button" class="btn btn-sm btn-danger" onclick="removeProductRow(${rowCounter})" title="Supprimer">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  `;
+  
+  tbody.appendChild(row);
+  updateRowNumbers();
+}
+
+function removeProductRow(rowId) {
+  const row = document.getElementById(`product-row-${rowId}`);
+  if (row) {
+    row.remove();
+    updateRowNumbers();
+  }
+}
+
+function duplicateLastRow() {
+  const rows = document.querySelectorAll('.product-row');
+  if (rows.length === 0) {
+    addProductRow();
+    return;
+  }
+  
+  const lastRow = rows[rows.length - 1];
+  const data = {};
+  const inputs = lastRow.querySelectorAll('input, select');
+  
+  inputs.forEach(input => {
+    if (input.name) {
+      if (input.type === 'checkbox') {
+        data[input.name] = input.checked;
+      } else {
+        data[input.name] = input.value;
+      }
+    }
+  });
+  
+  addProductRow(data);
+}
+
+function updateRowNumbers() {
+  const rows = document.querySelectorAll('.product-row');
+  rows.forEach((row, index) => {
+    const badge = row.querySelector('td:first-child .badge');
+    if (badge) {
+      badge.textContent = index + 1;
+    }
+  });
+}
+
+// Gérer la soumission du formulaire
+document.getElementById('multipleProductsForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const rows = document.querySelectorAll('.product-row');
+  if (rows.length === 0) {
+    alert('Veuillez ajouter au moins un produit');
+    return;
+  }
+  
+  // Collecter les données de chaque produit
+  const products = [];
+  let hasValidProduct = false;
+  
+  rows.forEach((row, index) => {
+    const name = row.querySelector('.product-name').value.trim();
+    const sellingPrice = row.querySelector('input[name="selling_price"]').value;
+    
+    if (name && sellingPrice) {
+      const productData = {
+        name: name,
+        barcode: row.querySelector('input[name="barcode"]').value.trim() || '',
+        category: row.querySelector('select[name="category"]').value || '',
+        purchase_price: row.querySelector('input[name="purchase_price"]').value || '0',
+        selling_price: sellingPrice,
+        wholesale_price: row.querySelector('input[name="wholesale_price"]').value || '0',
+        stock_quantity: row.querySelector('input[name="stock_quantity"]').value || '0',
+        min_stock_level: row.querySelector('input[name="min_stock_level"]').value || '10',
+        manufacturer: row.querySelector('input[name="manufacturer"]').value.trim() || '',
+        supplier: ''
+      };
+      
+      products.push(JSON.stringify(productData));
+      hasValidProduct = true;
+    }
+  });
+  
+  if (!hasValidProduct) {
+    alert('Veuillez remplir au moins le nom et le prix de vente pour au moins un produit');
+    return;
+  }
+  
+  // Créer des champs cachés pour chaque produit
+  const form = this;
+  products.forEach(productJson => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'products[]';
+    input.value = productJson;
+    form.appendChild(input);
+  });
+  
+  // Soumettre le formulaire
+  this.submit();
+});
+
+// Ajouter la première ligne au chargement
+document.addEventListener('DOMContentLoaded', function() {
+  addProductRow();
+  
+  // Ajouter 4 lignes vides supplémentaires pour commencer
+  for (let i = 0; i < 4; i++) {
+    addProductRow();
+  }
+});
+</script>
+
+{% endblock %}
+

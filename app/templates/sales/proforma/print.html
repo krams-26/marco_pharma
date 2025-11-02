@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proforma {{ proforma.proforma_number }} - MARCO PHARMA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .invoice-container {
+            max-width: 850px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+        }
+        
+        .invoice-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .company-logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .company-logo i {
+            font-size: 2rem;
+            color: #667eea;
+        }
+        
+        .invoice-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-number {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .invoice-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .customer-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .products-table th,
+        .products-table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .products-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .products-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .total-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .total-final {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #667eea;
+            border-top: 2px solid #667eea;
+            padding-top: 10px;
+        }
+        
+        .conditions {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        @media print {
+            .print-button {
+                display: none;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .invoice-container {
+                margin: 0;
+                padding: 20px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="btn btn-primary print-button" onclick="window.print()">
+        <i class="fas fa-print"></i> Imprimer
+    </button>
+
+    <div class="invoice-container">
+        <!-- En-tête -->
+        <div class="invoice-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="company-logo">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                    <h1 class="invoice-title">MARCO PHARMA</h1>
+                    <p class="mb-0">Système de Gestion Pharmaceutique</p>
+                    <p class="mb-0">République Démocratique du Congo</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <h2 class="invoice-title">FACTURE PRO FORMA</h2>
+                    <p class="invoice-number">N°: {{ proforma.proforma_number }}</p>
+                    <p class="invoice-number">Date: {{ proforma.issue_date.strftime('%d/%m/%Y') }}</p>
+                    <p class="invoice-number">Validité: {{ proforma.validity_date.strftime('%d/%m/%Y') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Détails de la facture -->
+        <div class="invoice-details">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-primary mb-3">Client</h5>
+                    <p class="mb-1"><strong>{{ proforma.customer_name }}</strong></p>
+                    {% if proforma.customer_address %}
+                    <p class="mb-1">{{ proforma.customer_address }}</p>
+                    {% endif %}
+                    {% if proforma.customer_phone %}
+                    <p class="mb-1">Tél: {{ proforma.customer_phone }}</p>
+                    {% endif %}
+                    {% if proforma.customer_email %}
+                    <p class="mb-0">Email: {{ proforma.customer_email }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <h5 class="text-primary mb-3">Statut</h5>
+                    <span class="badge bg-{% if proforma.status == 'draft' %}secondary{% elif proforma.status == 'sent' %}info{% elif proforma.status == 'accepted' %}success{% elif proforma.status == 'rejected' %}danger{% else %}warning{% endif %} fs-6">
+                        {% if proforma.status == 'draft' %}Brouillon
+                        {% elif proforma.status == 'sent' %}Envoyé
+                        {% elif proforma.status == 'accepted' %}Accepté
+                        {% elif proforma.status == 'rejected' %}Rejeté
+                        {% else %}{{ proforma.status }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des produits -->
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Code</th>
+                    <th>Quantité</th>
+                    <th>Prix unitaire</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in proforma.items %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.product_code }}</td>
+                    <td>{{ item.quantity_requested }}</td>
+                    <td>${{ "%.2f"|format(item.unit_price) }}</td>
+                    <td>${{ "%.2f"|format(item.line_total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totaux -->
+        <div class="total-section">
+            <div class="row">
+                <div class="col-md-6">
+                    {% if proforma.notes %}
+                    <h6 class="text-primary">Notes:</h6>
+                    <p class="text-muted">{{ proforma.notes }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <div class="total-line total-final">
+                        <span>Total:</span>
+                        <span>${{ "%.2f"|format(proforma.total_ttc) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conditions -->
+        <div class="conditions">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">Conditions de paiement:</h6>
+                    <p class="text-muted">{{ proforma.payment_conditions }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary">Conditions de livraison:</h6>
+                    <p class="text-muted">{{ proforma.delivery_conditions }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="text-center mt-5">
+            <p class="text-muted">
+                <small>Cette facture pro forma est valide jusqu'au {{ proforma.validity_date.strftime('%d/%m/%Y') }}</small>
+            </p>
+            <p class="text-muted">
+                <small>Générée le {{ proforma.issue_date.strftime('%d/%m/%Y à %H:%M') }} par {{ proforma.user.full_name if proforma.user else 'Système' }}</small>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-print on load
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

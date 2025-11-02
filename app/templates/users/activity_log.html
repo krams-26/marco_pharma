@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Journal d'Activités{% endblock %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Journal d'Activités</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{{ url_for('users.index') }}">Utilisateurs</a></li>
+              <li class="breadcrumb-item active">Journal</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{{ url_for('users.index') }}" class="btn btn-sm btn-neutral">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <h3 class="mb-0">Journal d'Activités - {{ user.username }}</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table align-items-center table-flush">
+              <thead class="thead-light">
+                <tr>
+                  <th>Date/Heure</th>
+                  <th>Action</th>
+                  <th>Type d'Entité</th>
+                  <th>Détails</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if audits %}
+                  {% for audit in audits %}
+                  <tr>
+                    <td>{{ audit.created_at.strftime('%d/%m/%Y %H:%M:%S') if audit.created_at else '-' }}</td>
+                    <td>
+                      {% if audit.action == 'create' %}
+                        <span class="badge badge-success">Création</span>
+                      {% elif audit.action == 'update' %}
+                        <span class="badge badge-info">Modification</span>
+                      {% elif audit.action == 'delete' %}
+                        <span class="badge badge-danger">Suppression</span>
+                      {% else %}
+                        <span class="badge badge-secondary">{{ audit.action }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ audit.entity_type or '-' }}</td>
+                    <td>{{ audit.details or '-' }}</td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-5">
+                      <i class="fas fa-clipboard-list" style="font-size: 3rem;"></i><br>
+                      Aucune activité enregistrée
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

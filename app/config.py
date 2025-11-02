@@ -4,7 +4,9 @@ from datetime import timedelta
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    # En production, définir SECRET_KEY dans les variables d'environnement
+    # Générer une clé sécurisée avec: python -c "import secrets; print(secrets.token_hex(32))"
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production-CHANGE-IN-PRODUCTION'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:@localhost:3306/marphar'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     

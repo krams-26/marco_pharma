@@ -146,13 +146,93 @@
                 <td><span class="badge badge-primary">{{ customer.pharmacy.name if customer.pharmacy else 'N/A' }}</span></td>
                 {% endif %}
                 <td class="text-right">
-                  <a href="{{ url_for('customers.view', id=customer.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir">
-                    <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
-                  </a>
-                  <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
-                    <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
-                  </a>
-                        </td>
+                  <!-- Actions pour admin -->
+                  {% if current_user.role == 'admin' %}
+                  <div class="btn-group" role="group">
+                    <!-- Voir détails -->
+                    <a href="{{ url_for('customers.view', id=customer.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir détails">
+                      <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                    </a>
+                    
+                    <!-- Modifier -->
+                    <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    
+                    <!-- Menu déroulant pour plus d'actions -->
+                    <div class="btn-group" role="group">
+                      <button type="button" class="btn btn-sm btn-icon btn-secondary dropdown-toggle" data-toggle="dropdown" title="Plus d'actions">
+                        <span class="btn-inner--icon"><i class="fas fa-ellipsis-v"></i></span>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <!-- Historique des ventes -->
+                        <a class="dropdown-item" href="{{ url_for('customers.sales_history', id=customer.id) }}">
+                          <i class="fas fa-shopping-cart text-info"></i> Historique Ventes
+                        </a>
+                        
+                        <!-- Historique des paiements -->
+                        <a class="dropdown-item" href="{{ url_for('customers.payments_history', id=customer.id) }}">
+                          <i class="fas fa-credit-card text-success"></i> Historique Paiements
+                        </a>
+                        
+                        <!-- Créer une vente -->
+                        <a class="dropdown-item" href="{{ url_for('pos.index', customer_id=customer.id) }}">
+                          <i class="fas fa-plus-circle text-primary"></i> Nouvelle Vente
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Gestion du crédit -->
+                        <a class="dropdown-item" href="{{ url_for('customers.manage_credit', id=customer.id) }}">
+                          <i class="fas fa-wallet text-warning"></i> Gérer Crédit
+                        </a>
+                        
+                        <!-- Exporter données -->
+                        <a class="dropdown-item" href="{{ url_for('customers.export_single', id=customer.id) }}">
+                          <i class="fas fa-download text-secondary"></i> Exporter Données
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Changer type client -->
+                        <a class="dropdown-item" href="{{ url_for('customers.change_type', id=customer.id) }}">
+                          <i class="fas fa-user-tag text-info"></i> Changer Type
+                        </a>
+                        
+                        <!-- Désactiver/Activer -->
+                        {% if customer.is_active %}
+                        <a class="dropdown-item text-warning" href="{{ url_for('customers.toggle_status', id=customer.id) }}" 
+                           onclick="return confirm('Désactiver ce client ?')">
+                          <i class="fas fa-pause"></i> Désactiver
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item text-success" href="{{ url_for('customers.toggle_status', id=customer.id) }}">
+                          <i class="fas fa-play"></i> Activer
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Supprimer -->
+                        <a class="dropdown-item text-danger" href="{{ url_for('customers.delete', id=customer.id) }}" 
+                           onclick="return confirm('Supprimer définitivement ce client ?')">
+                          <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <!-- Actions limitées pour non-admin -->
+                  <div class="btn-group" role="group">
+                    <a href="{{ url_for('customers.view', id=customer.id) }}" class="btn btn-sm btn-icon btn-info" title="Voir">
+                      <span class="btn-inner--icon"><i class="ni ni-archive-2"></i></span>
+                    </a>
+                    {% if current_user.has_permission('manage_customers') %}
+                    <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-sm btn-icon btn-primary" title="Modifier">
+                      <span class="btn-inner--icon"><i class="ni ni-ruler-pencil"></i></span>
+                    </a>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                </td>
                     </tr>
                     {% else %}
                     <tr>

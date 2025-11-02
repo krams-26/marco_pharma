@@ -13,7 +13,7 @@
         <h5 class="mb-0"><i class="bi bi-person-badge"></i> Informations utilisateur</h5>
     </div>
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" id="userForm">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Nom d'utilisateur *</label>
@@ -124,7 +124,7 @@
                             <div class="col-md-6 mb-2">
                                 <div class="custom-control custom-checkbox custom-control-sm">
                                     <input type="checkbox" class="custom-control-input perm-checkbox module-{{ loop.index0 }}" 
-                                           name="perm_{{ perm }}" id="perm_{{ perm }}" data-module="{{ loop.index0 }}">
+                                           name="perm_{{ perm }}" id="perm_{{ perm }}" data-module="{{ loop.index0 }}" form="userForm">
                                     <label class="custom-control-label small" for="perm_{{ perm }}">
                                         {{ label }}
                                     </label>
