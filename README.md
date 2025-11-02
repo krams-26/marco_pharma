@@ -135,30 +135,46 @@ pip install --upgrade -r requirements.txt
 
 ---
 
-## 📞 SUPPORT
+## 📞 SUPPORT & ASSISTANCE
 
-Pour toute assistance :
-1. Consulter `README.md`
-2. Vérifier la documentation du projet
-3. Contacter le support technique
+### **Besoin d'aide ?**
+
+Si vous rencontrez des difficultés ou avez des questions :
+
+1. **Consulter la documentation** : Commencez par lire ce `README.md`
+2. **Vérifier les ressources** : Explorez la documentation du projet
+3. **Contacter le support** : Utilisez les moyens de contact ci-dessous pour une assistance directe
+
+### **Contact Direct**
+
+Pour toute assistance technique, questions ou support :
+
+- **💬 Telegram :** [@TechBeyond](https://t.me/+243997204211) ou [+243997204211](https://t.me/+243997204211)
+- **📧 Email :** kraluk2412@gmail.com
+
+*Nous répondons généralement dans les 24 heures.*
 
 ---
 
-## 📜 LICENCE
+## 📜 LICENCE & CRÉDITS
+
+### **Copyright**
 
 **© 2025 Tech & Beyond** - Tous droits réservés
 
 ### **Développement**
 
-**Développeur :** Ramazani L. Kevin
+**Développeur Principal :** **Ramazani L. Kevin**
 
-Passionné par le développement d'applications web et mobiles, spécialisé dans la création de solutions logicielles sur mesure pour les entreprises. Fort d'une expérience dans le développement full-stack avec Python/Flask, React, et les bases de données relationnelles, je me concentre sur la création de systèmes de gestion efficaces, sécurisés et intuitifs. Ce système de gestion pharmaceutique MARCO PHARMA a été conçu avec soin pour répondre aux besoins spécifiques de la gestion quotidienne des pharmacies, en combinant robustesse technique et facilité d'utilisation.
+Passionné par le développement d'applications web et mobiles, spécialisé dans la création de solutions logicielles sur mesure pour les entreprises. Fort d'une expérience dans le développement full-stack avec Python/Flask, React, et les bases de données relationnelles, je me concentre sur la création de systèmes de gestion efficaces, sécurisés et intuitifs.
 
-### **Assistance & Contact**
+Ce système de gestion pharmaceutique **MARCO PHARMA** a été conçu avec soin pour répondre aux besoins spécifiques de la gestion quotidienne des pharmacies, en combinant robustesse technique et facilité d'utilisation.
 
-Pour toute assistance technique, questions ou support :
-- **Telegram :** [@TechBeyond](https://t.me/+243997204211) ou [+243997204211](https://t.me/+243997204211)
-- **Email :** kraluk2412@gmail.com
+### **Informations Légales**
+
+Ce logiciel est fourni "tel quel", sans garantie d'aucune sorte. Tous les droits de propriété intellectuelle appartiennent à **Tech & Beyond**.
+
+Pour toute question concernant l'utilisation, la modification ou la distribution de ce logiciel, veuillez contacter le développeur.
 
 ---
 
