@@ -146,10 +146,19 @@ Pour toute assistance :
 
 ## 📜 LICENCE
 
-**© 2025 Marco Pharma SARL** - Tous droits réservés
+**© 2025 Tech & Beyond** - Tous droits réservés
 
-**Développement :** Rama L. Kevin - Tech & Beyond
-**Contact développeur :** kraluk2412@gmail.com
+### **Développement**
+
+**Développeur :** Ramazani L. Kevin
+
+Passionné par le développement d'applications web et mobiles, spécialisé dans la création de solutions logicielles sur mesure pour les entreprises. Fort d'une expérience dans le développement full-stack avec Python/Flask, React, et les bases de données relationnelles, je me concentre sur la création de systèmes de gestion efficaces, sécurisés et intuitifs. Ce système de gestion pharmaceutique MARCO PHARMA a été conçu avec soin pour répondre aux besoins spécifiques de la gestion quotidienne des pharmacies, en combinant robustesse technique et facilité d'utilisation.
+
+### **Assistance & Contact**
+
+Pour toute assistance technique, questions ou support :
+- **Telegram :** [@TechBeyond](https://t.me/+243997204211) ou [+243997204211](https://t.me/+243997204211)
+- **Email :** kraluk2412@gmail.com
 
 ---
 
